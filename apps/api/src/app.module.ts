@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
+import { EmailModule } from './common/email/email.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { LicenseModule } from './license/license.module';
@@ -40,6 +41,7 @@ import { SearchModule } from './search/search.module';
 @Module({
   imports: [
     PrismaModule,
+    EmailModule,
     AuditModule,
     AuthModule,
     LicenseModule,

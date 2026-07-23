@@ -1,10 +1,14 @@
 import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes, createHash } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../common/email/email.service';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyMfaDto } from './dto/verify-mfa.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtPayload } from '../common/jwt-payload';
 
 const DIACRITICS: Record<string, string> = {
@@ -33,12 +37,18 @@ function generateSixDigitCode(): string {
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILED_BY_EMAIL = 5;
 const MAX_FAILED_BY_IP = 20;
+const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
+
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly email: EmailService,
   ) {}
 
   async registerTenant(dto: RegisterTenantDto) {
@@ -123,10 +133,15 @@ export class AuthService {
 
     const loginTicket = this.jwt.sign({ sub: user.id, purpose: 'mfa' }, { expiresIn: '5m' });
 
-    // NOTE: no email/SMS provider is wired up yet, so the code is returned
-    // directly to the client for now — replace with a real delivery channel
-    // before production and stop returning `devCode`.
-    return { loginTicket, devCode: code };
+    const sent = await this.email.send(
+      user.email,
+      'Seu código de acesso — Plataforma Elos',
+      `<p>Seu código de verificação é:</p><p style="font-size:28px;font-weight:700;letter-spacing:4px">${code}</p><p>Válido por 5 minutos.</p>`,
+    );
+
+    // Falls back to returning the code directly when no email provider is
+    // configured (RESEND_API_KEY unset), so local/dev usage keeps working.
+    return sent ? { loginTicket } : { loginTicket, devCode: code };
   }
 
   /** Step 2: verify the 6-digit code, issue the real access token as an httpOnly cookie. */
@@ -187,6 +202,48 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    return { ok: true };
+  }
+
+  /** Always returns a generic success message, whether or not the account exists — avoids user enumeration. */
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const generic = { ok: true, message: 'Se o e-mail informado existir, enviamos um link de recuperação.' };
+
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug } });
+    if (!tenant) return generic;
+
+    const user = await this.prisma.user.findUnique({
+      where: { tenantId_email: { tenantId: tenant.id, email: dto.email.toLowerCase() } },
+    });
+    if (!user) return generic;
+
+    const token = randomBytes(32).toString('hex');
+    await this.prisma.passwordResetToken.create({
+      data: { userId: user.id, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS) },
+    });
+
+    const resetUrl = `${process.env.WEB_ORIGIN ?? 'http://localhost:3000'}/redefinir-senha?token=${token}`;
+    const sent = await this.email.send(
+      user.email,
+      'Redefinir senha — Plataforma Elos',
+      `<p>Recebemos um pedido para redefinir sua senha.</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Válido por 30 minutos. Se não foi você, ignore este e-mail.</p>`,
+    );
+
+    // Dev fallback mirrors the MFA code pattern: surface the link directly
+    // when there's no email provider configured, instead of silently failing.
+    return sent ? generic : { ...generic, devResetUrl: resetUrl };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const tokenHash = hashToken(dto.token);
+    const record = await this.prisma.passwordResetToken.findFirst({
+      where: { tokenHash, usedAt: null, expiresAt: { gt: new Date() } },
+    });
+    if (!record) throw new BadRequestException('Link de redefinição inválido ou expirado.');
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.prisma.user.update({ where: { id: record.userId }, data: { passwordHash } });
+    await this.prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
     return { ok: true };
   }
 

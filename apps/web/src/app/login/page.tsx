@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
-type Step = 'credentials' | 'mfa';
+type Step = 'credentials' | 'mfa' | 'forgot';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,13 +20,15 @@ export default function LoginPage() {
   const [devCode, setDevCode] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [forgotMessage, setForgotMessage] = useState('');
+  const [devResetUrl, setDevResetUrl] = useState('');
 
   const loginMutation = useMutation({
     mutationFn: async () => (await api.post('/auth/login', { tenantSlug, email, password })).data,
     onSuccess: (data) => {
       setLoginTicket(data.loginTicket);
-      setDevCode(data.devCode);
-      setCode(data.devCode);
+      setDevCode(data.devCode ?? '');
+      setCode(data.devCode ?? '');
       setStep('mfa');
       setError('');
     },
@@ -43,6 +46,14 @@ export default function LoginPage() {
       router.replace('/painel');
     },
     onError: () => setError('Código inválido ou expirado.'),
+  });
+
+  const forgotMutation = useMutation({
+    mutationFn: async () => (await api.post('/auth/forgot-password', { tenantSlug, email })).data,
+    onSuccess: (data) => {
+      setForgotMessage(data.message);
+      setDevResetUrl(data.devResetUrl ?? '');
+    },
   });
 
   return (
@@ -70,6 +81,18 @@ export default function LoginPage() {
               className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
             >
               {loginMutation.isPending ? 'Entrando…' : 'Entrar'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStep('forgot');
+                setForgotMessage('');
+                setDevResetUrl('');
+                setError('');
+              }}
+              className="text-center text-sm text-text-secondary hover:text-accent"
+            >
+              Esqueci minha senha
             </button>
           </form>
         )}
@@ -100,6 +123,43 @@ export default function LoginPage() {
               {mfaMutation.isPending ? 'Verificando…' : 'Verificar'}
             </button>
           </form>
+        )}
+
+        {step === 'forgot' && (
+          <div className="flex flex-col gap-4">
+            {!forgotMessage ? (
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  forgotMutation.mutate();
+                }}
+              >
+                <p className="text-sm text-text-secondary">Informe sua empresa e e-mail para receber o link de redefinição.</p>
+                <Field label="Empresa (slug)" value={tenantSlug} onChange={setTenantSlug} />
+                <Field label="E-mail" type="email" value={email} onChange={setEmail} />
+                <button
+                  type="submit"
+                  disabled={forgotMutation.isPending}
+                  className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
+                >
+                  {forgotMutation.isPending ? 'Enviando…' : 'Enviar link de recuperação'}
+                </button>
+              </form>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm text-text-secondary">{forgotMessage}</p>
+                {devResetUrl && (
+                  <p className="rounded-[10px] bg-tint-blue px-3 py-2 text-xs text-text-secondary">
+                    Modo dev: <Link href={devResetUrl} className="text-accent underline">{devResetUrl}</Link> (sem provedor de e-mail configurado).
+                  </p>
+                )}
+              </div>
+            )}
+            <button onClick={() => setStep('credentials')} className="text-center text-sm text-text-secondary hover:text-accent">
+              ← Voltar para o login
+            </button>
+          </div>
         )}
       </div>
     </div>
