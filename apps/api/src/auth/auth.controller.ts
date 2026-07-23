@@ -12,10 +12,14 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SkipLicenseCheck } from '../common/decorators/skip-license-check.decorator';
 import type { JwtPayload } from '../common/jwt-payload';
 
+const isProd = process.env.NODE_ENV === 'production';
+// Cross-site in production (Vercel frontend + Railway backend, different
+// domains) needs SameSite=None, which browsers only honor together with
+// Secure. Local dev keeps Lax since both apps run on http://localhost.
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
+  sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+  secure: isProd,
   maxAge: 8 * 60 * 60 * 1000,
 };
 
@@ -46,7 +50,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('elos_token');
+    res.clearCookie('elos_token', { httpOnly: true, sameSite: COOKIE_OPTIONS.sameSite, secure: COOKIE_OPTIONS.secure });
     return { ok: true };
   }
 
