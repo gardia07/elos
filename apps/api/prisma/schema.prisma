@@ -1,0 +1,1341 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Core: tenancy, auth, audit
+// ─────────────────────────────────────────────────────────────
+
+model Tenant {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  slug       String   @unique
+  razaoSocial String?
+  cnpj       String?
+  createdAt  DateTime @default(now())
+
+  users                    User[]
+  auditEvents              AuditEvent[]
+  recruitmentJobs          RecruitmentJob[]
+  candidates               Candidate[]
+  candidatePoolEntries     CandidatePoolEntry[]
+  jobRequisitions          JobRequisition[]
+  scheduledInterviews      ScheduledInterview[]
+  checklistItemDefs        ChecklistItemDef[]
+  admissions               Admission[]
+  employees                Employee[]
+  evaluationCycles         EvaluationCycle[]
+  evaluationRecords        EvaluationRecord[]
+  goals                    Goal[]
+  pdiActions               PdiAction[]
+  vacationRequests         VacationRequest[]
+  leaveRecords             LeaveRecord[]
+  terminations             Termination[]
+  terminationChecklistDefs TerminationChecklistDef[]
+
+  laborDeadlines       LaborDeadline[]
+  collectiveAgreements CollectiveAgreement[]
+  jobGrades            JobGrade[]
+  benefits             Benefit[]
+  benefitEnrollments   BenefitEnrollment[]
+  equipmentItems       EquipmentItem[]
+  timeJustifications   TimeJustification[]
+  payrollRuns          PayrollRun[]
+  payslipItems         PayslipItem[]
+  payrollGuides        PayrollGuide[]
+
+  agendaItems    AgendaItem[]
+  notepadEntries NotepadEntry[]
+
+  accidents         Accident[]
+  occupationalExams OccupationalExam[]
+  nrTrainingRecords NrTrainingRecord[]
+  pgrActions        PgrAction[]
+  riskMapEntries    RiskMapEntry[]
+  sstSettings       SstSettings?
+
+  documentRequirements DocumentRequirement[]
+  tasks                Task[]
+  license              TenantLicense?
+
+  ethicsCases          EthicsCase[]
+  compliancePolicies   CompliancePolicy[]
+  eloConversations     EloConversation[]
+  integrationConnections IntegrationConnection[]
+  announcements        Announcement[]
+  metricSnapshots      MetricSnapshot[]
+
+  @@map("tenants")
+}
+
+enum Role {
+  ADMIN
+  RH_GENERALISTA
+  GESTOR_AREA
+  COLABORADOR
+  COMPLIANCE
+  COMITE_ETICA
+  PSICOLOGIA
+
+  @@map("role")
+}
+
+model User {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @db.Uuid
+  email            String
+  passwordHash     String
+  name             String
+  role             Role      @default(COLABORADOR)
+  employeeId       String?   @db.Uuid
+  mfaEnabled       Boolean   @default(true)
+  mfaCodeHash      String?
+  mfaCodeExpiresAt DateTime?
+  createdAt        DateTime  @default(now())
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee? @relation(fields: [employeeId], references: [id])
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+// Cross-tenant on purpose — brute-force protection has to see attempts
+// regardless of which tenant is being targeted, and runs before any tenant
+// context exists (login is the one write path that predates auth). Not
+// RLS-scoped; not reachable through PrismaService.forCurrentTenant().
+model LoginAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String
+  ip        String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([ip, createdAt])
+  @@map("login_attempts")
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  actorId    String?  @db.Uuid
+  actorName  String
+  entityType String
+  entityId   String
+  action     String
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, entityType, entityId])
+  @@map("audit_events")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Recrutamento & Seleção
+// ─────────────────────────────────────────────────────────────
+
+enum JobContrato {
+  CLT
+  ESTAGIO
+
+  @@map("job_contrato")
+}
+
+enum JobStatus {
+  ABERTA
+  EM_ANALISE
+  ENCERRADA
+
+  @@map("job_status")
+}
+
+model RecruitmentJob {
+  id        String      @id @default(uuid()) @db.Uuid
+  tenantId  String      @db.Uuid
+  cargo     String
+  depto     String
+  contrato  JobContrato @default(CLT)
+  status    JobStatus   @default(ABERTA)
+  createdAt DateTime    @default(now())
+
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  candidates          Candidate[]
+  costs               JobCost[]
+  scheduledInterviews ScheduledInterview[]
+
+  @@index([tenantId])
+  @@map("recruitment_jobs")
+}
+
+enum CandidateStage {
+  TRIAGEM
+  ENTREVISTA
+  PROPOSTA
+  CONTRATADO
+  REPROVADO
+
+  @@map("candidate_stage")
+}
+
+model Candidate {
+  id               String         @id @default(uuid()) @db.Uuid
+  tenantId         String         @db.Uuid
+  jobId            String         @db.Uuid
+  nome             String
+  origem           String?
+  stage            CandidateStage @default(TRIAGEM)
+  email            String?
+  telefone         String?
+  resumo           String?
+  notas            String?
+  scoreComunicacao Int            @default(3)
+  scoreTecnica     Int            @default(3)
+  scoreCultura     Int            @default(3)
+  createdAt        DateTime       @default(now())
+
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  job                 RecruitmentJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  scheduledInterviews ScheduledInterview[]
+
+  @@index([tenantId, jobId])
+  @@map("candidates")
+}
+
+enum CandidatePoolType {
+  TALENT_BANK
+  BLOCKED
+
+  @@map("candidate_pool_type")
+}
+
+model CandidatePoolEntry {
+  id           String            @id @default(uuid()) @db.Uuid
+  tenantId     String            @db.Uuid
+  type         CandidatePoolType
+  nome         String
+  perfil       String?
+  vagaAnterior String?
+  motivo       String?
+  createdAt    DateTime          @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@map("candidate_pool_entries")
+}
+
+model JobCost {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  jobId     String   @db.Uuid
+  categoria String
+  descricao String?
+  valor     Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  job RecruitmentJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, jobId])
+  @@map("job_costs")
+}
+
+enum RequisitionStatus {
+  PENDENTE
+  APROVADA
+  RECUSADA
+
+  @@map("requisition_status")
+}
+
+model JobRequisition {
+  id            String             @id @default(uuid()) @db.Uuid
+  tenantId      String             @db.Uuid
+  cargo         String
+  solicitante   String
+  depto         String
+  contrato      JobContrato        @default(CLT)
+  faixaSalarial Decimal?           @db.Decimal(12, 2)
+  prioridade    String             @default("Normal")
+  status        RequisitionStatus  @default(PENDENTE)
+  respondidoEm  DateTime?
+  createdAt     DateTime           @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("job_requisitions")
+}
+
+model ScheduledInterview {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  jobId       String   @db.Uuid
+  candidateId String   @db.Uuid
+  dataLabel   String
+  hora        String
+  createdAt   DateTime @default(now())
+
+  job       RecruitmentJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate Candidate      @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  tenant    Tenant         @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, jobId])
+  @@map("scheduled_interviews")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Admissão
+// ─────────────────────────────────────────────────────────────
+
+enum ChecklistScope {
+  ADMISSAO
+  DESLIGAMENTO
+
+  @@map("checklist_scope")
+}
+
+model ChecklistItemDef {
+  id       String         @id @default(uuid()) @db.Uuid
+  tenantId String         @db.Uuid
+  scope    ChecklistScope @default(ADMISSAO)
+  filial   String?
+  key      String
+  nome     String
+  ativo    Boolean        @default(true)
+  ordem    Int            @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, scope, filial, key])
+  @@map("checklist_item_defs")
+}
+
+enum AdmissionStatus {
+  PENDENTE_DOCUMENTO
+  AGUARDANDO_EXAME
+  PRONTO_PARA_EFETIVAR
+  EFETIVADO
+
+  @@map("admission_status")
+}
+
+model Admission {
+  id               String          @id @default(uuid()) @db.Uuid
+  tenantId         String          @db.Uuid
+  nome             String
+  cargo            String
+  filial           String
+  dataInicio       DateTime        @db.Date
+  status           AdmissionStatus @default(PENDENTE_DOCUMENTO)
+  origemVaga       String?
+  salario          Decimal         @db.Decimal(12, 2)
+  docs             Json            @default("{}")
+  esocialSent      Boolean         @default(false)
+  contratoGerado   Boolean         @default(false)
+  contratoAssinado Boolean         @default(false)
+  employeeId       String?         @db.Uuid
+  createdAt        DateTime        @default(now())
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee? @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId])
+  @@map("admissions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Colaboradores
+// ─────────────────────────────────────────────────────────────
+
+enum EmployeeStatus {
+  ATIVO
+  INATIVO
+
+  @@map("employee_status")
+}
+
+model Employee {
+  id                        String         @id @default(uuid()) @db.Uuid
+  tenantId                  String         @db.Uuid
+  matricula                 String
+  nome                      String
+  cargo                     String
+  departamento              String
+  filial                    String?
+  gestorDireto              String?
+  status                    EmployeeStatus @default(ATIVO)
+  dataAdmissao              DateTime       @db.Date
+  email                     String?
+  telefone                  String?
+  endereco                  String?
+  cpf                       String?
+  rg                        String?
+  dataNascimento            DateTime?      @db.Date
+  nacionalidade             String?
+  estadoCivil               String?
+  nomeMae                   String?
+  nomePai                   String?
+  pis                       String?
+  ctps                      String?
+  tituloEleitor             String?
+  genero                    String?
+  escolaridade              String?
+  cnh                       String?
+  contatoEmergenciaNome     String?
+  contatoEmergenciaTelefone String?
+  conjugeNome               String?
+  conjugeCpf                String?
+  pcd                       Boolean        @default(false)
+  racaCor                   String?
+  salario                   Decimal        @db.Decimal(12, 2)
+  tipoContrato              JobContrato    @default(CLT)
+  feriasSaldo               Int            @default(30)
+  feriasVencimento          DateTime       @db.Date
+  conformidadeDocumental    Int            @default(0)
+  createdAt                 DateTime       @default(now())
+
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users             User[]
+  dependentes       Dependente[]
+  historico         HistoricoEvento[]
+  documentos        EmployeeDocumento[]
+  documentRequirements EmployeeDocumentRequirement[]
+  feriasHistorico   FeriasHistorico[]
+  admissions        Admission[]
+  evaluationRecords EvaluationRecord[]
+  goals             Goal[]
+  pdiActions        PdiAction[]
+  vacationRequests  VacationRequest[]
+  leaveRecords      LeaveRecord[]
+  terminations      Termination[]
+
+  benefitEnrollments BenefitEnrollment[]
+  equipmentItems     EquipmentItem[]
+  timeJustifications TimeJustification[]
+  payslipItems       PayslipItem[]
+
+  accidents         Accident[]
+  occupationalExams OccupationalExam[]
+  nrTrainingRecords NrTrainingRecord[]
+
+  policyAcknowledgments PolicyAcknowledgment[]
+
+  @@unique([tenantId, matricula])
+  @@index([tenantId])
+  @@map("employees")
+}
+
+model Dependente {
+  id             String    @id @default(uuid()) @db.Uuid
+  employeeId     String    @db.Uuid
+  nome           String
+  parentesco     String
+  cpf            String?
+  dataNascimento DateTime? @db.Date
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("dependentes")
+}
+
+model HistoricoEvento {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @db.Uuid
+  evento     String
+  categoria  String
+  autor      String
+  data       DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("historico_eventos")
+}
+
+model EmployeeDocumento {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @db.Uuid
+  nome       String
+  tipo       String
+  tamanho    String
+  uploadEm   DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("employee_documentos")
+}
+
+model FeriasHistorico {
+  id         String @id @default(uuid()) @db.Uuid
+  employeeId String @db.Uuid
+  periodo    String
+  dias       Int
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("ferias_historico")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Avaliação e PDI
+// ─────────────────────────────────────────────────────────────
+
+enum EvaluationModel {
+  NOVENTA
+  CENTO_OITENTA
+  TRESSESSENTA
+
+  @@map("evaluation_model")
+}
+
+model EvaluationCycle {
+  id            String          @id @default(uuid()) @db.Uuid
+  tenantId      String          @db.Uuid
+  nome          String
+  periodoInicio DateTime        @db.Date
+  periodoFim    DateTime        @db.Date
+  modelo        EvaluationModel @default(NOVENTA)
+  createdAt     DateTime        @default(now())
+
+  tenant  Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  records EvaluationRecord[]
+  goals   Goal[]
+
+  @@index([tenantId])
+  @@map("evaluation_cycles")
+}
+
+model EvaluationRecord {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  cycleId    String   @db.Uuid
+  employeeId String   @db.Uuid
+  autoNota   Decimal? @db.Decimal(3, 1)
+  gestorNota Decimal? @db.Decimal(3, 1)
+
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cycle    EvaluationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employee Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([cycleId, employeeId])
+  @@index([tenantId])
+  @@map("evaluation_records")
+}
+
+enum GoalStatus {
+  EM_ANDAMENTO
+  CONCLUIDA
+
+  @@map("goal_status")
+}
+
+model Goal {
+  id         String     @id @default(uuid()) @db.Uuid
+  tenantId   String     @db.Uuid
+  cycleId    String     @db.Uuid
+  employeeId String     @db.Uuid
+  texto      String
+  status     GoalStatus @default(EM_ANDAMENTO)
+  createdAt  DateTime   @default(now())
+
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cycle    EvaluationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employee Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, cycleId])
+  @@map("goals")
+}
+
+model PdiAction {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  employeeId String   @db.Uuid
+  texto      String
+  prazo      DateTime @db.Date
+  done       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, employeeId])
+  @@map("pdi_actions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Férias e Afastamentos
+// ─────────────────────────────────────────────────────────────
+
+enum VacationStatus {
+  PENDENTE
+  APROVADA
+  RECUSADA
+
+  @@map("vacation_status")
+}
+
+model VacationRequest {
+  id         String         @id @default(uuid()) @db.Uuid
+  tenantId   String         @db.Uuid
+  employeeId String         @db.Uuid
+  inicio     DateTime       @db.Date
+  fim        DateTime       @db.Date
+  status     VacationStatus @default(PENDENTE)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, employeeId])
+  @@map("vacation_requests")
+}
+
+model LeaveRecord {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  employeeId  String    @db.Uuid
+  tipo        String
+  inicio      DateTime  @db.Date
+  retorno     DateTime? @db.Date
+  esocialSent Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, employeeId])
+  @@map("leave_records")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Desligamento
+// ─────────────────────────────────────────────────────────────
+
+enum TerminationType {
+  SEM_JUSTA_CAUSA
+  PEDIDO_DEMISSAO
+  ACORDO
+
+  @@map("termination_type")
+}
+
+enum TerminationStatus {
+  EM_ANDAMENTO
+  CONCLUIDO
+
+  @@map("termination_status")
+}
+
+model TerminationChecklistDef {
+  id         String  @id @default(uuid()) @db.Uuid
+  tenantId   String  @db.Uuid
+  key        String
+  nome       String
+  ativo      Boolean @default(true)
+  bloqueante Boolean @default(true)
+  ordem      Int     @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@map("termination_checklist_defs")
+}
+
+model Termination {
+  id               String            @id @default(uuid()) @db.Uuid
+  tenantId         String            @db.Uuid
+  employeeId       String            @db.Uuid
+  nome             String
+  cargo            String
+  data             DateTime          @db.Date
+  tipo             TerminationType
+  motivo           String?
+  status           TerminationStatus @default(EM_ANDAMENTO)
+  docs             Json              @default("{}")
+  esocialSent      Boolean           @default(false)
+  termoGerado      Boolean           @default(false)
+  cartaGerada      Boolean           @default(false)
+  entrevistaMotivo String?
+  entrevistaObs    String?
+  createdAt        DateTime          @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("terminations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Departamento Pessoal (DP)
+// ─────────────────────────────────────────────────────────────
+
+model LaborDeadline {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  obrigacao  String
+  vencimento DateTime @db.Date
+  cumprido   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("labor_deadlines")
+}
+
+model CollectiveAgreement {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @db.Uuid
+  sindicato          String
+  vigenciaInicio     DateTime  @db.Date
+  vigenciaFim        DateTime  @db.Date
+  reajustePercentual Decimal   @db.Decimal(5, 2)
+  clausulas          String?
+  reajusteAplicadoEm DateTime?
+  createdAt          DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("collective_agreements")
+}
+
+model JobGrade {
+  id         String  @id @default(uuid()) @db.Uuid
+  tenantId   String  @db.Uuid
+  cargo      String
+  faixaMin   Decimal @db.Decimal(12, 2)
+  faixaMax   Decimal @db.Decimal(12, 2)
+  nivel      String
+  requisitos String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("job_grades")
+}
+
+model Benefit {
+  id            String  @id @default(uuid()) @db.Uuid
+  tenantId      String  @db.Uuid
+  nome          String
+  elegibilidade String
+  custoMensal   Decimal @db.Decimal(12, 2)
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments BenefitEnrollment[]
+
+  @@index([tenantId])
+  @@map("benefits")
+}
+
+model BenefitEnrollment {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  benefitId  String   @db.Uuid
+  employeeId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  benefit  Benefit  @relation(fields: [benefitId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([benefitId, employeeId])
+  @@index([tenantId])
+  @@map("benefit_enrollments")
+}
+
+model EquipmentItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  employeeId    String   @db.Uuid
+  item          String
+  entregaEm     DateTime @db.Date
+  validadeMeses Int
+  createdAt     DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("equipment_items")
+}
+
+enum TimeJustificationStatus {
+  PENDENTE
+  APROVADA
+  RECUSADA
+
+  @@map("time_justification_status")
+}
+
+model TimeJustification {
+  id         String                  @id @default(uuid()) @db.Uuid
+  tenantId   String                  @db.Uuid
+  employeeId String                  @db.Uuid
+  data       DateTime                @db.Date
+  ocorrencia String
+  status     TimeJustificationStatus @default(PENDENTE)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("time_justifications")
+}
+
+enum PayrollRunStatus {
+  ABERTO
+  PROCESSADA
+
+  @@map("payroll_run_status")
+}
+
+model PayrollRun {
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String           @db.Uuid
+  competencia String // "2026-07"
+  status      PayrollRunStatus @default(ABERTO)
+  esocialSent Boolean          @default(false)
+  processedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items  PayslipItem[]
+  guides PayrollGuide[]
+
+  @@unique([tenantId, competencia])
+  @@index([tenantId])
+  @@map("payroll_runs")
+}
+
+model PayslipItem {
+  id           String  @id @default(uuid()) @db.Uuid
+  tenantId     String  @db.Uuid
+  payrollRunId String  @db.Uuid
+  employeeId   String  @db.Uuid
+  proventos    Decimal @db.Decimal(12, 2)
+  descontos    Decimal @db.Decimal(12, 2)
+  liquido      Decimal @db.Decimal(12, 2)
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([payrollRunId, employeeId])
+  @@index([tenantId])
+  @@map("payslip_items")
+}
+
+enum PayrollGuideStatus {
+  PENDENTE
+  GERADA
+
+  @@map("payroll_guide_status")
+}
+
+model PayrollGuide {
+  id           String             @id @default(uuid()) @db.Uuid
+  tenantId     String             @db.Uuid
+  payrollRunId String             @db.Uuid
+  guia         String
+  status       PayrollGuideStatus @default(PENDENTE)
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("payroll_guides")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Área de trabalho: agenda do dia + bloco de notas com IA
+// ─────────────────────────────────────────────────────────────
+
+model AgendaItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  data      DateTime @db.Date
+  hora      String?
+  descricao String
+  concluida Boolean  @default(false)
+  origem    String   @default("MANUAL")
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, data])
+  @@map("agenda_items")
+}
+
+model NotepadEntry {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  data      DateTime @db.Date
+  conteudo  String   @default("")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("notepad_entries")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SST — Saúde e Segurança do Trabalho
+// ─────────────────────────────────────────────────────────────
+
+enum AccidentTipo {
+  TIPICO
+  TRAJETO
+  DOENCA_OCUPACIONAL
+
+  @@map("accident_tipo")
+}
+
+enum AccidentStatus {
+  EM_ANALISE
+  ENCERRADA
+
+  @@map("accident_status")
+}
+
+model Accident {
+  id               String         @id @default(uuid()) @db.Uuid
+  tenantId         String         @db.Uuid
+  employeeId       String         @db.Uuid
+  cargo            String
+  tipoAcidente     AccidentTipo
+  comAfastamento   Boolean        @default(false)
+  diasAfastamento  Int            @default(0)
+  dataAcidente     DateTime       @db.Date
+  dataEmissaoCat   DateTime       @db.Date
+  descricao        String?
+  status           AccidentStatus @default(EM_ANALISE)
+  esocialSent      Boolean        @default(false)
+  causaRaiz        String?
+  acaoCorretiva    String?
+  notaEncerramento String?
+  createdAt        DateTime       @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("accidents")
+}
+
+enum ExameTipo {
+  ADMISSIONAL
+  PERIODICO
+  RETORNO_TRABALHO
+  MUDANCA_FUNCAO
+  DEMISSIONAL
+
+  @@map("exame_tipo")
+}
+
+enum ExameResultado {
+  APTO
+  INAPTO
+
+  @@map("exame_resultado")
+}
+
+model OccupationalExam {
+  id            String          @id @default(uuid()) @db.Uuid
+  tenantId      String          @db.Uuid
+  employeeId    String          @db.Uuid
+  cargo         String
+  tipo          ExameTipo
+  dataPrevista  DateTime        @db.Date
+  dataRealizada DateTime?       @db.Date
+  resultado     ExameResultado?
+  esocialSent   Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("occupational_exams")
+}
+
+model NrTrainingRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  employeeId     String   @db.Uuid
+  curso          String
+  dataRealizacao DateTime @db.Date
+  validadeMeses  Int      @default(12)
+  createdAt      DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("nr_training_records")
+}
+
+enum PgrActionStatus {
+  PLANEJADA
+  EM_ANDAMENTO
+  CONCLUIDA
+
+  @@map("pgr_action_status")
+}
+
+model PgrAction {
+  id       String          @id @default(uuid()) @db.Uuid
+  tenantId String          @db.Uuid
+  acao     String
+  setor    String
+  prazo    DateTime        @db.Date
+  status   PgrActionStatus @default(PLANEJADA)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("pgr_actions")
+}
+
+enum RiskLevel {
+  ALTO
+  MEDIO
+  BAIXO
+
+  @@map("risk_level")
+}
+
+model RiskMapEntry {
+  id       String    @id @default(uuid()) @db.Uuid
+  tenantId String    @db.Uuid
+  setor    String
+  riscos   String
+  nivel    RiskLevel
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("risk_map_entries")
+}
+
+model SstSettings {
+  tenantId                String    @id @db.Uuid
+  mapaRiscosEsocialSentAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("sst_settings")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Documentos obrigatórios — motor de conformidade documental
+// ─────────────────────────────────────────────────────────────
+
+model DocumentRequirement {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  nome      String
+  categoria String
+  obrigatorio Boolean @default(true)
+  // Dias de validade a partir da data de conformidade; null = não expira.
+  validadeDias Int?
+  // Listas vazias = aplica a todos; caso contrário, o valor do colaborador
+  // precisa constar na lista para o requisito se aplicar a ele.
+  aplicaStatus       String[] @default([])
+  aplicaTipoContrato String[] @default([])
+  aplicaDepartamento String[] @default([])
+  aplicaCargo        String[] @default([])
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant    Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employees EmployeeDocumentRequirement[]
+
+  @@index([tenantId])
+  @@map("document_requirements")
+}
+
+enum DocumentReqStatus {
+  MISSING
+  PENDING
+  COMPLIANT
+  EXPIRED
+  REJECTED
+
+  @@map("document_req_status")
+}
+
+model EmployeeDocumentRequirement {
+  id            String            @id @default(uuid()) @db.Uuid
+  employeeId    String            @db.Uuid
+  requirementId String            @db.Uuid
+  status        DocumentReqStatus @default(MISSING)
+  expiraEm      DateTime?
+  observacao    String?
+  updatedAt     DateTime          @updatedAt
+
+  employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  requirement DocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, requirementId])
+  @@index([employeeId])
+  @@map("employee_document_requirements")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tarefas — alertas do painel persistidos como itens acionáveis
+// ─────────────────────────────────────────────────────────────
+
+enum TaskPriority {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+
+  @@map("task_priority")
+}
+
+enum TaskStatus {
+  ABERTA
+  CONCLUIDA
+
+  @@map("task_status")
+}
+
+model Task {
+  id             String       @id @default(uuid()) @db.Uuid
+  tenantId       String       @db.Uuid
+  modulo         String
+  titulo         String
+  prioridade     TaskPriority @default(MEDIA)
+  status         TaskStatus   @default(ABERTA)
+  // SISTEMA = gerada automaticamente a partir de uma regra do dashboard
+  // (reaberta se a condição persistir); MANUAL = criada por um usuário.
+  origem         String       @default("SISTEMA")
+  alertKey       String?
+  prazo          DateTime?
+  assignedUserId String?      @db.Uuid
+  detalhes       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, alertKey])
+  @@index([tenantId, status])
+  @@map("tasks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Licenciamento — plano comercial por tenant
+// ─────────────────────────────────────────────────────────────
+
+// Catálogo global de planos comerciais — não é dado de tenant, sem RLS.
+model LicensePlan {
+  id               String   @id @default(uuid()) @db.Uuid
+  code             String   @unique
+  nome             String
+  descricao        String?
+  modulos          String[] @default([])
+  maxUsuarios      Int
+  maxColaboradores Int
+  ativo            Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  tenantLicenses TenantLicense[]
+
+  @@map("license_plans")
+}
+
+enum TenantLicenseStatus {
+  TRIAL
+  ATIVA
+  SUSPENSA
+  CANCELADA
+  EXPIRADA
+
+  @@map("tenant_license_status")
+}
+
+model TenantLicense {
+  tenantId         String               @id @db.Uuid
+  planId           String               @db.Uuid
+  status           TenantLicenseStatus  @default(TRIAL)
+  iniciaEm         DateTime             @default(now())
+  expiraEm         DateTime?
+  maxUsuarios      Int
+  maxColaboradores Int
+  modulos          String[]             @default([])
+  observacoes      String?
+  updatedAt        DateTime             @updatedAt
+
+  tenant Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   LicensePlan @relation(fields: [planId], references: [id])
+
+  @@map("tenant_licenses")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Compliance — Canal de Ética e Políticas
+// ─────────────────────────────────────────────────────────────
+
+enum EthicsCaseCategoria {
+  ASSEDIO
+  DISCRIMINACAO
+  FRAUDE
+  CONFLITO_INTERESSE
+  OUTRO
+
+  @@map("ethics_case_categoria")
+}
+
+enum EthicsCaseStatus {
+  ABERTO
+  EM_INVESTIGACAO
+  CONCLUIDO
+
+  @@map("ethics_case_status")
+}
+
+model EthicsCase {
+  id              String              @id @default(uuid()) @db.Uuid
+  tenantId        String              @db.Uuid
+  protocolo       String
+  categoria       EthicsCaseCategoria
+  descricao       String
+  anonimo         Boolean             @default(true)
+  denuncianteNome String?
+  status          EthicsCaseStatus    @default(ABERTO)
+  conclusao       String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, protocolo])
+  @@index([tenantId])
+  @@map("ethics_cases")
+}
+
+model CompliancePolicy {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  titulo    String
+  categoria String
+  conteudo  String
+  versao    Int      @default(1)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant          Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  acknowledgments PolicyAcknowledgment[]
+
+  @@index([tenantId])
+  @@map("compliance_policies")
+}
+
+model PolicyAcknowledgment {
+  id         String   @id @default(uuid()) @db.Uuid
+  policyId   String   @db.Uuid
+  employeeId String   @db.Uuid
+  aceitoEm   DateTime @default(now())
+
+  policy   CompliancePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  employee Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([policyId, employeeId])
+  @@index([policyId])
+  @@map("policy_acknowledgments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Elô — assistente de IA (chat + modo agente)
+// ─────────────────────────────────────────────────────────────
+
+model EloConversation {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  userId        String   @db.Uuid
+  pergunta      String
+  resposta      String
+  modoAgente    Boolean  @default(false)
+  acaoExecutada String?
+  createdAt     DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, createdAt])
+  @@map("elo_conversations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Ferramentas — Integrações e Comunicação
+// ─────────────────────────────────────────────────────────────
+
+model IntegrationConnection {
+  id                    String    @id @default(uuid()) @db.Uuid
+  tenantId              String    @db.Uuid
+  tipo                  String
+  nome                  String
+  descricao             String?
+  conectado             Boolean   @default(false)
+  ultimaSincronizacaoEm DateTime?
+  createdAt             DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@map("integration_connections")
+}
+
+model Announcement {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  titulo    String
+  corpo     String
+  autor     String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("announcements")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Histórico de métricas — captura diária para permitir comparações
+// reais ("vs. mês anterior") no painel, sem inventar números.
+// ─────────────────────────────────────────────────────────────
+
+model MetricSnapshot {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @db.Uuid
+  metrica  String
+  valor    Decimal  @db.Decimal(10, 2)
+  data     DateTime @db.Date
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, metrica, data])
+  @@index([tenantId, metrica, data])
+  @@map("metric_snapshots")
+}

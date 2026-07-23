@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+:root {
+  --page-bg: #fef9f3;
+  --surface: #ffffff;
+  --surface-alt: #f6efe7;
+  --text: #2f2b26;
+  --text-secondary: #706558;
+  --text-tertiary: #a89c8d;
+  --border: #ece2d6;
+  --border-strong: #d9cfc9;
+  --divider: #f0e8dd;
+  --tint-blue: #e8eef3;
+  --accent: #92adc3;
+  --on-accent: #ffffff;
+  --success: #6d8a3d;
+  --success-bg: #eaf1e0;
+  --warning: #c9b27a;
+  --warning-bg: #fdf3ec;
+  --danger: #b06a5e;
+  --danger-deep: #8a2e2e;
+  --info: #c9857a;
+  --purple: #8a7fb0;
+}
+
+:root[data-theme="dark"] {
+  --page-bg: #1c1a17;
+  --surface: #242019;
+  --surface-alt: #2c2721;
+  --text: #f3ede4;
+  --text-secondary: #b8ab9c;
+  --text-tertiary: #8a7d6e;
+  --border: #3a332c;
+  --border-strong: #4a4239;
+  --divider: #332d27;
+  --tint-blue: #2a3540;
+  --on-accent: #1c1a17;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page-bg: #1c1a17;
+    --surface: #242019;
+    --surface-alt: #2c2721;
+    --text: #f3ede4;
+    --text-secondary: #b8ab9c;
+    --text-tertiary: #8a7d6e;
+    --border: #3a332c;
+    --border-strong: #4a4239;
+    --divider: #332d27;
+    --tint-blue: #2a3540;
+    --on-accent: #1c1a17;
+  }
+}
+
+@theme inline {
+  --color-page-bg: var(--page-bg);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-divider: var(--divider);
+  --color-tint-blue: var(--tint-blue);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-deep: var(--danger-deep);
+  --color-info: var(--info);
+  --color-purple: var(--purple);
+  --font-sans: var(--font-work-sans);
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+* {
+  border-color: var(--border);
+}
