@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DocumentsService } from '../documents/documents.service';
 import { getRequestContext } from '../../common/request-context';
 import { nextMatricula } from './matricula.util';
 import {
@@ -26,7 +27,10 @@ function addMonths(date: Date, months: number): Date {
 
 @Injectable()
 export class EmployeesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly documents: DocumentsService,
+  ) {}
 
   private db() {
     return this.prisma.forCurrentTenant();
@@ -75,10 +79,12 @@ export class EmployeesService {
       };
     }
 
-    const employees = await this.db().employee.findMany({ where, orderBy: { matricula: 'asc' } });
+    const employees = await this.db().employee.findMany({ where, orderBy: { nome: 'asc' } });
+    const { byEmployee: conformidade } = await this.documents.complianceOverview(employees.map((e) => e.id));
     const hoje = new Date();
     let mapped = employees.map((e) => ({
       ...e,
+      conformidadeDocumental: conformidade[e.id] ?? e.conformidadeDocumental,
       tempoDeCasa: monthsBetween(e.dataAdmissao, hoje),
       feriasVencimentoAlerta: daysUntil(e.feriasVencimento, hoje) <= 60,
     }));
@@ -142,11 +148,13 @@ export class EmployeesService {
     });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
 
+    const { byEmployee: conformidade } = await this.documents.complianceOverview([id]);
     const hoje = new Date();
     const proximasFerias = employee.vacationRequests.find((r) => r.fim >= hoje) ?? null;
 
     return {
       ...employee,
+      conformidadeDocumental: conformidade[id] ?? employee.conformidadeDocumental,
       tempoDeCasa: monthsBetween(employee.dataAdmissao, hoje),
       feriasVencimentoAlerta: daysUntil(employee.feriasVencimento, hoje) <= 60,
       proximasFerias: proximasFerias ? { inicio: proximasFerias.inicio, fim: proximasFerias.fim } : null,

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { complianceTone } from '@/lib/format';
 import { Badge, Button, Card, KpiCard } from '@/components/ui';
 import { Header } from '@/components/header';
 
@@ -15,6 +16,8 @@ interface Kpis {
   pendenciasAbertasDelta: number | null;
   complianceGeral: number;
   complianceGeralDelta: number | null;
+  conformidadeDocumental: number;
+  conformidadeDocumentalDelta: number | null;
   riscoGeral: 'Baixo' | 'Médio' | 'Alto';
   alertasCriticosAtivos: number;
 }
@@ -135,9 +138,14 @@ export default function PainelPage() {
       <Header eyebrow="Seu dia a dia" title="Área de trabalho" />
       <main className="flex-1 overflow-y-auto px-8 py-6">
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-5 gap-4">
             <KpiCard
-              label="Compliance geral"
+              label="Conformidade documental"
+              value={<Badge tone={complianceTone(kpis?.conformidadeDocumental ?? 0)}>{kpis?.conformidadeDocumental ?? '—'}%</Badge>}
+              delta={<Delta value={kpis?.conformidadeDocumentalDelta ?? null} unidade=" pts" favoravel="alto" />}
+            />
+            <KpiCard
+              label="Compliance (ética e políticas)"
               value={kpis?.complianceGeral ?? '—'}
               delta={<Delta value={kpis?.complianceGeralDelta ?? null} unidade=" pts" favoravel="alto" />}
             />

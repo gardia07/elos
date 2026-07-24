@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { ComplianceOverviewService } from '../compliance/overview.service';
+import { DocumentsService } from '../rh/documents/documents.service';
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -26,6 +27,7 @@ export class DashboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly compliance: ComplianceOverviewService,
+    private readonly documents: DocumentsService,
   ) {}
 
   private db() {
@@ -46,18 +48,21 @@ export class DashboardService {
 
     await this.refreshTasks();
     const complianceOverview = await this.compliance.get();
+    const { overall: conformidadeDocumental } = await this.documents.complianceOverview();
     const { riscoGeral, alertasCriticosAtivos } = await this.calcRisco();
 
     await Promise.all([
       this.captureSnapshot('COLABORADORES_ATIVOS', colaboradoresAtivos),
       this.captureSnapshot('PENDENCIAS_ABERTAS', pendenciasAbertas),
       this.captureSnapshot('COMPLIANCE_GERAL', complianceOverview.maturidade),
+      this.captureSnapshot('CONFORMIDADE_DOCUMENTAL', conformidadeDocumental),
     ]);
 
-    const [colaboradoresAnterior, pendenciasAnterior, complianceAnterior] = await Promise.all([
+    const [colaboradoresAnterior, pendenciasAnterior, complianceAnterior, conformidadeAnterior] = await Promise.all([
       this.valorMesAnterior('COLABORADORES_ATIVOS'),
       this.valorMesAnterior('PENDENCIAS_ABERTAS'),
       this.valorMesAnterior('COMPLIANCE_GERAL'),
+      this.valorMesAnterior('CONFORMIDADE_DOCUMENTAL'),
     ]);
 
     return {
@@ -70,6 +75,8 @@ export class DashboardService {
       pendenciasAbertasDelta: pendenciasAnterior != null ? pendenciasAbertas - pendenciasAnterior : null,
       complianceGeral: complianceOverview.maturidade,
       complianceGeralDelta: complianceAnterior != null ? complianceOverview.maturidade - complianceAnterior : null,
+      conformidadeDocumental,
+      conformidadeDocumentalDelta: conformidadeAnterior != null ? conformidadeDocumental - conformidadeAnterior : null,
       riscoGeral,
       alertasCriticosAtivos,
     };

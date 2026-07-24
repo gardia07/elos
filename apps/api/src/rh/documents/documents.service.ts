@@ -151,6 +151,39 @@ export class DocumentsService {
     return compliance;
   }
 
+  /**
+   * Recomputes document compliance for a set of employees (defaults to every
+   * active employee) in one pass — used by the employees list, employee
+   * profile, and the dashboard-wide KPI so they never show a stale
+   * conformidadeDocumental left over from before someone last opened the
+   * Documentos tab.
+   */
+  async complianceOverview(employeeIds?: string[]) {
+    const db = this.db();
+    const employees = await db.employee.findMany({
+      where: employeeIds ? { id: { in: employeeIds } } : { status: 'ATIVO' },
+    });
+
+    const byEmployee: Record<string, number> = {};
+    let totalRequired = 0;
+    let totalCompliant = 0;
+
+    for (const employee of employees) {
+      const { applicable } = await this.syncForEmployee(employee.id);
+      const rows = await db.employeeDocumentRequirement.findMany({
+        where: { employeeId: employee.id, requirementId: { in: applicable.map((r) => r.id) } },
+        include: { requirement: true },
+      });
+      const required = rows.filter((r) => r.requirement.obrigatorio);
+      totalRequired += required.length;
+      totalCompliant += required.filter((r) => r.status === 'COMPLIANT').length;
+      byEmployee[employee.id] = await this.recalcCompliance(employee.id, rows);
+    }
+
+    const overall = totalRequired ? Math.round((100 * totalCompliant) / totalRequired) : 100;
+    return { overall, byEmployee };
+  }
+
   /** Tenant-wide aggregation across every active employee — for Ferramentas > Documentos. */
   async listAllEmployees() {
     const db = this.db();

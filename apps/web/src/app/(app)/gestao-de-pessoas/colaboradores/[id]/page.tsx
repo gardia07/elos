@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { maskCPF, maskPhoneBR } from '@/lib/format';
+import { complianceTone, maskCPF, maskPhoneBR } from '@/lib/format';
 import { Badge, Button, Card, KpiCard } from '@/components/ui';
 
 const ESCOLARIDADE_OPTIONS = [
@@ -48,6 +48,7 @@ interface EmployeeDetail {
   filial: string | null;
   gestorDireto: string | null;
   status: 'ATIVO' | 'INATIVO';
+  conformidadeDocumental: number;
   dataAdmissao: string;
   email: string | null;
   telefone: string | null;
@@ -237,6 +238,7 @@ export default function EmployeeProfilePage() {
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{e.nome}</h2>
             <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
+            <Badge tone={complianceTone(e.conformidadeDocumental)}>Conformidade: {e.conformidadeDocumental}%</Badge>
           </div>
           <p className="text-sm text-text-secondary">
             {e.cargo} · {e.departamento} · {e.filial ?? '—'} · gestor: {e.gestorDireto || 'Não atribuído'}
@@ -560,7 +562,7 @@ export default function EmployeeProfilePage() {
           <Card>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Conformidade documental</h3>
-              <Badge tone={(compliance?.compliance ?? 0) >= 90 ? 'green' : (compliance?.compliance ?? 0) >= 50 ? 'amber' : 'red'}>
+              <Badge tone={complianceTone(compliance?.compliance ?? 0)}>
                 {compliance?.compliance ?? 0}%
               </Badge>
             </div>

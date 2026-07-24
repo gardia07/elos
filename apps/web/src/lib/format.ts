@@ -7,6 +7,13 @@
  * value has no time-of-day meaning, so it must be read back in UTC instead
  * of the browser's local timezone.
  */
+/** 100% = verde, 50–99% = amarelo, abaixo de 50% = vermelho. */
+export function complianceTone(pct: number): 'green' | 'amber' | 'red' {
+  if (pct >= 100) return 'green';
+  if (pct >= 50) return 'amber';
+  return 'red';
+}
+
 export function formatDate(v: string): string {
   return new Date(v).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { complianceTone } from '@/lib/format';
 import { Badge, Button, Card } from '@/components/ui';
 
 interface DocumentRequirement {
@@ -155,6 +156,7 @@ interface Employee {
   dataAdmissao: string;
   status: 'ATIVO' | 'INATIVO';
   feriasVencimentoAlerta: boolean;
+  conformidadeDocumental: number;
 }
 
 interface FilterOptions {
@@ -424,6 +426,7 @@ export default function ColaboradoresPage() {
               <th className="px-5 py-3 font-medium">Cargo</th>
               <th className="px-5 py-3 font-medium">Departamento</th>
               <th className="px-5 py-3 font-medium">Admissão</th>
+              <th className="px-5 py-3 font-medium">Conformidade</th>
               <th className="px-5 py-3 font-medium">Status</th>
             </tr>
           </thead>
@@ -439,6 +442,9 @@ export default function ColaboradoresPage() {
                 <td className="px-5 py-3">{e.cargo}</td>
                 <td className="px-5 py-3 text-text-secondary">{e.departamento}</td>
                 <td className="px-5 py-3 text-text-secondary">{new Date(e.dataAdmissao).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                <td className="px-5 py-3">
+                  <Badge tone={complianceTone(e.conformidadeDocumental)}>{e.conformidadeDocumental}%</Badge>
+                </td>
                 <td className="px-5 py-3">
                   <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
                 </td>
