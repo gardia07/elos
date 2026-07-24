@@ -48,9 +48,6 @@ export function Sidebar() {
       </nav>
 
       <div>
-        <div className="px-3 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-on-accent/60">
-          Ferramentas
-        </div>
         <nav className="flex flex-col gap-1">
           {FERRAMENTAS.map((item) => (
             <NavItem key={item.href} {...item} active={pathname?.startsWith(item.href)} />
