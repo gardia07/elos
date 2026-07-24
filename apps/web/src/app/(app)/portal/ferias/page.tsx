@@ -80,8 +80,8 @@ export default function PortalFeriasPage() {
           <tbody>
             {requests?.map((r) => (
               <tr key={r.id} className="border-b border-divider last:border-0">
-                <td className="px-5 py-3">{new Date(r.inicio).toLocaleDateString('pt-BR')}</td>
-                <td className="px-5 py-3">{new Date(r.fim).toLocaleDateString('pt-BR')}</td>
+                <td className="px-5 py-3">{new Date(r.inicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                <td className="px-5 py-3">{new Date(r.fim).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="px-5 py-3">
                   <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
                 </td>

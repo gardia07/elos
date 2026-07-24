@@ -2,6 +2,7 @@ import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateEmployeeDto {
+  @IsOptional() @IsString() matricula?: string;
   @IsString() nome!: string;
   @IsString() cargo!: string;
   @IsString() departamento!: string;

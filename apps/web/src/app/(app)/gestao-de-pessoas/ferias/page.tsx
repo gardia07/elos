@@ -184,7 +184,7 @@ export default function FeriasPage() {
                 <div>
                   <div className="font-medium">{r.employee.nome}</div>
                   <div className="text-sm text-text-secondary">
-                    {new Date(r.inicio).toLocaleDateString('pt-BR')} a {new Date(r.fim).toLocaleDateString('pt-BR')}
+                    {new Date(r.inicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} a {new Date(r.fim).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                   </div>
                 </div>
                 <div className="flex gap-2">

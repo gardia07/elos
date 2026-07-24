@@ -110,8 +110,8 @@ export default function UniformePage() {
               <tr key={e.id} className="border-t border-divider">
                 <td className="py-2">{e.employee.nome}</td>
                 <td className="py-2">{e.item}</td>
-                <td className="py-2 text-text-secondary">{new Date(e.entregaEm).toLocaleDateString('pt-BR')}</td>
-                <td className="py-2 text-text-secondary">{new Date(e.vencimento).toLocaleDateString('pt-BR')}</td>
+                <td className="py-2 text-text-secondary">{new Date(e.entregaEm).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                <td className="py-2 text-text-secondary">{new Date(e.vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="py-2">
                   <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
                 </td>

@@ -52,9 +52,14 @@ export default function ConfiguracoesPage() {
     queryFn: async () => (await api.get<TenantUser[]>('/tenant/users')).data,
   });
 
+  const [tenantSaved, setTenantSaved] = useState(false);
   const saveTenant = useMutation({
     mutationFn: async () => api.patch('/tenant', { razaoSocial: razaoSocial ?? undefined, cnpj: cnpj ?? undefined }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenant'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant'] });
+      setTenantSaved(true);
+      setTimeout(() => setTenantSaved(false), 3000);
+    },
   });
 
   const updateRole = useMutation({
@@ -96,9 +101,13 @@ export default function ConfiguracoesPage() {
                 className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
               />
             </label>
-            <Button className="self-start" onClick={() => saveTenant.mutate()} disabled={saveTenant.isPending}>
-              Salvar
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button className="self-start" onClick={() => saveTenant.mutate()} disabled={saveTenant.isPending}>
+                {saveTenant.isPending ? 'Salvando…' : 'Salvar'}
+              </Button>
+              {tenantSaved && <span className="text-sm text-success">Salvo com sucesso.</span>}
+              {saveTenant.isError && <span className="text-sm text-danger">Não foi possível salvar.</span>}
+            </div>
           </Card>
 
           <Card className="flex flex-col gap-3">

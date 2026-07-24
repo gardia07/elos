@@ -144,7 +144,7 @@ export default function ExamesPage() {
               <tr key={e.id} className="cursor-pointer border-b border-divider last:border-0 hover:bg-surface-alt" onClick={() => setOpenId(e.id)}>
                 <td className="px-5 py-3 font-medium">{e.employee.nome}</td>
                 <td className="px-5 py-3">{TIPO_LABEL[e.tipo]}</td>
-                <td className="px-5 py-3 text-text-secondary">{new Date(e.dataPrevista).toLocaleDateString('pt-BR')}</td>
+                <td className="px-5 py-3 text-text-secondary">{new Date(e.dataPrevista).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="px-5 py-3">
                   <Badge tone={STATUS_TONE[e.status] ?? 'grey'}>{e.status}</Badge>
                 </td>
@@ -165,11 +165,11 @@ export default function ExamesPage() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <div className="text-xs text-text-tertiary">Data prevista</div>
-                <div>{new Date(detail.dataPrevista).toLocaleDateString('pt-BR')}</div>
+                <div>{new Date(detail.dataPrevista).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
               </div>
               <div>
                 <div className="text-xs text-text-tertiary">Data realizada</div>
-                <div>{detail.dataRealizada ? new Date(detail.dataRealizada).toLocaleDateString('pt-BR') : '—'}</div>
+                <div>{detail.dataRealizada ? new Date(detail.dataRealizada).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'}</div>
               </div>
               <div>
                 <div className="text-xs text-text-tertiary">Resultado</div>

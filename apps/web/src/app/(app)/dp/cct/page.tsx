@@ -102,7 +102,7 @@ export default function CctPage() {
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-medium">{a.sindicato}</div>
-                <div className="text-sm text-text-secondary">Vigente até {new Date(a.vigenciaFim).toLocaleDateString('pt-BR')}</div>
+                <div className="text-sm text-text-secondary">Vigente até {new Date(a.vigenciaFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
               </div>
               <Badge tone="blue">Reajuste {a.reajustePercentual}%</Badge>
             </div>

@@ -132,7 +132,7 @@ export default function PontoPage() {
             {justifications?.map((j) => (
               <tr key={j.id} className="border-t border-divider">
                 <td className="py-2">{j.employee.nome}</td>
-                <td className="py-2 text-text-secondary">{new Date(j.data).toLocaleDateString('pt-BR')}</td>
+                <td className="py-2 text-text-secondary">{new Date(j.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="py-2">{j.ocorrencia}</td>
                 <td className="py-2">
                   <Badge tone={STATUS_TONE[j.status]}>{STATUS_LABEL[j.status]}</Badge>

@@ -40,7 +40,7 @@ export default function PortalMeuPerfilPage() {
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-3 gap-4">
         <KpiCard label="Saldo de férias" value={data ? `${data.feriasSaldo} dias` : '—'} />
-        <KpiCard label="Vencimento das férias" value={data ? new Date(data.feriasVencimento).toLocaleDateString('pt-BR') : '—'} />
+        <KpiCard label="Vencimento das férias" value={data ? new Date(data.feriasVencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'} />
         <KpiCard label="Status" value={data ? <Badge tone={data.status === 'ATIVO' ? 'green' : 'grey'}>{data.status}</Badge> : '—'} />
       </div>
 
@@ -52,7 +52,7 @@ export default function PortalMeuPerfilPage() {
           <div><div className="text-xs text-text-tertiary">Cargo</div><div>{data?.cargo}</div></div>
           <div><div className="text-xs text-text-tertiary">Departamento</div><div>{data?.departamento}</div></div>
           <div><div className="text-xs text-text-tertiary">Filial</div><div>{data?.filial ?? '—'}</div></div>
-          <div><div className="text-xs text-text-tertiary">Admissão</div><div>{data ? new Date(data.dataAdmissao).toLocaleDateString('pt-BR') : '—'}</div></div>
+          <div><div className="text-xs text-text-tertiary">Admissão</div><div>{data ? new Date(data.dataAdmissao).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'}</div></div>
           <div><div className="text-xs text-text-tertiary">E-mail</div><div>{data?.email ?? '—'}</div></div>
           <div><div className="text-xs text-text-tertiary">Telefone</div><div>{data?.telefone ?? '—'}</div></div>
         </div>

@@ -85,7 +85,7 @@ export default function PrazosPage() {
             {data?.map((d) => (
               <tr key={d.id} className="border-t border-divider">
                 <td className="py-2">{d.obrigacao}</td>
-                <td className="py-2 text-text-secondary">{new Date(d.vencimento).toLocaleDateString('pt-BR')}</td>
+                <td className="py-2 text-text-secondary">{new Date(d.vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="py-2">
                   <Badge tone={STATUS_TONE[d.status]}>{d.status}</Badge>
                 </td>

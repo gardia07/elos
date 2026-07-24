@@ -112,8 +112,8 @@ export default function SstEpiPage() {
               <tr key={e.id} className="border-b border-divider last:border-0">
                 <td className="px-5 py-3">{e.employee.nome}</td>
                 <td className="px-5 py-3">{e.item}</td>
-                <td className="px-5 py-3 text-text-secondary">{new Date(e.entregaEm).toLocaleDateString('pt-BR')}</td>
-                <td className="px-5 py-3 text-text-secondary">{new Date(e.vencimento).toLocaleDateString('pt-BR')}</td>
+                <td className="px-5 py-3 text-text-secondary">{new Date(e.entregaEm).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                <td className="px-5 py-3 text-text-secondary">{new Date(e.vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="px-5 py-3">
                   <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
                 </td>

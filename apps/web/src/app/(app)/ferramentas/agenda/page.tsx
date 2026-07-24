@@ -59,7 +59,7 @@ export default function AgendaGeralPage() {
                   <div key={i} className="flex items-center justify-between border-b border-divider py-2.5 text-sm last:border-0">
                     <span>{e.titulo}</span>
                     <span className="text-xs text-text-tertiary">
-                      {new Date(e.data).toLocaleDateString('pt-BR')} · {e.hub}
+                      {new Date(e.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} · {e.hub}
                     </span>
                   </div>
                 ))}

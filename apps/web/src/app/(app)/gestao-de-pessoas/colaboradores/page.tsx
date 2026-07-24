@@ -187,6 +187,7 @@ export default function ColaboradoresPage() {
   const [feriasVencendo, setFeriasVencendo] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
+  const [novaMatricula, setNovaMatricula] = useState('');
   const [novoNome, setNovoNome] = useState('');
   const [cargo, setCargo] = useState('');
   const [novoDepartamento, setNovoDepartamento] = useState('');
@@ -222,6 +223,7 @@ export default function ColaboradoresPage() {
   const create = useMutation({
     mutationFn: async () =>
       api.post('/rh/employees', {
+        matricula: novaMatricula || undefined,
         nome: novoNome,
         cargo,
         departamento: novoDepartamento,
@@ -232,6 +234,7 @@ export default function ColaboradoresPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowForm(false);
+      setNovaMatricula('');
       setNovoNome('');
       setCargo('');
       setNovoDepartamento('');
@@ -370,6 +373,15 @@ export default function ColaboradoresPage() {
               create.mutate();
             }}
           >
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Matrícula</span>
+              <input
+                value={novaMatricula}
+                onChange={(e) => setNovaMatricula(e.target.value)}
+                placeholder="Automática"
+                className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              />
+            </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Nome</span>
               <input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />

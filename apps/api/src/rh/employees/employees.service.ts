@@ -34,7 +34,7 @@ export class EmployeesService {
 
   async create(dto: CreateEmployeeDto) {
     const db = this.db();
-    const matricula = await nextMatricula(db);
+    const matricula = dto.matricula || (await nextMatricula(db));
     const dataAdmissao = new Date(dto.dataAdmissao);
     const employee = await db.employee.create({
       data: {

@@ -88,7 +88,7 @@ export default function PgrPcmsoPage() {
               <div>
                 <div className="font-medium">{a.acao}</div>
                 <div className="text-xs text-text-tertiary">
-                  {a.setor} · prazo {new Date(a.prazo).toLocaleDateString('pt-BR')}
+                  {a.setor} · prazo {new Date(a.prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                 </div>
               </div>
               <select

@@ -214,7 +214,7 @@ export default function DesligamentoPage() {
               <div>
                 <div className="font-medium">{t.nome}</div>
                 <div className="text-sm text-text-secondary">
-                  {t.cargo} · {TIPO_LABEL[t.tipo]} · {new Date(t.data).toLocaleDateString('pt-BR')}
+                  {t.cargo} · {TIPO_LABEL[t.tipo]} · {new Date(t.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                 </div>
               </div>
               <Badge tone={t.status === 'CONCLUIDO' ? 'green' : 'amber'}>

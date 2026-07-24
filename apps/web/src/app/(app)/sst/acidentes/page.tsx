@@ -197,7 +197,7 @@ export default function AcidentesPage() {
               <tr key={a.id} className="cursor-pointer border-b border-divider last:border-0 hover:bg-surface-alt" onClick={() => openDrawer(a.id)}>
                 <td className="px-5 py-3 font-medium">{a.employee.nome}</td>
                 <td className="px-5 py-3">{TIPO_LABEL[a.tipoAcidente]}</td>
-                <td className="px-5 py-3 text-text-secondary">{new Date(a.dataAcidente).toLocaleDateString('pt-BR')}</td>
+                <td className="px-5 py-3 text-text-secondary">{new Date(a.dataAcidente).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="px-5 py-3">
                   <Badge tone={a.status === 'ENCERRADA' ? 'green' : 'amber'}>{a.status === 'ENCERRADA' ? 'Encerrada' : 'Em análise'}</Badge>
                 </td>
@@ -222,11 +222,11 @@ export default function AcidentesPage() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <div className="text-xs text-text-tertiary">Data do acidente</div>
-                <div>{new Date(detail.dataAcidente).toLocaleDateString('pt-BR')}</div>
+                <div>{new Date(detail.dataAcidente).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
               </div>
               <div>
                 <div className="text-xs text-text-tertiary">Emissão da CAT</div>
-                <div>{new Date(detail.dataEmissaoCat).toLocaleDateString('pt-BR')}</div>
+                <div>{new Date(detail.dataEmissaoCat).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
               </div>
               <div>
                 <div className="text-xs text-text-tertiary">Afastamento</div>
