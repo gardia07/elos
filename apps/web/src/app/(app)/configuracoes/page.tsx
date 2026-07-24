@@ -11,6 +11,7 @@ import { Header } from '@/components/header';
 interface TenantInfo {
   name: string;
   slug: string;
+  nomeFantasia: string | null;
   razaoSocial: string | null;
   cnpj: string | null;
   inscricaoEstadual: string | null;
@@ -55,6 +56,7 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 type EmpresaForm = {
+  nomeFantasia: string;
   razaoSocial: string; cnpj: string;
   inscricaoEstadual: string; inscricaoMunicipal: string; cnae: string;
   regimeTributario: '' | 'SIMPLES_NACIONAL' | 'LUCRO_PRESUMIDO' | 'LUCRO_REAL';
@@ -64,6 +66,7 @@ type EmpresaForm = {
 
 function toEmpresaForm(t?: TenantInfo): EmpresaForm {
   return {
+    nomeFantasia: t?.nomeFantasia ?? '',
     razaoSocial: t?.razaoSocial ?? '', cnpj: t?.cnpj ?? '',
     inscricaoEstadual: t?.inscricaoEstadual ?? '', inscricaoMunicipal: t?.inscricaoMunicipal ?? '', cnae: t?.cnae ?? '',
     regimeTributario: t?.regimeTributario ?? '',
@@ -137,6 +140,7 @@ export default function ConfiguracoesPage() {
             <h3 className="text-sm font-semibold">Dados da empresa</h3>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <EmpresaField label="Nome fantasia" value={empresa.nomeFantasia} onChange={(v) => { setEmpresa({ ...empresa, nomeFantasia: v }); setEmpresaEdited(true); }} className="lg:col-span-2" />
               <EmpresaField label="Razão social" value={empresa.razaoSocial} onChange={(v) => { setEmpresa({ ...empresa, razaoSocial: v }); setEmpresaEdited(true); }} className="lg:col-span-2" />
               <EmpresaField label="CNPJ" value={empresa.cnpj} onChange={(v) => { setEmpresa({ ...empresa, cnpj: maskCNPJ(v) }); setEmpresaEdited(true); }} />
               <EmpresaField label="Inscrição estadual" value={empresa.inscricaoEstadual} onChange={(v) => { setEmpresa({ ...empresa, inscricaoEstadual: v }); setEmpresaEdited(true); }} />

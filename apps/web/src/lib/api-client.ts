@@ -15,4 +15,5 @@ export interface ApiUser {
 export interface ApiTenant {
   slug: string;
   name: string;
+  nomeFantasia: string | null;
 }

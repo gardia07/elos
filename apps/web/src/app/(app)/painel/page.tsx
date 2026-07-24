@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { complianceTone } from '@/lib/format';
@@ -15,10 +14,8 @@ interface Kpis {
   colaboradoresAtivosDeltaPct: number | null;
   pendenciasAbertas: number;
   pendenciasAbertasDelta: number | null;
-  complianceGeral: number;
-  complianceGeralDelta: number | null;
-  conformidadeDocumental: number;
-  conformidadeDocumentalDelta: number | null;
+  conformidadeGeral: number;
+  conformidadeGeralDelta: number | null;
   riscoGeral: 'Baixo' | 'Médio' | 'Alto';
   alertasCriticosAtivos: number;
 }
@@ -64,10 +61,8 @@ function Delta({ value, unidade, favoravel }: { value: number | null; unidade: s
 }
 
 export default function PainelPage() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const today = todayIso();
-  const [noteContent, setNoteContent] = useState<string | null>(null);
   const [novaHora, setNovaHora] = useState('');
   const [novaDescricao, setNovaDescricao] = useState('');
 
@@ -91,11 +86,6 @@ export default function PainelPage() {
     queryFn: async () => (await api.get<AgendaItem[]>('/agenda/items', { params: { data: today } })).data,
   });
 
-  const { data: notepad } = useQuery({
-    queryKey: ['agenda', 'notepad', today],
-    queryFn: async () => (await api.get<{ conteudo: string }>(`/agenda/notepad/${today}`)).data,
-  });
-
   const invalidateAgenda = () => queryClient.invalidateQueries({ queryKey: ['agenda', 'items', today] });
 
   const createItem = useMutation({
@@ -112,18 +102,6 @@ export default function PainelPage() {
     onSuccess: invalidateAgenda,
   });
 
-  const saveNotepad = useMutation({
-    mutationFn: async () => api.put(`/agenda/notepad/${today}`, { conteudo: noteContent ?? '' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agenda', 'notepad', today] }),
-  });
-
-  const content = noteContent ?? notepad?.conteudo ?? '';
-
-  const sendToElo = () => {
-    if (!content.trim()) return;
-    router.push(`/elo?pergunta=${encodeURIComponent(content)}&modoAgente=1`);
-  };
-
   // Agenda do dia mostra o que foi digitado manualmente/pela Elô (AgendaItem)
   // e as tarefas manuais (Task origem=MANUAL). Pendências geradas
   // automaticamente pelo sistema (origem=SISTEMA) vão para o card de
@@ -139,7 +117,7 @@ export default function PainelPage() {
   const alertasPrioritarios: PriorityAlert[] = (tasks ?? [])
     .filter((t) => t.origem === 'SISTEMA')
     .sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade])
-    .map((t) => ({ categoria: t.modulo, mensagem: t.titulo, severidade: PRIORIDADE_SEVERIDADE[t.prioridade] }));
+    .map((t) => ({ categoria: t.modulo, mensagem: t.titulo, severidade: PRIORIDADE_SEVERIDADE[t.prioridade], href: t.detalhes?.href }));
 
   const concluidas = timedItems.filter((i) => i.concluida).length;
   const total = timedItems.length + taskItems.length;
@@ -149,16 +127,11 @@ export default function PainelPage() {
       <Header eyebrow="Seu dia a dia" title="Área de trabalho" />
       <main className="flex-1 overflow-y-auto px-8 py-6">
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <KpiCard
-              label="Conformidade documental"
-              value={<Badge tone={complianceTone(kpis?.conformidadeDocumental ?? 0)}>{kpis?.conformidadeDocumental ?? '—'}%</Badge>}
-              delta={<Delta value={kpis?.conformidadeDocumentalDelta ?? null} unidade=" pts" favoravel="alto" />}
-            />
-            <KpiCard
-              label="Compliance (ética e políticas)"
-              value={kpis?.complianceGeral ?? '—'}
-              delta={<Delta value={kpis?.complianceGeralDelta ?? null} unidade=" pts" favoravel="alto" />}
+              label="Conformidade geral"
+              value={<Badge tone={complianceTone(kpis?.conformidadeGeral ?? 0)}>{kpis?.conformidadeGeral ?? '—'}%</Badge>}
+              delta={<Delta value={kpis?.conformidadeGeralDelta ?? null} unidade=" pts" favoravel="alto" />}
             />
             <KpiCard
               label="Pendências em aberto"
@@ -258,30 +231,6 @@ export default function PainelPage() {
                 Adicionar
               </Button>
             </form>
-          </Card>
-
-          <Card>
-            <div className="mb-3">
-              <h3 className="text-sm font-semibold">Bloco de notas</h3>
-              <p className="text-xs text-text-tertiary">Rascunho rápido do dia — para virar tarefa ou item de agenda, envie para a Elô.</p>
-            </div>
-
-            <textarea
-              value={content}
-              onChange={(e) => setNoteContent(e.target.value)}
-              rows={8}
-              placeholder="Anote aqui qualquer demanda que surgir durante o dia…"
-              className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm leading-relaxed"
-            />
-
-            <div className="mt-3 flex items-center gap-2">
-              <Button variant="secondary" disabled={saveNotepad.isPending} onClick={() => saveNotepad.mutate()}>
-                Salvar
-              </Button>
-              <Button disabled={!content.trim()} onClick={sendToElo}>
-                Enviar para Elô →
-              </Button>
-            </div>
           </Card>
         </div>
       </main>

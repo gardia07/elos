@@ -31,13 +31,23 @@ export function Sidebar() {
   const pathname = usePathname();
   const { tenant } = useAuth();
 
+  const nomeEmpresa = tenant?.nomeFantasia || tenant?.name;
+
   return (
-    <aside className="flex w-60 shrink-0 flex-col gap-6 bg-accent px-4 py-6 text-on-accent">
-      <div className="flex flex-col items-center gap-1 px-2">
+    <aside className="flex w-60 shrink-0 flex-col bg-accent py-6 text-on-accent">
+      <div className="flex justify-center px-4 pb-4">
         <Image src="/logo-elos-cream.png" alt="elos" width={965} height={562} className="h-8 w-auto" />
-        {tenant?.name && <span className="text-xs font-medium text-on-accent/70">{tenant.name}</span>}
       </div>
 
+      <div className="border-t border-on-accent/15" />
+
+      {nomeEmpresa && (
+        <div className="px-4 py-3 text-center text-sm font-semibold text-on-accent">{nomeEmpresa}</div>
+      )}
+
+      <div className="mb-4 border-t border-on-accent/15" />
+
+      <div className="flex flex-col gap-6 px-4">
       <nav className="flex flex-col gap-1">
         {HUBS.map((hub) => (
           <NavItem key={hub.href} {...hub} active={pathname?.startsWith(hub.href)} />
@@ -61,6 +71,7 @@ export function Sidebar() {
             <NavItem key={item.href} {...item} active={pathname === item.href || pathname?.startsWith(item.href + '/')} />
           ))}
         </nav>
+      </div>
       </div>
     </aside>
   );

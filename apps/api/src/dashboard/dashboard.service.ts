@@ -14,6 +14,13 @@ function startOfUtcDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
+function formatDiasRestantes(alvo: Date, hoje: Date): string {
+  const dias = Math.round((alvo.getTime() - hoje.getTime()) / 86_400_000);
+  if (dias < 0) return `há ${Math.abs(dias)} dia(s)`;
+  if (dias === 0) return 'hoje';
+  return `em ${dias} dia(s)`;
+}
+
 export interface Alert {
   hub: string;
   mensagem: string;
@@ -49,20 +56,21 @@ export class DashboardService {
     await this.refreshTasks();
     const complianceOverview = await this.compliance.get();
     const { overall: conformidadeDocumental } = await this.documents.complianceOverview();
+    // Um único índice para "a empresa inteira": documentação obrigatória dos
+    // colaboradores + programa de ética/políticas, não dois números soltos.
+    const conformidadeGeral = Math.round((conformidadeDocumental + complianceOverview.maturidade) / 2);
     const { riscoGeral, alertasCriticosAtivos } = await this.calcRisco();
 
     await Promise.all([
       this.captureSnapshot('COLABORADORES_ATIVOS', colaboradoresAtivos),
       this.captureSnapshot('PENDENCIAS_ABERTAS', pendenciasAbertas),
-      this.captureSnapshot('COMPLIANCE_GERAL', complianceOverview.maturidade),
-      this.captureSnapshot('CONFORMIDADE_DOCUMENTAL', conformidadeDocumental),
+      this.captureSnapshot('CONFORMIDADE_GERAL', conformidadeGeral),
     ]);
 
-    const [colaboradoresAnterior, pendenciasAnterior, complianceAnterior, conformidadeAnterior] = await Promise.all([
+    const [colaboradoresAnterior, pendenciasAnterior, conformidadeAnterior] = await Promise.all([
       this.valorMesAnterior('COLABORADORES_ATIVOS'),
       this.valorMesAnterior('PENDENCIAS_ABERTAS'),
-      this.valorMesAnterior('COMPLIANCE_GERAL'),
-      this.valorMesAnterior('CONFORMIDADE_DOCUMENTAL'),
+      this.valorMesAnterior('CONFORMIDADE_GERAL'),
     ]);
 
     return {
@@ -73,10 +81,8 @@ export class DashboardService {
           : null,
       pendenciasAbertas,
       pendenciasAbertasDelta: pendenciasAnterior != null ? pendenciasAbertas - pendenciasAnterior : null,
-      complianceGeral: complianceOverview.maturidade,
-      complianceGeralDelta: complianceAnterior != null ? complianceOverview.maturidade - complianceAnterior : null,
-      conformidadeDocumental,
-      conformidadeDocumentalDelta: conformidadeAnterior != null ? conformidadeDocumental - conformidadeAnterior : null,
+      conformidadeGeral,
+      conformidadeGeralDelta: conformidadeAnterior != null ? conformidadeGeral - conformidadeAnterior : null,
       riscoGeral,
       alertasCriticosAtivos,
     };
@@ -100,21 +106,23 @@ export class DashboardService {
 
     const alerts: Alert[] = [];
 
-    const [esocialPendentes, prazosPendentes, feriasVencendo, cctsSemReajuste, equipamentos] = await Promise.all([
-      db.admission.count({ where: { esocialSent: false, status: { not: 'EFETIVADO' } } }),
+    const [admissoesPendentes, prazosPendentes, colaboradoresFeriasVencendo, cctsSemReajuste, equipamentos] = await Promise.all([
+      db.admission.findMany({ where: { esocialSent: false, status: { not: 'EFETIVADO' } }, select: { id: true, nome: true } }),
       db.laborDeadline.count({ where: { cumprido: false, vencimento: { lte: em30dias } } }),
-      db.employee.count({ where: { status: 'ATIVO', feriasVencimento: { lte: em60dias } } }),
+      db.employee.findMany({ where: { status: 'ATIVO', feriasVencimento: { lte: em60dias } }, select: { id: true, nome: true, feriasVencimento: true } }),
       db.collectiveAgreement.count({ where: { reajusteAplicadoEm: null, vigenciaFim: { gte: hoje } } }),
-      db.equipmentItem.findMany({ select: { entregaEm: true, validadeMeses: true } }),
+      db.equipmentItem.findMany({ select: { id: true, item: true, entregaEm: true, validadeMeses: true, employeeId: true, employee: { select: { nome: true } } } }),
     ]);
 
-    if (esocialPendentes > 0) {
+    // Alertas por pessoa/registro — nome de quem precisa da ação e link direto
+    // para a página onde ela é resolvida, em vez de uma contagem agregada.
+    for (const admissao of admissoesPendentes) {
       alerts.push({
         hub: 'DP',
-        alertKey: 'dp-esocial-s2200-pendente',
+        alertKey: `dp-esocial-s2200-pendente-${admissao.id}`,
         prioridade: 'ALTA',
-        mensagem: `Envio do evento eSocial S-2200 pendente para ${esocialPendentes} admissão(ões)`,
-        href: '/gestao-de-pessoas/admissao',
+        mensagem: `Envio do evento eSocial S-2200 pendente para ${admissao.nome}`,
+        href: `/gestao-de-pessoas/admissao/${admissao.id}`,
       });
     }
     if (prazosPendentes > 0) {
@@ -126,13 +134,13 @@ export class DashboardService {
         href: '/dp/prazos',
       });
     }
-    if (feriasVencendo > 0) {
+    for (const colaborador of colaboradoresFeriasVencendo) {
       alerts.push({
         hub: 'RH',
-        alertKey: 'rh-ferias-vencendo',
+        alertKey: `rh-ferias-vencendo-${colaborador.id}`,
         prioridade: 'MEDIA',
-        mensagem: `${feriasVencendo} colaborador(es) com período aquisitivo de férias vencendo em 60 dias`,
-        href: '/gestao-de-pessoas/colaboradores',
+        mensagem: `${colaborador.nome} — período aquisitivo de férias vence em ${formatDiasRestantes(colaborador.feriasVencimento, hoje)}`,
+        href: `/gestao-de-pessoas/colaboradores/${colaborador.id}`,
       });
     }
     if (cctsSemReajuste > 0) {
@@ -149,17 +157,16 @@ export class DashboardService {
       const vencimento = addMonths(e.entregaEm, e.validadeMeses);
       const diasRestantes = Math.round((vencimento.getTime() - hoje.getTime()) / 86_400_000);
       return diasRestantes <= 30;
-    }).length;
-    if (epiVencidoOuVencendo > 0) {
+    });
+    for (const e of epiVencidoOuVencendo) {
       alerts.push({
         hub: 'DP',
-        alertKey: 'dp-epi-vencendo',
+        alertKey: `dp-epi-vencendo-${e.id}`,
         prioridade: 'BAIXA',
-        mensagem: `${epiVencidoOuVencendo} item(ns) de uniforme/EPI vencido(s) ou vencendo`,
-        href: '/dp/uniforme',
+        mensagem: `${e.employee.nome} — ${e.item} vencido ou vencendo`,
+        href: e.employeeId ? `/gestao-de-pessoas/colaboradores/${e.employeeId}` : '/dp/uniforme',
       });
     }
-
     return alerts;
   }
 

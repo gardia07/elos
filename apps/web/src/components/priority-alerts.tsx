@@ -1,9 +1,15 @@
+'use client';
+
+import Link from 'next/link';
+
 export type AlertSeveridade = 'alta' | 'media' | 'baixa';
 
 export interface PriorityAlert {
   categoria: string;
   mensagem: string;
   severidade: AlertSeveridade;
+  /** Quando presente, o bloco inteiro vira um link para a página onde a ação é resolvida. */
+  href?: string;
 }
 
 const SEVERIDADE_COLOR: Record<AlertSeveridade, string> = {
@@ -33,13 +39,22 @@ export function PriorityAlerts({
       <div className="flex flex-col gap-3">
         {alertas.map((alerta, i) => {
           const cor = categoriaColor[alerta.categoria] ?? SEVERIDADE_COLOR[alerta.severidade];
-          return (
-            <div key={i} className="flex items-start gap-3 rounded-[12px] bg-[#FDF9F5] p-4">
+          const content = (
+            <>
               <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: cor }} />
               <div className="flex min-w-0 flex-col gap-1">
                 <span className="text-[11px] font-bold uppercase tracking-[0.04em] text-[#8A94A6]">{alerta.categoria}</span>
                 <span className="text-[15px] leading-snug text-[#2D2D2D]">{alerta.mensagem}</span>
               </div>
+            </>
+          );
+          return alerta.href ? (
+            <Link key={i} href={alerta.href} className="flex items-start gap-3 rounded-[12px] bg-[#FDF9F5] p-4 transition hover:bg-[#F7EFE6]">
+              {content}
+            </Link>
+          ) : (
+            <div key={i} className="flex items-start gap-3 rounded-[12px] bg-[#FDF9F5] p-4">
+              {content}
             </div>
           );
         })}

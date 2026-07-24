@@ -3,6 +3,7 @@ import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-va
 const REGIMES_TRIBUTARIOS = ['SIMPLES_NACIONAL', 'LUCRO_PRESUMIDO', 'LUCRO_REAL'] as const;
 
 export class UpdateTenantDto {
+  @IsOptional() @IsString() nomeFantasia?: string;
   @IsOptional() @IsString() razaoSocial?: string;
   @IsOptional() @IsString() cnpj?: string;
   @IsOptional() @IsString() inscricaoEstadual?: string;

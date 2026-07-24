@@ -231,7 +231,9 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
               <div className="border-b border-divider px-4 py-3">
                 <div className="font-medium">{user?.name}</div>
                 <div className="text-xs text-text-tertiary">{ROLE_LABEL[user?.role ?? ''] ?? user?.role}</div>
-                {tenant?.name && <div className="mt-1 text-xs text-text-tertiary">{tenant.name}</div>}
+                {(tenant?.nomeFantasia || tenant?.name) && (
+                  <div className="mt-1 text-xs text-text-tertiary">{tenant?.nomeFantasia || tenant?.name}</div>
+                )}
               </div>
               <button
                 onClick={toggleTheme}

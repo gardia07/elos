@@ -194,7 +194,7 @@ export class AuthService {
     return {
       accessToken,
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      tenant: { slug: tenant.slug, name: tenant.name },
+      tenant: { slug: tenant.slug, name: tenant.name, nomeFantasia: tenant.nomeFantasia },
     };
   }
 
@@ -271,7 +271,7 @@ export class AuthService {
     const tenant = await this.prisma.tenant.findUniqueOrThrow({ where: { id: user.tenantId } });
     return {
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      tenant: { slug: tenant.slug, name: tenant.name },
+      tenant: { slug: tenant.slug, name: tenant.name, nomeFantasia: tenant.nomeFantasia },
     };
   }
 
@@ -293,7 +293,7 @@ export class AuthService {
     return {
       accessToken,
       user: { id: targetUser.id, name: targetUser.name, email: targetUser.email, role: targetUser.role },
-      tenant: { slug: targetTenant.slug, name: targetTenant.name },
+      tenant: { slug: targetTenant.slug, name: targetTenant.name, nomeFantasia: targetTenant.nomeFantasia },
     };
   }
 }
