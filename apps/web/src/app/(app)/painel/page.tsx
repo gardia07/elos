@@ -124,17 +124,22 @@ export default function PainelPage() {
     router.push(`/elo?pergunta=${encodeURIComponent(content)}&modoAgente=1`);
   };
 
-  // Agenda do dia é automática: junta o que foi digitado manualmente ou criado
-  // pela Elô (AgendaItem) com as pendências abertas do sistema (Task), num só lugar.
+  // Agenda do dia mostra o que foi digitado manualmente/pela Elô (AgendaItem)
+  // e as tarefas manuais (Task origem=MANUAL). Pendências geradas
+  // automaticamente pelo sistema (origem=SISTEMA) vão para o card de
+  // Alertas prioritários, não duplicam aqui.
   const timedItems = (agendaItems ?? [])
     .slice()
     .sort((a, b) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99'));
-  const taskItems = (tasks ?? []).slice().sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade]);
+  const taskItems = (tasks ?? [])
+    .filter((t) => t.origem === 'MANUAL')
+    .sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade]);
 
+  const PRIORIDADE_SEVERIDADE = { CRITICA: 'alta', ALTA: 'alta', MEDIA: 'media', BAIXA: 'baixa' } as const;
   const alertasPrioritarios: PriorityAlert[] = (tasks ?? [])
-    .filter((t) => t.prioridade === 'ALTA' || t.prioridade === 'CRITICA')
+    .filter((t) => t.origem === 'SISTEMA')
     .sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade])
-    .map((t) => ({ categoria: t.modulo, mensagem: t.titulo, severidade: 'alta' }));
+    .map((t) => ({ categoria: t.modulo, mensagem: t.titulo, severidade: PRIORIDADE_SEVERIDADE[t.prioridade] }));
 
   const concluidas = timedItems.filter((i) => i.concluida).length;
   const total = timedItems.length + taskItems.length;
