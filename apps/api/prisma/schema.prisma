@@ -159,6 +159,7 @@ model AuditEvent {
 enum JobContrato {
   CLT
   ESTAGIO
+  PJ
 
   @@map("job_contrato")
 }

@@ -120,7 +120,7 @@ function DocumentRequirementsConfig() {
         <div className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Aplica a</span>
           <div className="flex gap-3 py-2">
-            {(['CLT', 'ESTAGIO'] as const).map((tipo) => (
+            {(['CLT', 'ESTAGIO', 'PJ'] as const).map((tipo) => (
               <label key={tipo} className="flex items-center gap-1.5 text-xs">
                 <input
                   type="checkbox"
@@ -327,6 +327,7 @@ export default function ColaboradoresPage() {
                 <option value="">Todos</option>
                 <option value="CLT">CLT</option>
                 <option value="ESTAGIO">Estágio</option>
+                <option value="PJ">PJ</option>
               </select>
             </label>
             <label className="flex flex-col gap-1.5 text-sm">

@@ -7,7 +7,7 @@ export class CreateEmployeeDto {
   @IsString() departamento!: string;
   @IsDateString() dataAdmissao!: string;
   @IsNumber() @Min(0) salario!: number;
-  @IsOptional() @IsIn(['CLT', 'ESTAGIO']) tipoContrato?: 'CLT' | 'ESTAGIO';
+  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ';
   @IsOptional() @IsString() filial?: string;
   @IsOptional() @IsString() email?: string;
   @IsOptional() @IsString() telefone?: string;
@@ -18,7 +18,7 @@ export class ListEmployeesQueryDto {
   @IsOptional() @IsString() departamento?: string;
   @IsOptional() @IsString() cargo?: string;
   @IsOptional() @IsString() filial?: string;
-  @IsOptional() @IsIn(['CLT', 'ESTAGIO']) tipoContrato?: 'CLT' | 'ESTAGIO';
+  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ';
   @IsOptional() @IsIn(['ATIVO', 'INATIVO']) status?: 'ATIVO' | 'INATIVO';
   @IsOptional() @IsDateString() admissaoDe?: string;
   @IsOptional() @IsDateString() admissaoAte?: string;
@@ -31,11 +31,13 @@ export class ListEmployeesQueryDto {
 
 export class UpdateEmployeeDto {
   // Contratuais
+  @IsOptional() @IsString() matricula?: string;
+  @IsOptional() @IsDateString() dataAdmissao?: string;
   @IsOptional() @IsString() cargo?: string;
   @IsOptional() @IsString() departamento?: string;
   @IsOptional() @IsString() filial?: string;
   @IsOptional() @IsString() gestorDireto?: string;
-  @IsOptional() @IsIn(['CLT', 'ESTAGIO']) tipoContrato?: 'CLT' | 'ESTAGIO';
+  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ';
 
   // Contato
   @IsOptional() @IsString() email?: string;

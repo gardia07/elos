@@ -35,6 +35,11 @@ export class EmployeesController {
     return this.service.filterOptions();
   }
 
+  @Get('managers')
+  managers(@Query('excludeId') excludeId?: string) {
+    return this.service.managers(excludeId);
+  }
+
   @Get(':id')
   get(@Param('id') id: string) {
     return this.service.get(id);

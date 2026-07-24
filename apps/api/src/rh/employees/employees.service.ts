@@ -103,6 +103,20 @@ export class EmployeesService {
     };
   }
 
+  /** Candidates for the "gestor direto" picker — active CLT/PJ employees, optionally excluding the employee being edited. */
+  async managers(excludeId?: string) {
+    const employees = await this.db().employee.findMany({
+      where: {
+        status: 'ATIVO',
+        tipoContrato: { in: ['CLT', 'PJ'] },
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true, nome: true, cargo: true, tipoContrato: true },
+      orderBy: { nome: 'asc' },
+    });
+    return employees;
+  }
+
   async orgChart() {
     const employees = await this.db().employee.findMany({
       where: { status: 'ATIVO' },
@@ -141,10 +155,14 @@ export class EmployeesService {
 
   async update(id: string, dto: UpdateEmployeeDto) {
     await this.mustFind(id);
-    const { dataNascimento, ...rest } = dto;
+    const { dataNascimento, dataAdmissao, ...rest } = dto;
     const updated = await this.db().employee.update({
       where: { id },
-      data: { ...rest, ...(dataNascimento ? { dataNascimento: new Date(dataNascimento) } : {}) },
+      data: {
+        ...rest,
+        ...(dataNascimento ? { dataNascimento: new Date(dataNascimento) } : {}),
+        ...(dataAdmissao ? { dataAdmissao: new Date(dataAdmissao) } : {}),
+      },
     });
     await this.addHistorico(id, 'Dados cadastrais atualizados', 'Documento');
     return updated;

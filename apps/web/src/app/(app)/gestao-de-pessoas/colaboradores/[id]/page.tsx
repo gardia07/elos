@@ -62,7 +62,7 @@ interface EmployeeDetail {
   conjugeNome: string | null;
   conjugeCpf: string | null;
   salario: string;
-  tipoContrato: 'CLT' | 'ESTAGIO';
+  tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ';
   feriasSaldo: number;
   feriasVencimento: string;
   feriasVencimentoAlerta: boolean;
@@ -83,7 +83,8 @@ type EditFields = {
   nomeMae: string; nomePai: string; genero: string; cnh: string; rg: string;
   tituloEleitor: string; pis: string; ctps: string; cpf: string;
   conjugeNome: string; conjugeCpf: string;
-  cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO';
+  matricula: string; dataAdmissao: string;
+  cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ';
 };
 
 function toEditFields(e: EmployeeDetail): EditFields {
@@ -95,6 +96,7 @@ function toEditFields(e: EmployeeDetail): EditFields {
     nomeMae: e.nomeMae ?? '', nomePai: e.nomePai ?? '', genero: e.genero ?? '', cnh: e.cnh ?? '', rg: e.rg ?? '',
     tituloEleitor: e.tituloEleitor ?? '', pis: e.pis ?? '', ctps: e.ctps ?? '', cpf: e.cpf ?? '',
     conjugeNome: e.conjugeNome ?? '', conjugeCpf: e.conjugeCpf ?? '',
+    matricula: e.matricula, dataAdmissao: e.dataAdmissao.slice(0, 10),
     cargo: e.cargo, departamento: e.departamento, filial: e.filial ?? '', gestorDireto: e.gestorDireto ?? '',
     tipoContrato: e.tipoContrato,
   };
@@ -139,6 +141,13 @@ export default function EmployeeProfilePage() {
     queryKey: ['employee', id],
     queryFn: async () => (await api.get<EmployeeDetail>(`/rh/employees/${id}`)).data,
     enabled: !!id,
+  });
+
+  const { data: managers } = useQuery({
+    queryKey: ['employees', 'managers', id],
+    queryFn: async () =>
+      (await api.get<{ id: string; nome: string; cargo: string; tipoContrato: string }[]>('/rh/employees/managers', { params: { excludeId: id } })).data,
+    enabled: editing && !!id,
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['employee', id] });
@@ -435,10 +444,29 @@ export default function EmployeeProfilePage() {
 
               <Section title="Dados contratuais">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <EditField label="Matrícula" value={edit.matricula} onChange={(v) => setEdit({ ...edit, matricula: v })} />
+                  <EditField label="Data de admissão" type="date" value={edit.dataAdmissao} onChange={(v) => setEdit({ ...edit, dataAdmissao: v })} />
                   <EditField label="Cargo" value={edit.cargo} onChange={(v) => setEdit({ ...edit, cargo: v })} />
                   <EditField label="Departamento" value={edit.departamento} onChange={(v) => setEdit({ ...edit, departamento: v })} />
                   <EditField label="Filial" value={edit.filial} onChange={(v) => setEdit({ ...edit, filial: v })} />
-                  <EditField label="Gestor direto" value={edit.gestorDireto} onChange={(v) => setEdit({ ...edit, gestorDireto: v })} />
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-text-secondary">Gestor direto</span>
+                    <select
+                      value={edit.gestorDireto}
+                      onChange={(ev) => setEdit({ ...edit, gestorDireto: ev.target.value })}
+                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                    >
+                      <option value="">Não atribuído</option>
+                      {edit.gestorDireto && !managers?.some((m) => m.nome === edit.gestorDireto) && (
+                        <option value={edit.gestorDireto}>{edit.gestorDireto}</option>
+                      )}
+                      {managers?.map((m) => (
+                        <option key={m.id} value={m.nome}>
+                          {m.nome} · {m.cargo} ({m.tipoContrato})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
               </Section>
             </form>
