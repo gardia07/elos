@@ -1107,6 +1107,8 @@ model DocumentRequirement {
   nome      String
   categoria String
   obrigatorio Boolean @default(true)
+  // Semeado automaticamente (documentos exigidos pela CLT) — não pode ser excluído.
+  sistema   Boolean  @default(false)
   // Dias de validade a partir da data de conformidade; null = não expira.
   validadeDias Int?
   // Listas vazias = aplica a todos; caso contrário, o valor do colaborador
@@ -1131,6 +1133,7 @@ enum DocumentReqStatus {
   COMPLIANT
   EXPIRED
   REJECTED
+  NAO_SE_APLICA
 
   @@map("document_req_status")
 }
@@ -1142,6 +1145,8 @@ model EmployeeDocumentRequirement {
   status        DocumentReqStatus @default(MISSING)
   expiraEm      DateTime?
   observacao    String?
+  arquivoNome   String?
+  anexadoEm     DateTime?
   updatedAt     DateTime          @updatedAt
 
   employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)

@@ -24,6 +24,9 @@ export class UpdateDocumentRequirementDto {
 }
 
 export class SetDocumentStatusDto {
-  @IsIn(['MISSING', 'PENDING', 'COMPLIANT', 'EXPIRED', 'REJECTED']) status!: 'MISSING' | 'PENDING' | 'COMPLIANT' | 'EXPIRED' | 'REJECTED';
+  @IsIn(['MISSING', 'PENDING', 'COMPLIANT', 'EXPIRED', 'REJECTED', 'NAO_SE_APLICA'])
+  status!: 'MISSING' | 'PENDING' | 'COMPLIANT' | 'EXPIRED' | 'REJECTED' | 'NAO_SE_APLICA';
   @IsOptional() @IsString() observacao?: string;
+  /** Presence of this field marks the item COMPLIANT regardless of `status`. */
+  @IsOptional() @IsString() arquivoNome?: string;
 }

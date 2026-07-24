@@ -18,9 +18,11 @@ const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar
 interface DocumentRequirementStatus {
   id: string;
   requirementId: string;
-  status: 'MISSING' | 'PENDING' | 'COMPLIANT' | 'EXPIRED' | 'REJECTED';
+  status: 'MISSING' | 'PENDING' | 'COMPLIANT' | 'EXPIRED' | 'REJECTED' | 'NAO_SE_APLICA';
   expiraEm: string | null;
-  requirement: { nome: string; categoria: string; obrigatorio: boolean; validadeDias: number | null };
+  arquivoNome: string | null;
+  anexadoEm: string | null;
+  requirement: { nome: string; categoria: string; obrigatorio: boolean; sistema: boolean; validadeDias: number | null };
 }
 
 const DOC_STATUS_LABEL: Record<DocumentRequirementStatus['status'], string> = {
@@ -29,6 +31,7 @@ const DOC_STATUS_LABEL: Record<DocumentRequirementStatus['status'], string> = {
   COMPLIANT: 'Conforme',
   EXPIRED: 'Vencido',
   REJECTED: 'Não conforme',
+  NAO_SE_APLICA: 'Não se aplica',
 };
 
 const DOC_STATUS_TONE: Record<DocumentRequirementStatus['status'], 'green' | 'blue' | 'amber' | 'red' | 'grey'> = {
@@ -37,6 +40,7 @@ const DOC_STATUS_TONE: Record<DocumentRequirementStatus['status'], 'green' | 'bl
   COMPLIANT: 'green',
   EXPIRED: 'red',
   REJECTED: 'red',
+  NAO_SE_APLICA: 'grey',
 };
 
 interface EmployeeDetail {
@@ -218,8 +222,11 @@ export default function EmployeeProfilePage() {
   });
 
   const setDocStatus = useMutation({
-    mutationFn: async (vars: { requirementId: string; status: DocumentRequirementStatus['status'] }) =>
-      api.patch(`/rh/documents/employees/${id}/requirements/${vars.requirementId}`, { status: vars.status }),
+    mutationFn: async (vars: { requirementId: string; status: DocumentRequirementStatus['status']; arquivoNome?: string }) =>
+      api.patch(`/rh/documents/employees/${id}/requirements/${vars.requirementId}`, {
+        status: vars.status,
+        arquivoNome: vars.arquivoNome,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rh', 'documents', id] });
       invalidate();
@@ -578,14 +585,17 @@ export default function EmployeeProfilePage() {
             )}
             <ul className="flex flex-col gap-2">
               {compliance?.documentos.map((d) => (
-                <li key={d.id} className="flex items-center justify-between rounded-[10px] border border-border p-2.5 text-sm">
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-border p-2.5 text-sm">
                   <div>
                     <div className="font-medium">
-                      {d.requirement.nome} {!d.requirement.obrigatorio && <span className="text-xs text-text-tertiary">(opcional)</span>}
+                      {d.requirement.nome}
+                      {d.requirement.sistema && <span className="text-xs text-text-tertiary"> · exigido pela CLT</span>}
+                      {!d.requirement.obrigatorio && <span className="text-xs text-text-tertiary"> (opcional)</span>}
                     </div>
                     <div className="text-xs text-text-tertiary">
                       {d.requirement.categoria}
                       {d.expiraEm && ` · vence em ${formatDate(d.expiraEm)}`}
+                      {d.arquivoNome && ` · anexo: ${d.arquivoNome}`}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -599,7 +609,20 @@ export default function EmployeeProfilePage() {
                       <option value="PENDING">Em análise</option>
                       <option value="COMPLIANT">Conforme</option>
                       <option value="REJECTED">Não conforme</option>
+                      <option value="NAO_SE_APLICA">Não se aplica</option>
                     </select>
+                    <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                      Anexar
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(ev) => {
+                          const file = ev.target.files?.[0];
+                          if (file) setDocStatus.mutate({ requirementId: d.requirementId, status: 'COMPLIANT', arquivoNome: file.name });
+                          ev.target.value = '';
+                        }}
+                      />
+                    </label>
                   </div>
                 </li>
               ))}

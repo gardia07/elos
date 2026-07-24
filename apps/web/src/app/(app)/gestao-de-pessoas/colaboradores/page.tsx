@@ -12,6 +12,7 @@ interface DocumentRequirement {
   nome: string;
   categoria: string;
   obrigatorio: boolean;
+  sistema: boolean;
   ativo: boolean;
   validadeDias: number | null;
   aplicaTipoContrato: string[];
@@ -63,6 +64,11 @@ function DocumentRequirementsConfig() {
     onSuccess: invalidate,
   });
 
+  const removeRequirement = useMutation({
+    mutationFn: async (id: string) => api.delete(`/rh/documents/requirements/${id}`),
+    onSuccess: invalidate,
+  });
+
   return (
     <Card className="flex flex-col gap-4">
       <div>
@@ -77,7 +83,8 @@ function DocumentRequirementsConfig() {
           <li key={r.id} className="flex items-center justify-between rounded-[10px] border border-border p-2.5 text-sm">
             <div>
               <div className="font-medium">
-                {r.nome} {!r.obrigatorio && <span className="text-xs text-text-tertiary">(opcional)</span>}
+                {r.nome} {r.sistema && <span className="text-xs text-text-tertiary">(exigido pela CLT)</span>}
+                {!r.obrigatorio && <span className="text-xs text-text-tertiary"> (opcional)</span>}
               </div>
               <div className="text-xs text-text-tertiary">
                 {r.categoria}
@@ -86,10 +93,20 @@ function DocumentRequirementsConfig() {
                 {r.aplicaDepartamento.length > 0 && ` · ${r.aplicaDepartamento.join(', ')}`}
               </div>
             </div>
-            <label className="flex items-center gap-1.5 text-xs text-text-secondary">
-              <input type="checkbox" checked={r.ativo} onChange={(e) => toggleAtivo.mutate({ id: r.id, ativo: e.target.checked })} />
-              Ativo
-            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-xs text-text-secondary">
+                <input type="checkbox" checked={r.ativo} onChange={(e) => toggleAtivo.mutate({ id: r.id, ativo: e.target.checked })} />
+                Ativo
+              </label>
+              {!r.sistema && (
+                <button
+                  onClick={() => removeRequirement.mutate(r.id)}
+                  className="text-xs text-danger hover:underline"
+                >
+                  Excluir
+                </button>
+              )}
+            </div>
           </li>
         ))}
         {requirements?.length === 0 && <p className="text-sm text-text-tertiary">Nenhum requisito configurado ainda.</p>}

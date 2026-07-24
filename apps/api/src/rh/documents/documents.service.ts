@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { getRequestContext } from '../../common/request-context';
@@ -103,6 +103,15 @@ export class DocumentsService {
     return requirement;
   }
 
+  async deleteRequirement(id: string) {
+    const requirement = await this.mustFindRequirement(id);
+    if (requirement.sistema) {
+      throw new ForbiddenException('Documentos obrigatórios por lei não podem ser excluídos. Marque "não se aplica" no colaborador quando não for o caso.');
+    }
+    await this.db().documentRequirement.delete({ where: { id } });
+    await this.audit.log('document_requirement', id, 'excluido', { nome: requirement.nome });
+  }
+
   private async syncForEmployee(employeeId: string) {
     const db = this.db();
     const employee = await db.employee.findUnique({ where: { id: employeeId } });
@@ -152,14 +161,20 @@ export class DocumentsService {
     const requirement = await db.documentRequirement.findUnique({ where: { id: requirementId } });
     if (!requirement) throw new NotFoundException('Requisito não encontrado.');
 
-    const expiraEm = dto.status === 'COMPLIANT' && requirement.validadeDias
+    // Attaching a file always marks the item compliant — the file itself is
+    // the evidence of compliance, overriding whatever status was sent. A
+    // plain status change (no arquivoNome) leaves any previously attached
+    // file untouched.
+    const status = dto.arquivoNome ? 'COMPLIANT' : dto.status;
+    const expiraEm = status === 'COMPLIANT' && requirement.validadeDias
       ? new Date(Date.now() + requirement.validadeDias * 24 * 60 * 60 * 1000)
       : null;
+    const arquivoFields = dto.arquivoNome ? { arquivoNome: dto.arquivoNome, anexadoEm: new Date() } : {};
 
     await db.employeeDocumentRequirement.upsert({
       where: { employeeId_requirementId: { employeeId, requirementId } },
-      create: { employeeId, requirementId, status: dto.status, expiraEm, observacao: dto.observacao },
-      update: { status: dto.status, expiraEm, observacao: dto.observacao },
+      create: { employeeId, requirementId, status, expiraEm, observacao: dto.observacao, ...arquivoFields },
+      update: { status, expiraEm, observacao: dto.observacao, ...arquivoFields },
     });
 
     const rows = await db.employeeDocumentRequirement.findMany({ where: { employeeId }, include: { requirement: true } });
@@ -173,7 +188,8 @@ export class DocumentsService {
     rows: { status: string; requirement: { obrigatorio: boolean } }[],
     employee: EmployeeMandatoryFields,
   ) {
-    const required = rows.filter((r) => r.requirement.obrigatorio);
+    // NAO_SE_APLICA is excluded entirely (neither counted as missing nor compliant).
+    const required = rows.filter((r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA');
     const missingFields = missingMandatoryFields(employee);
 
     const totalItems = required.length + MANDATORY_FIELDS.length;
@@ -207,7 +223,7 @@ export class DocumentsService {
         where: { employeeId: employee.id, requirementId: { in: applicable.map((r) => r.id) } },
         include: { requirement: true },
       });
-      const required = rows.filter((r) => r.requirement.obrigatorio);
+      const required = rows.filter((r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA');
       const missingFields = missingMandatoryFields(employee);
       totalItems += required.length + MANDATORY_FIELDS.length;
       totalCompliant += required.filter((r) => r.status === 'COMPLIANT').length + (MANDATORY_FIELDS.length - missingFields.length);
@@ -237,7 +253,7 @@ export class DocumentsService {
       r.status === 'COMPLIANT' && r.expiraEm && r.expiraEm < today ? { ...r, status: 'EXPIRED' as const } : r,
     );
 
-    const counts = { MISSING: 0, PENDING: 0, COMPLIANT: 0, EXPIRED: 0, REJECTED: 0 };
+    const counts = { MISSING: 0, PENDING: 0, COMPLIANT: 0, EXPIRED: 0, REJECTED: 0, NAO_SE_APLICA: 0 };
     for (const r of withEffectiveStatus) counts[r.status] += 1;
 
     return { counts, documentos: withEffectiveStatus };

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentRequirementDto, SetDocumentStatusDto, UpdateDocumentRequirementDto } from './dto/documents.dto';
@@ -21,6 +21,11 @@ export class DocumentsController {
   @Patch('requirements/:id')
   updateRequirement(@Param('id') id: string, @Body() dto: UpdateDocumentRequirementDto) {
     return this.service.updateRequirement(id, dto);
+  }
+
+  @Delete('requirements/:id')
+  deleteRequirement(@Param('id') id: string) {
+    return this.service.deleteRequirement(id);
   }
 
   @Get('all-employees')

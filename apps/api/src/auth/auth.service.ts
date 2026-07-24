@@ -10,6 +10,7 @@ import { VerifyMfaDto } from './dto/verify-mfa.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SwitchTenantDto } from './dto/switch-tenant.dto';
+import { CLT_DOCUMENT_REQUIREMENTS } from '../rh/documents/clt-requirements';
 import { JwtPayload } from '../common/jwt-payload';
 
 const DIACRITICS: Record<string, string> = {
@@ -95,6 +96,17 @@ export class AuthService {
         },
       });
     }
+
+    // Same RLS-scoping caveat as tenantLicense above.
+    await this.prisma.forTenant(tenant.id).documentRequirement.createMany({
+      data: CLT_DOCUMENT_REQUIREMENTS.map((r) => ({
+        tenantId: tenant.id,
+        nome: r.nome,
+        categoria: r.categoria,
+        obrigatorio: true,
+        sistema: true,
+      })),
+    });
 
     await this.email.send(
       dto.email,
