@@ -31,7 +31,7 @@ export function Sidebar() {
 
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-6 bg-accent px-4 py-6 text-on-accent">
-      <div className="px-2">
+      <div className="flex justify-center px-2">
         <Image src="/logo-elos-cream.png" alt="elos" width={965} height={562} className="h-8 w-auto" />
       </div>
 
