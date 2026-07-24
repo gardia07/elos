@@ -45,7 +45,7 @@ export default function AdmissaoPage() {
               <div>
                 <div className="font-medium">{a.nome}</div>
                 <div className="text-sm text-text-secondary">
-                  {a.cargo} · {a.filial} · início {new Date(a.dataInicio).toLocaleDateString('pt-BR')}
+                  {a.cargo} · {a.filial} · início {new Date(a.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                 </div>
               </div>
               <Badge tone={STATUS_TONE[a.status]}>{STATUS_LABEL[a.status]}</Badge>

@@ -9,6 +9,7 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyMfaDto } from './dto/verify-mfa.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SwitchTenantDto } from './dto/switch-tenant.dto';
 import { JwtPayload } from '../common/jwt-payload';
 
 const DIACRITICS: Record<string, string> = {
@@ -259,6 +260,28 @@ export class AuthService {
     return {
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
       tenant: { slug: tenant.slug, name: tenant.name },
+    };
+  }
+
+  /** Lets a user with an account in more than one tenant (same e-mail) jump between them without re-entering a password. */
+  async switchTenant(userId: string, dto: SwitchTenantDto) {
+    const me = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    const targetTenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug } });
+    if (!targetTenant) throw new BadRequestException('Empresa não encontrada.');
+
+    const targetUser = await this.prisma.user.findUnique({
+      where: { tenantId_email: { tenantId: targetTenant.id, email: me.email } },
+    });
+    if (!targetUser) throw new UnauthorizedException('Você não tem uma conta nessa empresa.');
+
+    const payload: JwtPayload = { sub: targetUser.id, tenantId: targetTenant.id, name: targetUser.name, role: targetUser.role };
+    const accessToken = this.jwt.sign(payload, { expiresIn: '8h' });
+
+    return {
+      accessToken,
+      user: { id: targetUser.id, name: targetUser.name, email: targetUser.email, role: targetUser.role },
+      tenant: { slug: targetTenant.slug, name: targetTenant.name },
     };
   }
 }

@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from '@nes
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
+import { SwitchTenantDto } from './dto/switch-tenant.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyMfaDto } from './dto/verify-mfa.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -70,6 +71,15 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: JwtPayload) {
     return this.auth.me(user.sub);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('switch-tenant')
+  @HttpCode(200)
+  async switchTenant(@CurrentUser() user: JwtPayload, @Body() dto: SwitchTenantDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.auth.switchTenant(user.sub, dto);
+    res.cookie('elos_token', result.accessToken, COOKIE_OPTIONS);
+    return { user: result.user, tenant: result.tenant };
   }
 
   @UseGuards(AuthGuard)

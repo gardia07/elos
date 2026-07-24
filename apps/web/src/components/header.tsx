@@ -67,6 +67,9 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
   const [newPassword, setNewPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [showSwitchDrawer, setShowSwitchDrawer] = useState(false);
+  const [switchSlug, setSwitchSlug] = useState('');
+  const [switchError, setSwitchError] = useState('');
 
   const { data: searchData } = useQuery({
     queryKey: ['search', searchTerm],
@@ -96,6 +99,18 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
       setNewPassword('');
     },
     onError: () => setPasswordError('Não foi possível trocar a senha. Confira a senha atual.'),
+  });
+
+  const switchTenant = useMutation({
+    mutationFn: async () => api.post('/auth/switch-tenant', { tenantSlug: switchSlug }),
+    onSuccess: () => {
+      queryClient.clear();
+      setShowSwitchDrawer(false);
+      setSwitchSlug('');
+      setSwitchError('');
+      router.replace('/painel');
+    },
+    onError: () => setSwitchError('Você não tem uma conta nessa empresa.'),
   });
 
   const initials = user?.name
@@ -235,6 +250,17 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
                 Trocar senha
               </button>
               <button
+                onClick={() => {
+                  setShowAccountMenu(false);
+                  setShowSwitchDrawer(true);
+                  setSwitchError('');
+                  setSwitchSlug('');
+                }}
+                className="block w-full px-4 py-2.5 text-left text-sm hover:bg-surface-alt"
+              >
+                Trocar de empresa
+              </button>
+              <button
                 onClick={() => logout.mutate()}
                 className="block w-full rounded-b-[10px] px-4 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
               >
@@ -283,6 +309,33 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
             </Button>
           </form>
         )}
+      </Drawer>
+
+      <Drawer open={showSwitchDrawer} onClose={() => setShowSwitchDrawer(false)} title="Trocar de empresa">
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            switchTenant.mutate();
+          }}
+        >
+          <p className="text-sm text-text-secondary">
+            Informe o identificador (slug) da outra empresa onde você tem uma conta com este mesmo e-mail.
+          </p>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-text-secondary">Empresa (slug)</span>
+            <input
+              value={switchSlug}
+              onChange={(e) => setSwitchSlug(e.target.value)}
+              required
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            />
+          </label>
+          {switchError && <p className="text-sm text-danger">{switchError}</p>}
+          <Button type="submit" disabled={switchTenant.isPending} className="self-start">
+            Trocar
+          </Button>
+        </form>
       </Drawer>
     </header>
   );

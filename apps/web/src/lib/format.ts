@@ -1,0 +1,30 @@
+/**
+ * Formats a date-only value ("YYYY-MM-DD", or an ISO datetime at UTC
+ * midnight as Prisma/JSON serializes `@db.Date` columns) as dd/mm/yyyy.
+ *
+ * `new Date(v).toLocaleDateString('pt-BR')` looks right but shifts the date
+ * back a day for anyone in a timezone behind UTC (all of Brazil) — the
+ * value has no time-of-day meaning, so it must be read back in UTC instead
+ * of the browser's local timezone.
+ */
+export function formatDate(v: string): string {
+  return new Date(v).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
+/** Formats digits as a Brazilian phone number while typing: (11) 91234-5678 / (11) 1234-5678. */
+export function maskPhoneBR(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+/** Formats digits as a CPF while typing: 123.456.789-01. */
+export function maskCPF(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}

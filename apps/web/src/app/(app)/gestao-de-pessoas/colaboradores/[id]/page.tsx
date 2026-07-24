@@ -5,7 +5,15 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { maskCPF, maskPhoneBR } from '@/lib/format';
 import { Badge, Button, Card, KpiCard } from '@/components/ui';
+
+const ESCOLARIDADE_OPTIONS = [
+  'Fundamental incompleto', 'Fundamental completo', 'Médio incompleto', 'Médio completo',
+  'Superior incompleto', 'Superior completo', 'Pós-graduação', 'Mestrado', 'Doutorado',
+];
+const ESTADO_CIVIL_OPTIONS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União estável'];
+const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 
 interface DocumentRequirementStatus {
   id: string;
@@ -116,7 +124,7 @@ function formatBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 function formatDate(v: string) {
-  return new Date(v).toLocaleDateString('pt-BR');
+  return new Date(v).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
 export default function EmployeeProfilePage() {
@@ -409,17 +417,17 @@ export default function EmployeeProfilePage() {
                 <Section title="Informações de contato">
                   <div className="grid grid-cols-2 gap-3">
                     <EditField label="E-mail" value={edit.email} onChange={(v) => setEdit({ ...edit, email: v })} />
-                    <EditField label="Telefone" value={edit.telefone} onChange={(v) => setEdit({ ...edit, telefone: v })} />
+                    <EditField label="Telefone" value={edit.telefone} onChange={(v) => setEdit({ ...edit, telefone: maskPhoneBR(v) })} />
                     <EditField label="Endereço" value={edit.endereco} onChange={(v) => setEdit({ ...edit, endereco: v })} className="col-span-2" />
                     <EditField label="Contato de emergência (nome)" value={edit.contatoEmergenciaNome} onChange={(v) => setEdit({ ...edit, contatoEmergenciaNome: v })} />
-                    <EditField label="Contato de emergência (telefone)" value={edit.contatoEmergenciaTelefone} onChange={(v) => setEdit({ ...edit, contatoEmergenciaTelefone: v })} />
+                    <EditField label="Contato de emergência (telefone)" value={edit.contatoEmergenciaTelefone} onChange={(v) => setEdit({ ...edit, contatoEmergenciaTelefone: maskPhoneBR(v) })} />
                   </div>
                 </Section>
 
                 <Section title="Cônjuge">
                   <div className="grid grid-cols-2 gap-3">
                     <EditField label="Nome" value={edit.conjugeNome} onChange={(v) => setEdit({ ...edit, conjugeNome: v })} />
-                    <EditField label="CPF" value={edit.conjugeCpf} onChange={(v) => setEdit({ ...edit, conjugeCpf: v })} />
+                    <EditField label="CPF" value={edit.conjugeCpf} onChange={(v) => setEdit({ ...edit, conjugeCpf: maskCPF(v) })} />
                   </div>
                 </Section>
               </div>
@@ -427,18 +435,18 @@ export default function EmployeeProfilePage() {
               <Section title="Dados pessoais">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <EditField label="Data de nascimento" type="date" value={edit.dataNascimento} onChange={(v) => setEdit({ ...edit, dataNascimento: v })} />
-                  <EditField label="Escolaridade" value={edit.escolaridade} onChange={(v) => setEdit({ ...edit, escolaridade: v })} />
-                  <EditField label="Estado civil" value={edit.estadoCivil} onChange={(v) => setEdit({ ...edit, estadoCivil: v })} />
+                  <SelectField label="Escolaridade" value={edit.escolaridade} onChange={(v) => setEdit({ ...edit, escolaridade: v })} options={ESCOLARIDADE_OPTIONS} />
+                  <SelectField label="Estado civil" value={edit.estadoCivil} onChange={(v) => setEdit({ ...edit, estadoCivil: v })} options={ESTADO_CIVIL_OPTIONS} />
                   <EditField label="Nacionalidade" value={edit.nacionalidade} onChange={(v) => setEdit({ ...edit, nacionalidade: v })} />
                   <EditField label="Nome da mãe" value={edit.nomeMae} onChange={(v) => setEdit({ ...edit, nomeMae: v })} />
                   <EditField label="Nome do pai" value={edit.nomePai} onChange={(v) => setEdit({ ...edit, nomePai: v })} />
-                  <EditField label="Gênero" value={edit.genero} onChange={(v) => setEdit({ ...edit, genero: v })} />
+                  <SelectField label="Gênero" value={edit.genero} onChange={(v) => setEdit({ ...edit, genero: v })} options={GENERO_OPTIONS} />
                   <EditField label="CNH" value={edit.cnh} onChange={(v) => setEdit({ ...edit, cnh: v })} />
                   <EditField label="RG" value={edit.rg} onChange={(v) => setEdit({ ...edit, rg: v })} />
                   <EditField label="Título de eleitor" value={edit.tituloEleitor} onChange={(v) => setEdit({ ...edit, tituloEleitor: v })} />
                   <EditField label="PIS" value={edit.pis} onChange={(v) => setEdit({ ...edit, pis: v })} />
                   <EditField label="CTPS" value={edit.ctps} onChange={(v) => setEdit({ ...edit, ctps: v })} />
-                  <EditField label="CPF" value={edit.cpf} onChange={(v) => setEdit({ ...edit, cpf: v })} />
+                  <EditField label="CPF" value={edit.cpf} onChange={(v) => setEdit({ ...edit, cpf: maskCPF(v) })} />
                 </div>
               </Section>
 
@@ -678,6 +686,39 @@ function Row({ label, value, className = '' }: { label: string; value: React.Rea
       <span className="text-xs text-text-tertiary">{label}</span>
       <span className="font-medium text-text">{value}</span>
     </div>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  className = '',
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  className?: string;
+}) {
+  return (
+    <label className={`flex flex-col gap-1.5 text-sm ${className}`}>
+      <span className="text-text-secondary">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+      >
+        <option value="">Não informado</option>
+        {value && !options.includes(value) && <option value={value}>{value}</option>}
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

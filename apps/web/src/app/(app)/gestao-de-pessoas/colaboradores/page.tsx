@@ -426,7 +426,7 @@ export default function ColaboradoresPage() {
                 </td>
                 <td className="px-5 py-3">{e.cargo}</td>
                 <td className="px-5 py-3 text-text-secondary">{e.departamento}</td>
-                <td className="px-5 py-3 text-text-secondary">{new Date(e.dataAdmissao).toLocaleDateString('pt-BR')}</td>
+                <td className="px-5 py-3 text-text-secondary">{new Date(e.dataAdmissao).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td className="px-5 py-3">
                   <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
                 </td>
