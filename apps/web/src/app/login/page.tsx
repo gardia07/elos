@@ -94,6 +94,9 @@ export default function LoginPage() {
             >
               Esqueci minha senha
             </button>
+            <Link href="/cadastro" className="text-center text-sm text-text-secondary hover:text-accent">
+              Cadastrar minha empresa
+            </Link>
           </form>
         )}
 
