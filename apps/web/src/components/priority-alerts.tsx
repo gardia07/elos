@@ -38,9 +38,9 @@ export function PriorityAlerts({
   onResolver?: (id: string) => void;
 }) {
   return (
-    <div className="rounded-[14px] bg-white p-4 shadow-[0_2px_16px_rgba(31,31,31,0.06)]">
-      <h3 className="mb-3 text-sm font-bold text-[#1F1F1F]">Alertas prioritários</h3>
-      <div className="flex flex-col gap-2">
+    <div className="flex max-h-[420px] flex-col rounded-[14px] bg-white p-4 shadow-[0_2px_16px_rgba(31,31,31,0.06)]">
+      <h3 className="mb-3 shrink-0 text-sm font-bold text-[#1F1F1F]">Alertas prioritários</h3>
+      <div className="flex flex-col gap-2 overflow-y-auto">
         {alertas.map((alerta) => {
           const cor = categoriaColor[alerta.categoria] ?? SEVERIDADE_COLOR[alerta.severidade];
           const content = (

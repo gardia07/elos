@@ -180,7 +180,7 @@ export default function PainelPage() {
                   {concluidas} de {total} concluídas
                 </span>
               </div>
-              <ul className="flex flex-col gap-2">
+              <ul className="flex max-h-[420px] flex-col gap-2 overflow-y-auto">
                 {timedItems.map((item) => (
                   <li key={`agenda-${item.id}`} className="flex items-start gap-3 rounded-[10px] border border-border p-2.5">
                     <input
