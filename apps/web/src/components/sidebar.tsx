@@ -15,6 +15,7 @@ const HUBS = [
 ];
 
 const FERRAMENTAS = [
+  { label: 'Cadastros', href: '/cadastros', enabled: true },
   { label: 'Aprovações', href: '/aprovacoes', enabled: true },
   { label: 'Ferramentas', href: '/ferramentas', enabled: true },
   { label: 'Configurações', href: '/configuracoes', enabled: true },
