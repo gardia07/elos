@@ -8,6 +8,7 @@ const SUBPAGES = [
   { label: 'Prazos trabalhistas', href: '/dp/prazos' },
   { label: 'CCT/Convenções', href: '/dp/cct' },
   { label: 'Tabela de Cargos', href: '/dp/cargos' },
+  { label: 'Departamentos', href: '/dp/departamentos' },
   { label: 'Benefícios', href: '/dp/beneficios' },
   { label: 'Uniforme e EPI', href: '/dp/uniforme' },
   { label: 'Ponto Eletrônico', href: '/dp/ponto' },

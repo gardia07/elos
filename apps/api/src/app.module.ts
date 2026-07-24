@@ -18,6 +18,7 @@ import { TerminationsModule } from './rh/terminations/terminations.module';
 import { DeadlinesModule } from './dp/deadlines/deadlines.module';
 import { AgreementsModule } from './dp/agreements/agreements.module';
 import { JobGradesModule } from './dp/job-grades/job-grades.module';
+import { DepartmentsModule } from './dp/departments/departments.module';
 import { BenefitsModule } from './dp/benefits/benefits.module';
 import { EquipmentModule } from './dp/equipment/equipment.module';
 import { TimeclockModule } from './dp/timeclock/timeclock.module';
@@ -55,6 +56,7 @@ import { SearchModule } from './search/search.module';
     DeadlinesModule,
     AgreementsModule,
     JobGradesModule,
+    DepartmentsModule,
     BenefitsModule,
     EquipmentModule,
     TimeclockModule,

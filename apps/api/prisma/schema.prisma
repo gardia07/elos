@@ -55,6 +55,7 @@ model Tenant {
   laborDeadlines       LaborDeadline[]
   collectiveAgreements CollectiveAgreement[]
   jobGrades            JobGrade[]
+  departments          Department[]
   benefits             Benefit[]
   benefitEnrollments   BenefitEnrollment[]
   equipmentItems       EquipmentItem[]
@@ -752,6 +753,7 @@ model JobGrade {
   id         String  @id @default(uuid()) @db.Uuid
   tenantId   String  @db.Uuid
   cargo      String
+  cbo        String?
   faixaMin   Decimal @db.Decimal(12, 2)
   faixaMax   Decimal @db.Decimal(12, 2)
   nivel      String
@@ -761,6 +763,19 @@ model JobGrade {
 
   @@index([tenantId])
   @@map("job_grades")
+}
+
+model Department {
+  id        String  @id @default(uuid()) @db.Uuid
+  tenantId  String  @db.Uuid
+  nome      String
+  descricao String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@map("departments")
 }
 
 model Benefit {

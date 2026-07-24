@@ -8,6 +8,7 @@ import { Button, Card } from '@/components/ui';
 interface JobGrade {
   id: string;
   cargo: string;
+  cbo: string | null;
   faixaMin: string;
   faixaMax: string;
   nivel: string;
@@ -22,6 +23,7 @@ export default function CargosPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [cargo, setCargo] = useState('');
+  const [cbo, setCbo] = useState('');
   const [faixaMin, setFaixaMin] = useState('');
   const [faixaMax, setFaixaMax] = useState('');
   const [nivel, setNivel] = useState('');
@@ -36,6 +38,7 @@ export default function CargosPage() {
     mutationFn: async () =>
       api.post('/dp/job-grades', {
         cargo,
+        cbo: cbo || undefined,
         faixaMin: Number(faixaMin),
         faixaMax: Number(faixaMax),
         nivel,
@@ -44,6 +47,12 @@ export default function CargosPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dp', 'job-grades'] });
       setShowForm(false);
+      setCargo('');
+      setCbo('');
+      setFaixaMin('');
+      setFaixaMax('');
+      setNivel('');
+      setRequisitos('');
     },
   });
 
@@ -65,6 +74,10 @@ export default function CargosPage() {
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Cargo</span>
               <input value={cargo} onChange={(e) => setCargo(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">CBO</span>
+              <input value={cbo} onChange={(e) => setCbo(e.target.value)} placeholder="0000-00" className="w-28 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Faixa mín.</span>
@@ -94,6 +107,7 @@ export default function CargosPage() {
           <thead>
             <tr className="text-left text-text-tertiary">
               <th className="pb-2">Cargo</th>
+              <th className="pb-2">CBO</th>
               <th className="pb-2">Faixa salarial</th>
               <th className="pb-2">Nível</th>
               <th className="pb-2">Requisitos</th>
@@ -103,6 +117,7 @@ export default function CargosPage() {
             {data?.map((g) => (
               <tr key={g.id} className="border-t border-divider">
                 <td className="py-2">{g.cargo}</td>
+                <td className="py-2 text-text-secondary">{g.cbo ?? '—'}</td>
                 <td className="py-2 text-text-secondary">
                   {formatBRL(Number(g.faixaMin))} – {formatBRL(Number(g.faixaMax))}
                 </td>
