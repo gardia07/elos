@@ -53,9 +53,8 @@ export class DashboardService {
     ]);
     const pendenciasAbertas = pontoPendente + feriasPendente + admissoesAbertas + desligamentosAbertos;
 
-    await this.refreshTasks();
+    const { conformidadeDocumental } = await this.refreshTasks();
     const complianceOverview = await this.compliance.get();
-    const { overall: conformidadeDocumental } = await this.documents.complianceOverview();
     // Um único índice para "a empresa inteira": documentação obrigatória dos
     // colaboradores + programa de ética/políticas, não dois números soltos.
     const conformidadeGeral = Math.round((conformidadeDocumental + complianceOverview.maturidade) / 2);
@@ -89,16 +88,17 @@ export class DashboardService {
   }
 
   async alerts(): Promise<Alert[]> {
-    return this.refreshTasks();
+    const { alerts } = await this.refreshTasks();
+    return alerts;
   }
 
-  private async refreshTasks(): Promise<Alert[]> {
-    const alertas = await this.buildAlerts();
-    await this.syncTasksFromAlerts(alertas);
-    return alertas;
+  private async refreshTasks(): Promise<{ alerts: Alert[]; conformidadeDocumental: number }> {
+    const { alerts, conformidadeDocumental } = await this.buildAlerts();
+    await this.syncTasksFromAlerts(alerts);
+    return { alerts, conformidadeDocumental };
   }
 
-  private async buildAlerts(): Promise<Alert[]> {
+  private async buildAlerts(): Promise<{ alerts: Alert[]; conformidadeDocumental: number }> {
     const db = this.db();
     const hoje = new Date();
     const em30dias = new Date(hoje.getTime() + 30 * 86_400_000);
@@ -215,8 +215,12 @@ export class DashboardService {
     }
 
     // Documentação obrigatória incompleta (CLT + requisitos configurados),
-    // um alerta por colaborador que ainda não está 100% conforme.
-    const { byEmployee: conformidadePorEmployee } = await this.documents.complianceOverview(empregadosAtivos.map((e) => e.id));
+    // um alerta por colaborador que ainda não está 100% conforme. Computado
+    // uma única vez aqui e reaproveitado pelo KPI de conformidade geral
+    // (kpis() lê o retorno desta função em vez de chamar complianceOverview
+    // de novo) — essa duplicação era o principal gargalo do painel.
+    const { overall: conformidadeDocumental, byEmployee: conformidadePorEmployee } =
+      await this.documents.complianceOverview(empregadosAtivos.map((e) => e.id));
     for (const empregado of empregadosAtivos) {
       const conformidade = conformidadePorEmployee[empregado.id] ?? 100;
       if (conformidade >= 100) continue;
@@ -229,7 +233,7 @@ export class DashboardService {
       });
     }
 
-    return alerts;
+    return { alerts, conformidadeDocumental };
   }
 
   /**

@@ -120,11 +120,15 @@ export class DocumentsService {
     const requirements = await db.documentRequirement.findMany({ where: { ativo: true } });
     const applicable = requirements.filter((r) => appliesToEmployee(r, employee));
 
-    for (const requirement of applicable) {
-      await db.employeeDocumentRequirement.upsert({
-        where: { employeeId_requirementId: { employeeId, requirementId: requirement.id } },
-        create: { employeeId, requirementId: requirement.id },
-        update: {},
+    // One batched insert instead of an upsert per requirement — the update
+    // branch was always a no-op ({}), so this only ever needed "create the
+    // rows that don't exist yet", which createMany does in a single round
+    // trip. The per-row loop was the main cost of computing compliance for a
+    // whole tenant (N employees × ~11 sequential awaits each).
+    if (applicable.length > 0) {
+      await db.employeeDocumentRequirement.createMany({
+        data: applicable.map((r) => ({ employeeId, requirementId: r.id })),
+        skipDuplicates: true,
       });
     }
 
@@ -213,21 +217,35 @@ export class DocumentsService {
       where: employeeIds ? { id: { in: employeeIds } } : { status: 'ATIVO' },
     });
 
+    // Independent per-employee, so run concurrently instead of one at a time
+    // — sequential awaits here is what made this scale linearly (and badly)
+    // with headcount.
+    const results = await Promise.all(
+      employees.map(async (employee) => {
+        const { applicable } = await this.syncForEmployee(employee.id);
+        const rows = await db.employeeDocumentRequirement.findMany({
+          where: { employeeId: employee.id, requirementId: { in: applicable.map((r) => r.id) } },
+          include: { requirement: true },
+        });
+        const required = rows.filter((r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA');
+        const missingFields = missingMandatoryFields(employee);
+        const { compliance } = await this.recalcCompliance(employee.id, rows, employee);
+        return {
+          employeeId: employee.id,
+          compliance,
+          requiredCount: required.length + MANDATORY_FIELDS.length,
+          compliantCount: required.filter((r) => r.status === 'COMPLIANT').length + (MANDATORY_FIELDS.length - missingFields.length),
+        };
+      }),
+    );
+
     const byEmployee: Record<string, number> = {};
     let totalItems = 0;
     let totalCompliant = 0;
-
-    for (const employee of employees) {
-      const { applicable } = await this.syncForEmployee(employee.id);
-      const rows = await db.employeeDocumentRequirement.findMany({
-        where: { employeeId: employee.id, requirementId: { in: applicable.map((r) => r.id) } },
-        include: { requirement: true },
-      });
-      const required = rows.filter((r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA');
-      const missingFields = missingMandatoryFields(employee);
-      totalItems += required.length + MANDATORY_FIELDS.length;
-      totalCompliant += required.filter((r) => r.status === 'COMPLIANT').length + (MANDATORY_FIELDS.length - missingFields.length);
-      byEmployee[employee.id] = (await this.recalcCompliance(employee.id, rows, employee)).compliance;
+    for (const r of results) {
+      byEmployee[r.employeeId] = r.compliance;
+      totalItems += r.requiredCount;
+      totalCompliant += r.compliantCount;
     }
 
     const overall = totalItems ? Math.round((100 * totalCompliant) / totalItems) : 100;
@@ -239,9 +257,7 @@ export class DocumentsService {
     const db = this.db();
     const employees = await db.employee.findMany({ where: { status: 'ATIVO' } });
 
-    for (const employee of employees) {
-      await this.syncForEmployee(employee.id);
-    }
+    await Promise.all(employees.map((employee) => this.syncForEmployee(employee.id)));
 
     const rows = await db.employeeDocumentRequirement.findMany({
       include: { requirement: true, employee: { select: { nome: true } } },
