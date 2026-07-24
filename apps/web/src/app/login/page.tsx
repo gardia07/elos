@@ -13,8 +13,8 @@ export default function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>('credentials');
-  const [tenantSlug, setTenantSlug] = useState('grupo-vitalis');
-  const [email, setEmail] = useState('admin@vitalis.com');
+  const [tenantSlug, setTenantSlug] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginTicket, setLoginTicket] = useState('');
   const [devCode, setDevCode] = useState('');
