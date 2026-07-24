@@ -95,6 +95,12 @@ export class AuthService {
       });
     }
 
+    await this.email.send(
+      dto.email,
+      'Bem-vindo à Plataforma Elos',
+      `<p>Olá, ${dto.adminName}!</p><p>Sua empresa <strong>${dto.companyName}</strong> foi cadastrada com sucesso na Plataforma Elos.</p><p>Para entrar, use o identificador da empresa: <strong>${slug}</strong></p>`,
+    );
+
     return { tenantSlug: tenant.slug };
   }
 
