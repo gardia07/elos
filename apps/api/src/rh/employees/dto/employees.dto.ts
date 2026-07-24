@@ -1,6 +1,9 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
+/** IsOptional() only skips validation for undefined/null — an empty string from a cleared date input still needs to pass IsDateString(), so blank it out to undefined first. */
+const EmptyStringToUndefined = () => Transform(({ value }) => (value === '' ? undefined : value));
+
 export class CreateEmployeeDto {
   @IsOptional() @IsString() matricula?: string;
   @IsString() nome!: string;
@@ -33,7 +36,7 @@ export class ListEmployeesQueryDto {
 export class UpdateEmployeeDto {
   // Contratuais
   @IsOptional() @IsString() matricula?: string;
-  @IsOptional() @IsDateString() dataAdmissao?: string;
+  @IsOptional() @EmptyStringToUndefined() @IsDateString() dataAdmissao?: string;
   @IsOptional() @IsString() cargo?: string;
   @IsOptional() @IsString() departamento?: string;
   @IsOptional() @IsString() filial?: string;
@@ -50,7 +53,7 @@ export class UpdateEmployeeDto {
   // Dados pessoais
   @IsOptional() @IsString() cpf?: string;
   @IsOptional() @IsString() rg?: string;
-  @IsOptional() @IsDateString() dataNascimento?: string;
+  @IsOptional() @EmptyStringToUndefined() @IsDateString() dataNascimento?: string;
   @IsOptional() @IsString() nacionalidade?: string;
   @IsOptional() @IsString() estadoCivil?: string;
   @IsOptional() @IsString() genero?: string;
@@ -76,7 +79,7 @@ export class AddDependenteDto {
   @IsString() nome!: string;
   @IsString() parentesco!: string;
   @IsOptional() @IsString() cpf?: string;
-  @IsOptional() @IsDateString() dataNascimento?: string;
+  @IsOptional() @EmptyStringToUndefined() @IsDateString() dataNascimento?: string;
 }
 
 export class AddDocumentoDto {

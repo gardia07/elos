@@ -17,6 +17,20 @@ model Tenant {
   slug       String   @unique
   razaoSocial String?
   cnpj       String?
+  inscricaoEstadual  String?
+  inscricaoMunicipal String?
+  cnae               String?
+  regimeTributario   RegimeTributario?
+  cep          String?
+  logradouro   String?
+  numero       String?
+  complemento  String?
+  bairro       String?
+  cidade       String?
+  uf           String?
+  representanteLegalNome  String?
+  representanteLegalCpf   String?
+  representanteLegalCargo String?
   createdAt  DateTime @default(now())
 
   users                    User[]
@@ -162,6 +176,14 @@ enum JobContrato {
   PJ
 
   @@map("job_contrato")
+}
+
+enum RegimeTributario {
+  SIMPLES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+
+  @@map("regime_tributario")
 }
 
 enum JobStatus {
