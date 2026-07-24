@@ -212,7 +212,8 @@ export default function EmployeeProfilePage() {
 
   const { data: compliance } = useQuery({
     queryKey: ['rh', 'documents', id],
-    queryFn: async () => (await api.get<{ compliance: number; documentos: DocumentRequirementStatus[] }>(`/rh/documents/employees/${id}`)).data,
+    queryFn: async () =>
+      (await api.get<{ compliance: number; missingFields: string[]; documentos: DocumentRequirementStatus[] }>(`/rh/documents/employees/${id}`)).data,
     enabled: tab === 'documentos',
   });
 
@@ -566,6 +567,12 @@ export default function EmployeeProfilePage() {
                 {compliance?.compliance ?? 0}%
               </Badge>
             </div>
+            {!!compliance?.missingFields.length && (
+              <div className="mb-3 rounded-[10px] border border-danger/30 bg-danger/5 p-3">
+                <p className="mb-1 text-xs font-semibold text-danger">Informações cadastrais obrigatórias pendentes:</p>
+                <p className="text-xs text-text-secondary">{compliance.missingFields.join(', ')}</p>
+              </div>
+            )}
             {compliance && compliance.documentos.length === 0 && (
               <p className="text-sm text-text-tertiary">Nenhum documento obrigatório se aplica a este colaborador.</p>
             )}

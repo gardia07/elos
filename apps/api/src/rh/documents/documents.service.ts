@@ -11,6 +11,32 @@ interface EmployeeLike {
   cargo: string;
 }
 
+interface EmployeeMandatoryFields {
+  cpf: string | null;
+  rg: string | null;
+  pis: string | null;
+  ctps: string | null;
+  dataNascimento: Date | null;
+  endereco: string | null;
+}
+
+// Core CLT/eSocial identification data — always counted against compliance,
+// even for a tenant with no DocumentRequirement configured yet, so a
+// freshly-created employee with nothing filled in doesn't read as "100%
+// conforme" just because there's nothing to compare against.
+const MANDATORY_FIELDS: { key: keyof EmployeeMandatoryFields; label: string }[] = [
+  { key: 'cpf', label: 'CPF' },
+  { key: 'rg', label: 'RG' },
+  { key: 'pis', label: 'PIS' },
+  { key: 'ctps', label: 'CTPS' },
+  { key: 'dataNascimento', label: 'Data de nascimento' },
+  { key: 'endereco', label: 'Endereço' },
+];
+
+function missingMandatoryFields(employee: EmployeeMandatoryFields): string[] {
+  return MANDATORY_FIELDS.filter((f) => !employee[f.key]).map((f) => f.label);
+}
+
 interface RequirementLike {
   ativo: boolean;
   aplicaStatus: string[];
@@ -97,7 +123,7 @@ export class DocumentsService {
   }
 
   async listForEmployee(employeeId: string) {
-    const { applicable } = await this.syncForEmployee(employeeId);
+    const { employee, applicable } = await this.syncForEmployee(employeeId);
     const db = this.db();
 
     const rows = await db.employeeDocumentRequirement.findMany({
@@ -114,12 +140,15 @@ export class DocumentsService {
       }
     }
 
-    const compliance = await this.recalcCompliance(employeeId, rows);
-    return { compliance, documentos: rows };
+    const { compliance, missingFields } = await this.recalcCompliance(employeeId, rows, employee);
+    return { compliance, missingFields, documentos: rows };
   }
 
   async setStatus(employeeId: string, requirementId: string, dto: SetDocumentStatusDto) {
     const db = this.db();
+    const employee = await db.employee.findUnique({ where: { id: employeeId } });
+    if (!employee) throw new NotFoundException('Colaborador não encontrado.');
+
     const requirement = await db.documentRequirement.findUnique({ where: { id: requirementId } });
     if (!requirement) throw new NotFoundException('Requisito não encontrado.');
 
@@ -134,21 +163,25 @@ export class DocumentsService {
     });
 
     const rows = await db.employeeDocumentRequirement.findMany({ where: { employeeId }, include: { requirement: true } });
-    const compliance = await this.recalcCompliance(employeeId, rows);
+    const { compliance, missingFields } = await this.recalcCompliance(employeeId, rows, employee);
     await this.audit.log('employee', employeeId, 'documento_status_atualizado', { requirementId, status: dto.status });
-    return { compliance };
+    return { compliance, missingFields };
   }
 
   private async recalcCompliance(
     employeeId: string,
     rows: { status: string; requirement: { obrigatorio: boolean } }[],
+    employee: EmployeeMandatoryFields,
   ) {
     const required = rows.filter((r) => r.requirement.obrigatorio);
-    const compliance = required.length
-      ? Math.round((100 * required.filter((r) => r.status === 'COMPLIANT').length) / required.length)
-      : 100;
+    const missingFields = missingMandatoryFields(employee);
+
+    const totalItems = required.length + MANDATORY_FIELDS.length;
+    const compliantItems = required.filter((r) => r.status === 'COMPLIANT').length + (MANDATORY_FIELDS.length - missingFields.length);
+    const compliance = totalItems ? Math.round((100 * compliantItems) / totalItems) : 100;
+
     await this.db().employee.update({ where: { id: employeeId }, data: { conformidadeDocumental: compliance } });
-    return compliance;
+    return { compliance, missingFields };
   }
 
   /**
@@ -165,7 +198,7 @@ export class DocumentsService {
     });
 
     const byEmployee: Record<string, number> = {};
-    let totalRequired = 0;
+    let totalItems = 0;
     let totalCompliant = 0;
 
     for (const employee of employees) {
@@ -175,12 +208,13 @@ export class DocumentsService {
         include: { requirement: true },
       });
       const required = rows.filter((r) => r.requirement.obrigatorio);
-      totalRequired += required.length;
-      totalCompliant += required.filter((r) => r.status === 'COMPLIANT').length;
-      byEmployee[employee.id] = await this.recalcCompliance(employee.id, rows);
+      const missingFields = missingMandatoryFields(employee);
+      totalItems += required.length + MANDATORY_FIELDS.length;
+      totalCompliant += required.filter((r) => r.status === 'COMPLIANT').length + (MANDATORY_FIELDS.length - missingFields.length);
+      byEmployee[employee.id] = (await this.recalcCompliance(employee.id, rows, employee)).compliance;
     }
 
-    const overall = totalRequired ? Math.round((100 * totalCompliant) / totalRequired) : 100;
+    const overall = totalItems ? Math.round((100 * totalCompliant) / totalItems) : 100;
     return { overall, byEmployee };
   }
 
