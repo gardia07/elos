@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 
 const HUBS = [
   { label: 'Área de trabalho', href: '/painel', enabled: true },
@@ -28,11 +29,13 @@ const OUTROS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { tenant } = useAuth();
 
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-6 bg-accent px-4 py-6 text-on-accent">
-      <div className="flex justify-center px-2">
+      <div className="flex flex-col items-center gap-1 px-2">
         <Image src="/logo-elos-cream.png" alt="elos" width={965} height={562} className="h-8 w-auto" />
+        {tenant?.name && <span className="text-xs font-medium text-on-accent/70">{tenant.name}</span>}
       </div>
 
       <nav className="flex flex-col gap-1">
