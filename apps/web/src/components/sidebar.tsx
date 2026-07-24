@@ -32,6 +32,7 @@ export function Sidebar() {
   const { tenant } = useAuth();
 
   const nomeEmpresa = tenant?.nomeFantasia || tenant?.name;
+  const inicialEmpresa = nomeEmpresa?.[0]?.toUpperCase();
 
   return (
     <aside className="flex w-60 shrink-0 flex-col bg-accent py-6 text-on-accent">
@@ -39,15 +40,9 @@ export function Sidebar() {
         <Image src="/logo-elos-cream.png" alt="elos" width={965} height={562} className="h-8 w-auto" />
       </div>
 
-      <div className="border-t border-on-accent/15" />
-
-      {nomeEmpresa && (
-        <div className="px-4 py-3 text-center text-sm font-semibold text-on-accent">{nomeEmpresa}</div>
-      )}
-
       <div className="mb-4 border-t border-on-accent/15" />
 
-      <div className="flex flex-col gap-6 px-4">
+      <div className="flex flex-1 flex-col gap-6 px-4">
       <nav className="flex flex-col gap-1">
         {HUBS.map((hub) => (
           <NavItem key={hub.href} {...hub} active={pathname?.startsWith(hub.href)} />
@@ -73,6 +68,18 @@ export function Sidebar() {
         </nav>
       </div>
       </div>
+
+      {nomeEmpresa && (
+        <>
+          <div className="mt-4 border-t border-on-accent/15" />
+          <div className="flex items-center gap-2.5 px-4 pt-4">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-semibold text-on-accent">
+              {inicialEmpresa}
+            </span>
+            <span className="truncate text-sm font-medium text-on-accent">{nomeEmpresa}</span>
+          </div>
+        </>
+      )}
     </aside>
   );
 }

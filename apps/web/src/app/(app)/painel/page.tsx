@@ -117,7 +117,7 @@ export default function PainelPage() {
   const alertasPrioritarios: PriorityAlert[] = (tasks ?? [])
     .filter((t) => t.origem === 'SISTEMA')
     .sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade])
-    .map((t) => ({ categoria: t.modulo, mensagem: t.titulo, severidade: PRIORIDADE_SEVERIDADE[t.prioridade], href: t.detalhes?.href }));
+    .map((t) => ({ id: t.id, categoria: t.modulo, mensagem: t.titulo, severidade: PRIORIDADE_SEVERIDADE[t.prioridade], href: t.detalhes?.href }));
 
   const concluidas = timedItems.filter((i) => i.concluida).length;
   const total = timedItems.length + taskItems.length;
@@ -150,88 +150,92 @@ export default function PainelPage() {
             />
           </div>
 
-          <PriorityAlerts alertas={alertasPrioritarios} />
-
-          <Card>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Agenda do dia</h3>
-              <span className="text-xs text-text-tertiary">
-                {concluidas} de {total} concluídas
-              </span>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-2">
+              <PriorityAlerts alertas={alertasPrioritarios} onResolver={(id) => completeTask.mutate(id)} />
             </div>
-            <ul className="flex flex-col gap-2">
-              {timedItems.map((item) => (
-                <li key={`agenda-${item.id}`} className="flex items-start gap-3 rounded-[10px] border border-border p-2.5">
-                  <input
-                    type="checkbox"
-                    checked={item.concluida}
-                    onChange={(e) => toggleItem.mutate({ id: item.id, concluida: e.target.checked })}
-                    className="mt-0.5"
-                  />
-                  <div>
-                    {item.hora && <div className="text-xs font-medium text-text-tertiary">{item.hora}</div>}
-                    <div className={`text-sm ${item.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{item.descricao}</div>
-                  </div>
-                </li>
-              ))}
-              {taskItems.map((t) => {
-                const href = t.detalhes?.href;
-                const row = (
-                  <>
+
+            <Card className="lg:col-span-3">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Agenda do dia</h3>
+                <span className="text-xs text-text-tertiary">
+                  {concluidas} de {total} concluídas
+                </span>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {timedItems.map((item) => (
+                  <li key={`agenda-${item.id}`} className="flex items-start gap-3 rounded-[10px] border border-border p-2.5">
                     <input
                       type="checkbox"
-                      checked={false}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        completeTask.mutate(t.id);
-                      }}
+                      checked={item.concluida}
+                      onChange={(e) => toggleItem.mutate({ id: item.id, concluida: e.target.checked })}
                       className="mt-0.5"
                     />
-                    <Badge tone={PRIORIDADE_TONE[t.prioridade]}>{t.modulo}</Badge>
-                    <span className="flex-1 text-sm">{t.titulo}</span>
-                  </>
-                );
-                return (
-                  <li key={`task-${t.id}`}>
-                    {href ? (
-                      <Link href={href} className="flex items-start gap-3 rounded-[10px] border border-border p-2.5 hover:border-accent">
-                        {row}
-                      </Link>
-                    ) : (
-                      <div className="flex items-start gap-3 rounded-[10px] border border-border p-2.5">{row}</div>
-                    )}
+                    <div>
+                      {item.hora && <div className="text-xs font-medium text-text-tertiary">{item.hora}</div>}
+                      <div className={`text-sm ${item.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{item.descricao}</div>
+                    </div>
                   </li>
-                );
-              })}
-              {total === 0 && <p className="text-sm text-text-tertiary">Nada pendente para hoje.</p>}
-            </ul>
+                ))}
+                {taskItems.map((t) => {
+                  const href = t.detalhes?.href;
+                  const row = (
+                    <>
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          completeTask.mutate(t.id);
+                        }}
+                        className="mt-0.5"
+                      />
+                      <Badge tone={PRIORIDADE_TONE[t.prioridade]}>{t.modulo}</Badge>
+                      <span className="flex-1 text-sm">{t.titulo}</span>
+                    </>
+                  );
+                  return (
+                    <li key={`task-${t.id}`}>
+                      {href ? (
+                        <Link href={href} className="flex items-start gap-3 rounded-[10px] border border-border p-2.5 hover:border-accent">
+                          {row}
+                        </Link>
+                      ) : (
+                        <div className="flex items-start gap-3 rounded-[10px] border border-border p-2.5">{row}</div>
+                      )}
+                    </li>
+                  );
+                })}
+                {total === 0 && <p className="text-sm text-text-tertiary">Nada pendente para hoje.</p>}
+              </ul>
 
-            <form
-              className="mt-3 flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                createItem.mutate();
-              }}
-            >
-              <input
-                type="time"
-                value={novaHora}
-                onChange={(e) => setNovaHora(e.target.value)}
-                className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
-              />
-              <input
-                value={novaDescricao}
-                onChange={(e) => setNovaDescricao(e.target.value)}
-                placeholder="Novo item da agenda…"
-                required
-                className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-1.5 text-sm"
-              />
-              <Button type="submit" disabled={createItem.isPending}>
-                Adicionar
-              </Button>
-            </form>
-          </Card>
+              <form
+                className="mt-3 flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  createItem.mutate();
+                }}
+              >
+                <input
+                  type="time"
+                  value={novaHora}
+                  onChange={(e) => setNovaHora(e.target.value)}
+                  className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                />
+                <input
+                  value={novaDescricao}
+                  onChange={(e) => setNovaDescricao(e.target.value)}
+                  placeholder="Novo item da agenda…"
+                  required
+                  className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-1.5 text-sm"
+                />
+                <Button type="submit" disabled={createItem.isPending}>
+                  Adicionar
+                </Button>
+              </form>
+            </Card>
+          </div>
         </div>
       </main>
     </>
