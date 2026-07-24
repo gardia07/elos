@@ -106,12 +106,26 @@ export class DashboardService {
 
     const alerts: Alert[] = [];
 
-    const [admissoesPendentes, prazosPendentes, colaboradoresFeriasVencendo, cctsSemReajuste, equipamentos] = await Promise.all([
+    const [
+      admissoesPendentes,
+      prazosPendentes,
+      colaboradoresFeriasVencendo,
+      cctsSemReajuste,
+      equipamentos,
+      pontosPendentes,
+      feriasSolicitadas,
+      treinamentos,
+      empregadosAtivos,
+    ] = await Promise.all([
       db.admission.findMany({ where: { esocialSent: false, status: { not: 'EFETIVADO' } }, select: { id: true, nome: true } }),
       db.laborDeadline.count({ where: { cumprido: false, vencimento: { lte: em30dias } } }),
       db.employee.findMany({ where: { status: 'ATIVO', feriasVencimento: { lte: em60dias } }, select: { id: true, nome: true, feriasVencimento: true } }),
       db.collectiveAgreement.count({ where: { reajusteAplicadoEm: null, vigenciaFim: { gte: hoje } } }),
       db.equipmentItem.findMany({ select: { id: true, item: true, entregaEm: true, validadeMeses: true, employeeId: true, employee: { select: { nome: true } } } }),
+      db.timeJustification.findMany({ where: { status: 'PENDENTE' }, select: { id: true, data: true, ocorrencia: true, employeeId: true, employee: { select: { nome: true } } } }),
+      db.vacationRequest.findMany({ where: { status: 'PENDENTE' }, select: { id: true, inicio: true, employeeId: true, employee: { select: { nome: true } } } }),
+      db.nrTrainingRecord.findMany({ select: { id: true, curso: true, dataRealizacao: true, validadeMeses: true, employeeId: true, employee: { select: { nome: true } } } }),
+      db.employee.findMany({ where: { status: 'ATIVO' }, select: { id: true, nome: true } }),
     ]);
 
     // Alertas por pessoa/registro — nome de quem precisa da ação e link direto
@@ -167,6 +181,54 @@ export class DashboardService {
         href: e.employeeId ? `/gestao-de-pessoas/colaboradores/${e.employeeId}` : '/dp/uniforme',
       });
     }
+    for (const p of pontosPendentes) {
+      alerts.push({
+        hub: 'DP',
+        alertKey: `dp-ponto-pendente-${p.id}`,
+        prioridade: 'MEDIA',
+        mensagem: `${p.employee.nome} — ocorrência de ponto (${p.ocorrencia}) aguardando justificativa`,
+        href: '/dp/ponto',
+      });
+    }
+
+    for (const f of feriasSolicitadas) {
+      alerts.push({
+        hub: 'RH',
+        alertKey: `rh-ferias-pendente-${f.id}`,
+        prioridade: 'MEDIA',
+        mensagem: `${f.employee.nome} — solicitação de férias aguardando aprovação`,
+        href: `/gestao-de-pessoas/colaboradores/${f.employeeId}`,
+      });
+    }
+
+    for (const t of treinamentos) {
+      const vencimento = addMonths(t.dataRealizacao, t.validadeMeses);
+      const diasRestantes = Math.round((vencimento.getTime() - hoje.getTime()) / 86_400_000);
+      if (diasRestantes > 30) continue;
+      alerts.push({
+        hub: 'SST',
+        alertKey: `sst-treinamento-vencendo-${t.id}`,
+        prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
+        mensagem: `${t.employee.nome} — treinamento ${t.curso} ${diasRestantes < 0 ? 'vencido' : 'vencendo'} (${formatDiasRestantes(vencimento, hoje)})`,
+        href: '/sst/treinamentos-nr',
+      });
+    }
+
+    // Documentação obrigatória incompleta (CLT + requisitos configurados),
+    // um alerta por colaborador que ainda não está 100% conforme.
+    const { byEmployee: conformidadePorEmployee } = await this.documents.complianceOverview(empregadosAtivos.map((e) => e.id));
+    for (const empregado of empregadosAtivos) {
+      const conformidade = conformidadePorEmployee[empregado.id] ?? 100;
+      if (conformidade >= 100) continue;
+      alerts.push({
+        hub: 'RH',
+        alertKey: `rh-documentacao-incompleta-${empregado.id}`,
+        prioridade: conformidade < 50 ? 'ALTA' : 'MEDIA',
+        mensagem: `${empregado.nome} — documentação/cadastro ${conformidade}% conforme`,
+        href: `/gestao-de-pessoas/colaboradores/${empregado.id}?tab=documentos`,
+      });
+    }
+
     return alerts;
   }
 

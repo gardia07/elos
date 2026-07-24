@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { complianceTone, maskCPF, maskPhoneBR } from '@/lib/format';
@@ -136,7 +136,9 @@ export default function EmployeeProfilePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<Tab>('geral');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabParam ?? '') ? (tabParam as Tab) : 'geral');
   const [showPromote, setShowPromote] = useState(false);
   const [novoCargo, setNovoCargo] = useState('');
   const [novoSalario, setNovoSalario] = useState('');
