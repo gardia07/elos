@@ -40,8 +40,6 @@ export function Sidebar() {
         <Image src="/logo-elos-cream.png" alt="elos" width={965} height={562} className="h-8 w-auto" />
       </div>
 
-      <div className="mb-4 border-t border-on-accent/15" />
-
       <div className="flex flex-1 flex-col gap-6 px-4">
       <nav className="flex flex-col gap-1">
         {HUBS.map((hub) => (

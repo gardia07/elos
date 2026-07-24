@@ -918,16 +918,26 @@ model PayrollGuide {
 // Área de trabalho: agenda do dia + bloco de notas com IA
 // ─────────────────────────────────────────────────────────────
 
+enum AgendaItemTipo {
+  REUNIAO
+  PRAZO
+  TAREFA
+  PESSOAL
+
+  @@map("agenda_item_tipo")
+}
+
 model AgendaItem {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
-  userId    String   @db.Uuid
-  data      DateTime @db.Date
+  id        String         @id @default(uuid()) @db.Uuid
+  tenantId  String         @db.Uuid
+  userId    String         @db.Uuid
+  data      DateTime       @db.Date
   hora      String?
   descricao String
-  concluida Boolean  @default(false)
-  origem    String   @default("MANUAL")
-  createdAt DateTime @default(now())
+  tipo      AgendaItemTipo @default(TAREFA)
+  concluida Boolean        @default(false)
+  origem    String         @default("MANUAL")
+  createdAt DateTime       @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

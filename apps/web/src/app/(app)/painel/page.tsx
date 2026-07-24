@@ -33,13 +33,29 @@ const PRIORIDADE_TONE = { BAIXA: 'grey', MEDIA: 'blue', ALTA: 'amber', CRITICA: 
 const PRIORIDADE_PESO = { CRITICA: 3, ALTA: 2, MEDIA: 1, BAIXA: 0 } as const;
 const RISCO_TONE = { Baixo: 'green', Médio: 'amber', Alto: 'red' } as const;
 
+type AgendaItemTipo = 'REUNIAO' | 'PRAZO' | 'TAREFA' | 'PESSOAL';
+
 interface AgendaItem {
   id: string;
   hora: string | null;
   descricao: string;
+  tipo: AgendaItemTipo;
   concluida: boolean;
   origem: string;
 }
+
+const AGENDA_TIPO_COLOR: Record<AgendaItemTipo, string> = {
+  REUNIAO: '#3B82F6',
+  PRAZO: '#A94438',
+  TAREFA: '#6D8A3D',
+  PESSOAL: '#8A7FB0',
+};
+const AGENDA_TIPO_LABEL: Record<AgendaItemTipo, string> = {
+  REUNIAO: 'Reunião',
+  PRAZO: 'Prazo',
+  TAREFA: 'Tarefa',
+  PESSOAL: 'Pessoal',
+};
 
 function todayIso(): string {
   const d = new Date();
@@ -65,6 +81,7 @@ export default function PainelPage() {
   const today = todayIso();
   const [novaHora, setNovaHora] = useState('');
   const [novaDescricao, setNovaDescricao] = useState('');
+  const [novoTipo, setNovoTipo] = useState<AgendaItemTipo>('TAREFA');
 
   const { data: kpis } = useQuery({
     queryKey: ['dashboard', 'kpis'],
@@ -89,11 +106,12 @@ export default function PainelPage() {
   const invalidateAgenda = () => queryClient.invalidateQueries({ queryKey: ['agenda', 'items', today] });
 
   const createItem = useMutation({
-    mutationFn: async () => api.post('/agenda/items', { data: today, hora: novaHora || undefined, descricao: novaDescricao }),
+    mutationFn: async () => api.post('/agenda/items', { data: today, hora: novaHora || undefined, descricao: novaDescricao, tipo: novoTipo }),
     onSuccess: () => {
       invalidateAgenda();
       setNovaHora('');
       setNovaDescricao('');
+      setNovoTipo('TAREFA');
     },
   });
 
@@ -171,6 +189,7 @@ export default function PainelPage() {
                       onChange={(e) => toggleItem.mutate({ id: item.id, concluida: e.target.checked })}
                       className="mt-0.5"
                     />
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: AGENDA_TIPO_COLOR[item.tipo] }} title={AGENDA_TIPO_LABEL[item.tipo]} />
                     <div>
                       {item.hora && <div className="text-xs font-medium text-text-tertiary">{item.hora}</div>}
                       <div className={`text-sm ${item.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{item.descricao}</div>
@@ -230,6 +249,15 @@ export default function PainelPage() {
                   required
                   className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-1.5 text-sm"
                 />
+                <select
+                  value={novoTipo}
+                  onChange={(e) => setNovoTipo(e.target.value as AgendaItemTipo)}
+                  className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                >
+                  {(Object.keys(AGENDA_TIPO_LABEL) as AgendaItemTipo[]).map((t) => (
+                    <option key={t} value={t}>{AGENDA_TIPO_LABEL[t]}</option>
+                  ))}
+                </select>
                 <Button type="submit" disabled={createItem.isPending}>
                   Adicionar
                 </Button>

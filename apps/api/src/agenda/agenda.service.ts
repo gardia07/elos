@@ -33,6 +33,7 @@ export class AgendaService {
         data: startOfDayUtc(dto.data),
         hora: dto.hora,
         descricao: dto.descricao,
+        tipo: dto.tipo,
       },
     });
   }
@@ -41,7 +42,7 @@ export class AgendaService {
     const db = this.db();
     const item = await db.agendaItem.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('Item de agenda não encontrado.');
-    return db.agendaItem.update({ where: { id }, data: { concluida: dto.concluida } });
+    return db.agendaItem.update({ where: { id }, data: { concluida: dto.concluida, tipo: dto.tipo } });
   }
 
   async getNotepad(date: string) {
