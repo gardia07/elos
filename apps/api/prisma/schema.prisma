@@ -16,6 +16,7 @@ model Tenant {
   name       String
   slug       String   @unique
   nomeFantasia String?
+  logoUrl      String?
   razaoSocial String?
   cnpj       String?
   inscricaoEstadual  String?

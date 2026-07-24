@@ -16,4 +16,5 @@ export interface ApiTenant {
   slug: string;
   name: string;
   nomeFantasia: string | null;
+  logoUrl: string | null;
 }

@@ -12,6 +12,7 @@ interface TenantInfo {
   name: string;
   slug: string;
   nomeFantasia: string | null;
+  logoUrl: string | null;
   razaoSocial: string | null;
   cnpj: string | null;
   inscricaoEstadual: string | null;
@@ -57,6 +58,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 type EmpresaForm = {
   nomeFantasia: string;
+  logoUrl: string;
   razaoSocial: string; cnpj: string;
   inscricaoEstadual: string; inscricaoMunicipal: string; cnae: string;
   regimeTributario: '' | 'SIMPLES_NACIONAL' | 'LUCRO_PRESUMIDO' | 'LUCRO_REAL';
@@ -67,6 +69,7 @@ type EmpresaForm = {
 function toEmpresaForm(t?: TenantInfo): EmpresaForm {
   return {
     nomeFantasia: t?.nomeFantasia ?? '',
+    logoUrl: t?.logoUrl ?? '',
     razaoSocial: t?.razaoSocial ?? '', cnpj: t?.cnpj ?? '',
     inscricaoEstadual: t?.inscricaoEstadual ?? '', inscricaoMunicipal: t?.inscricaoMunicipal ?? '', cnae: t?.cnae ?? '',
     regimeTributario: t?.regimeTributario ?? '',
@@ -138,6 +141,43 @@ export default function ConfiguracoesPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card className="flex flex-col gap-4 lg:col-span-2">
             <h3 className="text-sm font-semibold">Dados da empresa</h3>
+
+            <div className="flex items-center gap-4">
+              {empresa.logoUrl ? (
+                <img src={empresa.logoUrl} alt="Logo da empresa" className="h-16 w-16 rounded-[10px] border border-border object-contain" />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-[10px] border border-dashed border-border-strong text-xs text-text-tertiary">
+                  Sem logo
+                </div>
+              )}
+              <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm text-text hover:border-accent">
+                {empresa.logoUrl ? 'Trocar logo' : 'Enviar logo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setEmpresa({ ...empresa, logoUrl: reader.result as string });
+                      setEmpresaEdited(true);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+              </label>
+              {empresa.logoUrl && (
+                <button
+                  type="button"
+                  onClick={() => { setEmpresa({ ...empresa, logoUrl: '' }); setEmpresaEdited(true); }}
+                  className="text-sm text-danger hover:underline"
+                >
+                  Remover
+                </button>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <EmpresaField label="Nome fantasia" value={empresa.nomeFantasia} onChange={(v) => { setEmpresa({ ...empresa, nomeFantasia: v }); setEmpresaEdited(true); }} className="lg:col-span-2" />

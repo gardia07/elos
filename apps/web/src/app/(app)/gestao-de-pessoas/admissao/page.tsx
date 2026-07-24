@@ -36,6 +36,11 @@ export default function AdmissaoPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <Link href="/cadastros/checklist-admissao" className="text-sm text-accent hover:underline">
+          Configurar checklist →
+        </Link>
+      </div>
       {isLoading && <p className="text-sm text-text-tertiary">Carregando…</p>}
       {admissions?.length === 0 && <p className="text-sm text-text-tertiary">Nenhuma admissão em andamento.</p>}
       <div className="flex flex-col gap-3">

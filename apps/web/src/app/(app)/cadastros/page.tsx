@@ -29,6 +29,14 @@ const GRUPOS = [
       { label: 'Prazos trabalhistas', descricao: 'Obrigações e prazos legais', href: '/dp/prazos' },
     ],
   },
+  {
+    titulo: 'Documentos e checklists',
+    itens: [
+      { label: 'Documentos obrigatórios', descricao: 'Documentos exigidos dos colaboradores (conformidade)', href: '/gestao-de-pessoas/colaboradores' },
+      { label: 'Checklist de admissão', descricao: 'Etapas e documentos por filial', href: '/cadastros/checklist-admissao' },
+      { label: 'Checklist de demissão', descricao: 'Etapas obrigatórias no desligamento', href: '/cadastros/checklist-desligamento' },
+    ],
+  },
 ];
 
 export default function CadastrosPage() {

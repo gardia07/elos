@@ -4,6 +4,7 @@ const REGIMES_TRIBUTARIOS = ['SIMPLES_NACIONAL', 'LUCRO_PRESUMIDO', 'LUCRO_REAL'
 
 export class UpdateTenantDto {
   @IsOptional() @IsString() nomeFantasia?: string;
+  @IsOptional() @IsString() logoUrl?: string;
   @IsOptional() @IsString() razaoSocial?: string;
   @IsOptional() @IsString() cnpj?: string;
   @IsOptional() @IsString() inscricaoEstadual?: string;

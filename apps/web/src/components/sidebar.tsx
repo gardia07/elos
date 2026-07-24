@@ -71,9 +71,14 @@ export function Sidebar() {
         <>
           <div className="mt-4 border-t border-on-accent/15" />
           <div className="flex items-center gap-2.5 px-4 pt-4">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-semibold text-on-accent">
-              {inicialEmpresa}
-            </span>
+            {tenant?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={tenant.logoUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+            ) : (
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-semibold text-on-accent">
+                {inicialEmpresa}
+              </span>
+            )}
             <span className="truncate text-sm font-medium text-on-accent">{nomeEmpresa}</span>
           </div>
         </>

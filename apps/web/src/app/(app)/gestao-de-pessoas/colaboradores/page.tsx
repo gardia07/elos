@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { complianceTone } from '@/lib/format';
@@ -191,6 +192,7 @@ const TENURE_OPTIONS = [
 ];
 
 export default function ColaboradoresPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [nome, setNome] = useState('');
   const [status, setStatus] = useState('');
@@ -204,6 +206,8 @@ export default function ColaboradoresPage() {
   const [admissaoAte, setAdmissaoAte] = useState('');
   const [tempoDeCasaMinAnos, setTempoDeCasaMinAnos] = useState('');
   const [feriasVencendo, setFeriasVencendo] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const [showForm, setShowForm] = useState(false);
   const [novaMatricula, setNovaMatricula] = useState('');
@@ -233,6 +237,13 @@ export default function ColaboradoresPage() {
     queryKey: ['employees', filters],
     queryFn: async () => (await api.get<Employee[]>('/rh/employees', { params: filters })).data,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [JSON.stringify(filters)]);
+
+  const totalPages = Math.max(1, Math.ceil((employees?.length ?? 0) / PAGE_SIZE));
+  const pageEmployees = (employees ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const { data: filterOptions } = useQuery({
     queryKey: ['employees', 'filter-options'],
@@ -448,14 +459,14 @@ export default function ColaboradoresPage() {
             </tr>
           </thead>
           <tbody>
-            {employees?.map((e) => (
-              <tr key={e.id} className="border-b border-divider last:border-0 hover:bg-surface-alt">
+            {pageEmployees.map((e) => (
+              <tr
+                key={e.id}
+                onClick={() => router.push(`/gestao-de-pessoas/colaboradores/${e.id}`)}
+                className="cursor-pointer border-b border-divider last:border-0 hover:bg-surface-alt"
+              >
                 <td className="px-5 py-3 text-text-secondary">{e.matricula}</td>
-                <td className="px-5 py-3">
-                  <Link href={`/gestao-de-pessoas/colaboradores/${e.id}`} className="font-medium">
-                    {e.nome}
-                  </Link>
-                </td>
+                <td className="px-5 py-3 font-medium">{e.nome}</td>
                 <td className="px-5 py-3">{e.cargo}</td>
                 <td className="px-5 py-3 text-text-secondary">{e.departamento}</td>
                 <td className="px-5 py-3 text-text-secondary">{new Date(e.dataAdmissao).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
@@ -470,6 +481,32 @@ export default function ColaboradoresPage() {
           </tbody>
         </table>
         {employees?.length === 0 && <p className="py-8 text-center text-sm text-text-tertiary">Nenhum colaborador encontrado.</p>}
+        {(employees?.length ?? 0) > 0 && (
+          <div className="flex items-center justify-between border-t border-divider px-5 py-3 text-sm">
+            <span className="text-text-tertiary">
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, employees!.length)} de {employees!.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-[8px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
+              >
+                Anterior
+              </button>
+              <span className="text-xs text-text-tertiary">
+                {page} de {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-[8px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
