@@ -8,6 +8,7 @@ import { api } from '@/lib/api-client';
 import { complianceTone } from '@/lib/format';
 import { Badge, Button, Card, KpiCard } from '@/components/ui';
 import { Header } from '@/components/header';
+import { PriorityAlert, PriorityAlerts } from '@/components/priority-alerts';
 
 interface Kpis {
   colaboradoresAtivos: number;
@@ -130,6 +131,11 @@ export default function PainelPage() {
     .sort((a, b) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99'));
   const taskItems = (tasks ?? []).slice().sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade]);
 
+  const alertasPrioritarios: PriorityAlert[] = (tasks ?? [])
+    .filter((t) => t.prioridade === 'ALTA' || t.prioridade === 'CRITICA')
+    .sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade])
+    .map((t) => ({ categoria: t.modulo, mensagem: t.titulo, severidade: 'alta' }));
+
   const concluidas = timedItems.filter((i) => i.concluida).length;
   const total = timedItems.length + taskItems.length;
 
@@ -165,6 +171,8 @@ export default function PainelPage() {
               delta={<span className="text-text-tertiary">{kpis?.alertasCriticosAtivos ?? 0} alerta(s) crítico(s) ativo(s)</span>}
             />
           </div>
+
+          <PriorityAlerts alertas={alertasPrioritarios} />
 
           <Card>
             <div className="mb-3 flex items-center justify-between">
