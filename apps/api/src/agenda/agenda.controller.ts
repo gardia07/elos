@@ -9,8 +9,8 @@ export class AgendaController {
   constructor(private readonly service: AgendaService) {}
 
   @Get('items')
-  listItems(@Query('data') date: string) {
-    return this.service.listItems(date);
+  listItems(@Query('data') date?: string, @Query('dataInicio') dataInicio?: string, @Query('dataFim') dataFim?: string) {
+    return this.service.listItems(date, dataInicio, dataFim);
   }
 
   @Post('items')

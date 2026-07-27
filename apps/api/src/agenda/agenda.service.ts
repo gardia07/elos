@@ -16,11 +16,15 @@ export class AgendaService {
     return this.prisma.forCurrentTenant();
   }
 
-  async listItems(date: string) {
+  async listItems(date?: string, dataInicio?: string, dataFim?: string) {
     const { userId, tenantId } = getRequestContext();
+    const where =
+      dataInicio && dataFim
+        ? { userId, tenantId, data: { gte: startOfDayUtc(dataInicio), lte: startOfDayUtc(dataFim) } }
+        : { userId, tenantId, data: startOfDayUtc(date!) };
     return this.db().agendaItem.findMany({
-      where: { userId, tenantId, data: startOfDayUtc(date) },
-      orderBy: [{ hora: 'asc' }, { createdAt: 'asc' }],
+      where,
+      orderBy: [{ data: 'asc' }, { hora: 'asc' }, { createdAt: 'asc' }],
     });
   }
 
@@ -33,16 +37,18 @@ export class AgendaService {
         data: startOfDayUtc(dto.data),
         hora: dto.hora,
         descricao: dto.descricao,
+        notas: dto.notas,
         tipo: dto.tipo,
       },
     });
   }
 
   async toggleItem(id: string, dto: UpdateAgendaItemDto) {
+    const { userId, tenantId } = getRequestContext();
     const db = this.db();
-    const item = await db.agendaItem.findUnique({ where: { id } });
+    const item = await db.agendaItem.findFirst({ where: { id, userId, tenantId } });
     if (!item) throw new NotFoundException('Item de agenda não encontrado.');
-    return db.agendaItem.update({ where: { id }, data: { concluida: dto.concluida, tipo: dto.tipo } });
+    return db.agendaItem.update({ where: { id }, data: { concluida: dto.concluida, notas: dto.notas, tipo: dto.tipo } });
   }
 
   async getNotepad(date: string) {

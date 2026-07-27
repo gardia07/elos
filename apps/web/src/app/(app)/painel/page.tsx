@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { complianceTone } from '@/lib/format';
@@ -37,8 +38,10 @@ type AgendaItemTipo = 'REUNIAO' | 'PRAZO' | 'TAREFA' | 'PESSOAL';
 
 interface AgendaItem {
   id: string;
+  data: string;
   hora: string | null;
   descricao: string;
+  notas: string | null;
   tipo: AgendaItemTipo;
   concluida: boolean;
   origem: string;
@@ -62,6 +65,37 @@ function todayIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function toIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+interface WeekDay {
+  iso: string;
+  label: string;
+  dayNum: number;
+}
+
+function getCurrentWeekDays(): WeekDay[] {
+  const now = new Date();
+  const dow = now.getDay(); // 0=domingo..6=sábado
+  const diffToMonday = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMonday);
+  const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+  return labels.map((label, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return { iso: toIso(d), label, dayNum: d.getDate() };
+  });
+}
+
+function getWeekLabel(days: WeekDay[]): string {
+  const monday = new Date(days[0].iso);
+  const mesAno = monday.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const mesAnoCap = mesAno.charAt(0).toUpperCase() + mesAno.slice(1);
+  return `${mesAnoCap} · Semana de ${days[0].dayNum} a ${days[4].dayNum}`;
+}
+
 function Delta({ value, unidade, favoravel }: { value: number | null; unidade: string; favoravel: 'alto' | 'baixo' }) {
   if (value == null) return <span className="text-text-tertiary">Sem histórico suficiente</span>;
   if (value === 0) return <span className="text-text-tertiary">Estável vs. mês anterior</span>;
@@ -78,10 +112,19 @@ function Delta({ value, unidade, favoravel }: { value: number | null; unidade: s
 
 export default function PainelPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const today = todayIso();
+  const [novaData, setNovaData] = useState(today);
   const [novaHora, setNovaHora] = useState('');
   const [novaDescricao, setNovaDescricao] = useState('');
   const [novoTipo, setNovoTipo] = useState<AgendaItemTipo>('TAREFA');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [notasDraft, setNotasDraft] = useState('');
+
+  const weekDays = useMemo(() => getCurrentWeekDays(), []);
+  const weekLabel = useMemo(() => getWeekLabel(weekDays), [weekDays]);
+  const weekStart = weekDays[0].iso;
+  const weekEnd = weekDays[4].iso;
 
   const { data: kpis } = useQuery({
     queryKey: ['dashboard', 'kpis'],
@@ -103,12 +146,30 @@ export default function PainelPage() {
     queryFn: async () => (await api.get<AgendaItem[]>('/agenda/items', { params: { data: today } })).data,
   });
 
-  const invalidateAgenda = () => queryClient.invalidateQueries({ queryKey: ['agenda', 'items', today] });
+  const { data: weekItems } = useQuery({
+    queryKey: ['agenda', 'items', 'semana', weekStart, weekEnd],
+    queryFn: async () => (await api.get<AgendaItem[]>('/agenda/items', { params: { dataInicio: weekStart, dataFim: weekEnd } })).data,
+  });
+
+  const countsByDay = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const item of weekItems ?? []) {
+      const iso = item.data.slice(0, 10);
+      map[iso] = (map[iso] ?? 0) + 1;
+    }
+    return map;
+  }, [weekItems]);
+
+  const invalidateAgenda = () => {
+    queryClient.invalidateQueries({ queryKey: ['agenda', 'items', today] });
+    queryClient.invalidateQueries({ queryKey: ['agenda', 'items', 'semana', weekStart, weekEnd] });
+  };
 
   const createItem = useMutation({
-    mutationFn: async () => api.post('/agenda/items', { data: today, hora: novaHora || undefined, descricao: novaDescricao, tipo: novoTipo }),
+    mutationFn: async () => api.post('/agenda/items', { data: novaData, hora: novaHora || undefined, descricao: novaDescricao, tipo: novoTipo }),
     onSuccess: () => {
       invalidateAgenda();
+      setNovaData(today);
       setNovaHora('');
       setNovaDescricao('');
       setNovoTipo('TAREFA');
@@ -117,6 +178,11 @@ export default function PainelPage() {
 
   const toggleItem = useMutation({
     mutationFn: async (vars: { id: string; concluida: boolean }) => api.patch(`/agenda/items/${vars.id}`, { concluida: vars.concluida }),
+    onSuccess: invalidateAgenda,
+  });
+
+  const saveNotas = useMutation({
+    mutationFn: async (vars: { id: string; notas: string }) => api.patch(`/agenda/items/${vars.id}`, { notas: vars.notas }),
     onSuccess: invalidateAgenda,
   });
 
@@ -180,22 +246,87 @@ export default function PainelPage() {
                   {concluidas} de {total} concluídas
                 </span>
               </div>
+
+              <div className="mb-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.06em] text-text-tertiary">{weekLabel}</div>
+                <div className="grid grid-cols-5 gap-2">
+                  {weekDays.map((d) => {
+                    const isToday = d.iso === today;
+                    const count = countsByDay[d.iso] ?? 0;
+                    return (
+                      <button
+                        key={d.iso}
+                        type="button"
+                        onClick={() => router.push(`/ferramentas/agenda?data=${d.iso}`)}
+                        className={`flex flex-col items-center gap-1 rounded-[10px] border p-2 text-center transition ${
+                          isToday ? 'border-accent bg-tint-blue' : 'border-border hover:border-accent'
+                        }`}
+                      >
+                        <span className="text-[10px] font-medium uppercase text-text-tertiary">{d.label}</span>
+                        <span className="text-sm font-semibold text-text">{d.dayNum}</span>
+                        {count > 0 && <Badge tone="blue">{count}</Badge>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <ul className="flex max-h-[420px] flex-col gap-2 overflow-y-auto">
-                {timedItems.map((item) => (
-                  <li key={`agenda-${item.id}`} className="flex items-start gap-3 rounded-[10px] border border-border p-2.5">
-                    <input
-                      type="checkbox"
-                      checked={item.concluida}
-                      onChange={(e) => toggleItem.mutate({ id: item.id, concluida: e.target.checked })}
-                      className="mt-0.5"
-                    />
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: AGENDA_TIPO_COLOR[item.tipo] }} title={AGENDA_TIPO_LABEL[item.tipo]} />
-                    <div>
-                      {item.hora && <div className="text-xs font-medium text-text-tertiary">{item.hora}</div>}
-                      <div className={`text-sm ${item.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{item.descricao}</div>
-                    </div>
-                  </li>
-                ))}
+                {timedItems.map((item) => {
+                  const isExpanded = expandedId === item.id;
+                  return (
+                    <li key={`agenda-${item.id}`} className="rounded-[10px] border border-border p-2.5">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={item.concluida}
+                          onChange={(e) => toggleItem.mutate({ id: item.id, concluida: e.target.checked })}
+                          className="mt-0.5"
+                        />
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: AGENDA_TIPO_COLOR[item.tipo] }} title={AGENDA_TIPO_LABEL[item.tipo]} />
+                        <button
+                          type="button"
+                          className="flex-1 text-left"
+                          onClick={() => {
+                            if (isExpanded) {
+                              setExpandedId(null);
+                            } else {
+                              setExpandedId(item.id);
+                              setNotasDraft(item.notas ?? '');
+                            }
+                          }}
+                        >
+                          {item.hora && <div className="text-xs font-medium text-text-tertiary">{item.hora}</div>}
+                          <div className={`text-sm ${item.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{item.descricao}</div>
+                        </button>
+                        <span className="mt-0.5 text-text-tertiary">{isExpanded ? '▾' : '▸'}</span>
+                      </div>
+                      {isExpanded && (
+                        <div className="mt-2 flex flex-col gap-2 border-t border-divider pt-2 pl-6">
+                          <textarea
+                            value={notasDraft}
+                            onChange={(e) => setNotasDraft(e.target.value)}
+                            placeholder="Anotações, instruções ou etapas…"
+                            rows={3}
+                            className="rounded-[10px] border border-border-strong bg-surface px-2.5 py-2 text-sm"
+                          />
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="secondary"
+                              onClick={() => saveNotas.mutate({ id: item.id, notas: notasDraft })}
+                              disabled={saveNotas.isPending}
+                            >
+                              {saveNotas.isPending ? 'Salvando…' : 'Salvar nota'}
+                            </Button>
+                            <Link href={`/ferramentas/agenda?data=${today}&item=${item.id}`} className="text-xs text-accent hover:underline">
+                              Abrir na Agenda →
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
                 {taskItems.map((t) => {
                   const href = t.detalhes?.href;
                   const row = (
@@ -236,6 +367,12 @@ export default function PainelPage() {
                   createItem.mutate();
                 }}
               >
+                <input
+                  type="date"
+                  value={novaData}
+                  onChange={(e) => setNovaData(e.target.value)}
+                  className="w-36 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                />
                 <input
                   type="time"
                   value={novaHora}

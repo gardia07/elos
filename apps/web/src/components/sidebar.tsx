@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 
-const HUBS = [
+const NAV_ITEMS = [
   { label: 'Área de trabalho', href: '/painel', enabled: true },
   { label: 'Gestão de Pessoas', href: '/gestao-de-pessoas', enabled: true },
   { label: 'DP', href: '/dp', enabled: true },
@@ -13,15 +13,9 @@ const HUBS = [
   { label: 'Compliance', href: '/compliance', enabled: true },
   { label: 'Psicologia', href: '/psicologia', enabled: false },
   { label: 'Indicadores', href: '/indicadores', enabled: true },
-];
-
-const FERRAMENTAS = [
   { label: 'Aprovações', href: '/aprovacoes', enabled: true },
   { label: 'Ferramentas', href: '/ferramentas', enabled: true },
   { label: 'Configurações', href: '/configuracoes', enabled: true },
-];
-
-const OUTROS = [
   { label: 'Elô', href: '/elo', enabled: true },
   { label: 'Portal do Colaborador', href: '/portal', enabled: true },
 ];
@@ -39,28 +33,12 @@ export function Sidebar() {
         <Image src="/logo-elos-cream.png" alt="elos" width={965} height={562} className="h-8 w-auto" />
       </div>
 
-      <div className="flex flex-1 flex-col gap-6 px-4">
-      <nav className="flex flex-col gap-1">
-        {HUBS.map((hub) => (
-          <NavItem key={hub.href} {...hub} active={pathname?.startsWith(hub.href)} />
-        ))}
-      </nav>
-
-      <div>
+      <div className="flex flex-1 flex-col px-4">
         <nav className="flex flex-col gap-1">
-          {FERRAMENTAS.map((item) => (
-            <NavItem key={item.href} {...item} active={pathname?.startsWith(item.href)} />
-          ))}
-        </nav>
-      </div>
-
-      <div>
-        <nav className="flex flex-col gap-1">
-          {OUTROS.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <NavItem key={item.href} {...item} active={pathname === item.href || pathname?.startsWith(item.href + '/')} />
           ))}
         </nav>
-      </div>
       </div>
 
       {nomeEmpresa && (

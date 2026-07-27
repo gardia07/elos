@@ -66,8 +66,9 @@ model Tenant {
   payslipItems         PayslipItem[]
   payrollGuides        PayrollGuide[]
 
-  agendaItems    AgendaItem[]
-  notepadEntries NotepadEntry[]
+  agendaItems      AgendaItem[]
+  agendaDismissals AgendaDismissal[]
+  notepadEntries   NotepadEntry[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -935,6 +936,7 @@ model AgendaItem {
   data      DateTime       @db.Date
   hora      String?
   descricao String
+  notas     String?
   tipo      AgendaItemTipo @default(TAREFA)
   concluida Boolean        @default(false)
   origem    String         @default("MANUAL")
@@ -944,6 +946,24 @@ model AgendaItem {
 
   @@index([tenantId, userId, data])
   @@map("agenda_items")
+}
+
+/// "Visto/dispensado" pelo usuário para eventos de agenda-geral que não têm
+/// um campo de conclusão real no registro de origem (exame ocupacional,
+/// férias, desligamento) — não altera o registro de origem, só tira o
+/// evento da lista de agenda para quem dispensou.
+model AgendaDismissal {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  origem    String
+  sourceId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, origem, sourceId])
+  @@map("agenda_dismissals")
 }
 
 model NotepadEntry {

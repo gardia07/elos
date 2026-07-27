@@ -7,11 +7,13 @@ export class CreateAgendaItemDto {
   @IsDateString() data!: string;
   @IsOptional() @IsString() hora?: string;
   @IsString() descricao!: string;
+  @IsOptional() @IsString() notas?: string;
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
 }
 
 export class UpdateAgendaItemDto {
   @IsOptional() @IsBoolean() concluida?: boolean;
+  @IsOptional() @IsString() notas?: string;
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
 }
 
