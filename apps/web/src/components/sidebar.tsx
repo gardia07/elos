@@ -16,7 +16,6 @@ const HUBS = [
 ];
 
 const FERRAMENTAS = [
-  { label: 'Cadastros', href: '/cadastros', enabled: true },
   { label: 'Aprovações', href: '/aprovacoes', enabled: true },
   { label: 'Ferramentas', href: '/ferramentas', enabled: true },
   { label: 'Configurações', href: '/configuracoes', enabled: true },
@@ -67,7 +66,10 @@ export function Sidebar() {
       {nomeEmpresa && (
         <>
           <div className="mt-4 border-t border-on-accent/15" />
-          <div className="flex items-center gap-2.5 px-4 pt-4">
+          <Link
+            href="/configuracoes"
+            className="flex items-center gap-2.5 px-4 pt-4 transition hover:opacity-80"
+          >
             {tenant?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={tenant.logoUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
@@ -77,7 +79,7 @@ export function Sidebar() {
               </span>
             )}
             <span className="truncate text-sm font-medium text-on-accent">{nomeEmpresa}</span>
-          </div>
+          </Link>
         </>
       )}
     </aside>

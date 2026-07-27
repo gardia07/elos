@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes, createHash } from 'node:crypto';
@@ -10,6 +10,8 @@ import { VerifyMfaDto } from './dto/verify-mfa.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SwitchTenantDto } from './dto/switch-tenant.dto';
+import { CreateCompanyDto } from './dto/create-company.dto';
+import { UpdateTenantDto } from '../tenant/dto/tenant.dto';
 import { CLT_DOCUMENT_REQUIREMENTS } from '../rh/documents/clt-requirements';
 import { JwtPayload } from '../common/jwt-payload';
 
@@ -80,13 +82,29 @@ export class AuthService {
       include: { users: true },
     });
 
+    await this.provisionNewTenant(tenant.id, trialPlan);
+
+    await this.email.send(
+      dto.email,
+      'Bem-vindo à Plataforma Elos',
+      `<p>Olá, ${dto.adminName}!</p><p>Sua empresa <strong>${dto.companyName}</strong> foi cadastrada com sucesso na Plataforma Elos.</p><p>Para entrar, use o identificador da empresa: <strong>${slug}</strong></p>`,
+    );
+
+    return { tenantSlug: tenant.slug };
+  }
+
+  /** Shared by registerTenant (public signup) and createCompany (adding a company from within an existing account). */
+  private async provisionNewTenant(
+    tenantId: string,
+    trialPlan: { id: string; maxUsuarios: number; maxColaboradores: number; modulos: string[] } | null,
+  ) {
     // tenant_licenses is RLS-protected, so this write has to go through the
     // tenant-scoped client (there's no request context yet at this point in
     // the flow, hence forTenant(id) rather than forCurrentTenant()).
     if (trialPlan) {
-      await this.prisma.forTenant(tenant.id).tenantLicense.create({
+      await this.prisma.forTenant(tenantId).tenantLicense.create({
         data: {
-          tenantId: tenant.id,
+          tenantId,
           planId: trialPlan.id,
           status: 'TRIAL',
           expiraEm: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -98,23 +116,79 @@ export class AuthService {
     }
 
     // Same RLS-scoping caveat as tenantLicense above.
-    await this.prisma.forTenant(tenant.id).documentRequirement.createMany({
+    await this.prisma.forTenant(tenantId).documentRequirement.createMany({
       data: CLT_DOCUMENT_REQUIREMENTS.map((r) => ({
-        tenantId: tenant.id,
+        tenantId,
         nome: r.nome,
         categoria: r.categoria,
         obrigatorio: true,
         sistema: true,
       })),
     });
+  }
 
-    await this.email.send(
-      dto.email,
-      'Bem-vindo à Plataforma Elos',
-      `<p>Olá, ${dto.adminName}!</p><p>Sua empresa <strong>${dto.companyName}</strong> foi cadastrada com sucesso na Plataforma Elos.</p><p>Para entrar, use o identificador da empresa: <strong>${slug}</strong></p>`,
-    );
+  /** Lists every company (tenant) the current user's e-mail has an account in, for the "minhas empresas" screen. */
+  async listCompanies(userId: string) {
+    const me = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-    return { tenantSlug: tenant.slug };
+    // users has no RLS policy (auth flows need cross-tenant lookups by e-mail).
+    const accounts = await this.prisma.user.findMany({
+      where: { email: me.email },
+      select: { tenantId: true, tenant: { select: { id: true, slug: true, name: true, nomeFantasia: true, logoUrl: true } } },
+    });
+
+    return accounts.map((a) => ({ ...a.tenant, current: a.tenantId === me.tenantId }));
+  }
+
+  /** Loads full profile data for a company the user's e-mail has an account in (not necessarily the active one). */
+  async getCompany(userId: string, tenantId: string) {
+    const me = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const account = await this.prisma.user.findUnique({ where: { tenantId_email: { tenantId, email: me.email } } });
+    if (!account) throw new NotFoundException('Empresa não encontrada.');
+
+    return this.prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+  }
+
+  /** Updates full profile data for a company the user's e-mail has an ADMIN account in. */
+  async updateCompany(userId: string, tenantId: string, dto: UpdateTenantDto) {
+    const me = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const account = await this.prisma.user.findUnique({ where: { tenantId_email: { tenantId, email: me.email } } });
+    if (!account) throw new NotFoundException('Empresa não encontrada.');
+    if (account.role !== 'ADMIN') throw new ForbiddenException('Apenas administradores podem editar esta empresa.');
+
+    return this.prisma.tenant.update({ where: { id: tenantId }, data: dto });
+  }
+
+  /** Adds a new, independent company under the same e-mail/password, so the user can switch between them without a second signup. */
+  async createCompany(userId: string, dto: CreateCompanyDto) {
+    const me = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    const slug = slugify(dto.companyName);
+    const existing = await this.prisma.tenant.findUnique({ where: { slug } });
+    if (existing) {
+      throw new ConflictException('Já existe uma empresa cadastrada com esse nome.');
+    }
+
+    const trialPlan = await this.prisma.licensePlan.findUnique({ where: { code: 'trial' } });
+
+    const tenant = await this.prisma.tenant.create({
+      data: {
+        name: dto.companyName,
+        slug,
+        users: {
+          create: {
+            email: me.email,
+            passwordHash: me.passwordHash,
+            name: me.name,
+            role: 'ADMIN',
+          },
+        },
+      },
+    });
+
+    await this.provisionNewTenant(tenant.id, trialPlan);
+
+    return { tenantSlug: tenant.slug, name: tenant.name };
   }
 
   /** Step 1: validate credentials, issue a short-lived MFA ticket + 6-digit code. */

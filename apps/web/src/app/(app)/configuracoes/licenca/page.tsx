@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Badge, Button, Card, KpiCard } from '@/components/ui';
-import { Header } from '@/components/header';
 
 interface License {
   configured: boolean;
@@ -61,15 +59,8 @@ export default function LicencaPage() {
   if (!license) return <p className="p-8 text-sm text-text-tertiary">Carregando…</p>;
 
   return (
-    <>
-      <Header eyebrow="Configurações" title="Licença" />
-      <main className="flex-1 overflow-y-auto px-8 py-6">
-        <div className="flex flex-col gap-6">
-          <Link href="/painel" className="text-sm text-text-secondary hover:text-text">
-            ← Voltar para Área de trabalho
-          </Link>
-
-          <div className="grid grid-cols-4 gap-4">
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-4 gap-4">
             <KpiCard label="Plano" value={license.planName ?? '—'} />
             <KpiCard label="Usuários" value={`${license.usuarios} / ${license.maxUsuarios || '∞'}`} />
             <KpiCard label="Colaboradores ativos" value={`${license.colaboradores} / ${license.maxColaboradores || '∞'}`} />
@@ -115,8 +106,6 @@ export default function LicencaPage() {
               </Button>
             </div>
           </Card>
-        </div>
-      </main>
-    </>
+    </div>
   );
 }

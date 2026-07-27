@@ -1,8 +1,10 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { SwitchTenantDto } from './dto/switch-tenant.dto';
+import { CreateCompanyDto } from './dto/create-company.dto';
+import { UpdateTenantDto } from '../tenant/dto/tenant.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyMfaDto } from './dto/verify-mfa.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -80,6 +82,30 @@ export class AuthController {
     const result = await this.auth.switchTenant(user.sub, dto);
     res.cookie('elos_token', result.accessToken, COOKIE_OPTIONS);
     return { user: result.user, tenant: result.tenant };
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('companies')
+  listCompanies(@CurrentUser() user: JwtPayload) {
+    return this.auth.listCompanies(user.sub);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('companies')
+  createCompany(@CurrentUser() user: JwtPayload, @Body() dto: CreateCompanyDto) {
+    return this.auth.createCompany(user.sub, dto);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('companies/:id')
+  getCompany(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.auth.getCompany(user.sub, id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch('companies/:id')
+  updateCompany(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: UpdateTenantDto) {
+    return this.auth.updateCompany(user.sub, id, dto);
   }
 
   @UseGuards(AuthGuard)
