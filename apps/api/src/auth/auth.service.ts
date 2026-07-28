@@ -18,10 +18,11 @@ import { JwtPayload } from '../common/jwt-payload';
 // Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
 const COMPANY_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
+const COMPANY_CODE_LENGTH = 6;
+
 function generateCompanyCode(): string {
-  const length = 4 + Math.floor(Math.random() * 3); // 4 a 6 caracteres
   let code = '';
-  for (let i = 0; i < length; i++) {
+  for (let i = 0; i < COMPANY_CODE_LENGTH; i++) {
     code += COMPANY_CODE_CHARS[Math.floor(Math.random() * COMPANY_CODE_CHARS.length)];
   }
   return code;
