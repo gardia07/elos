@@ -208,6 +208,7 @@ function TiposTab() {
                         type="number"
                         min={0}
                         max={100}
+                        step="0.01"
                         value={percEmpresa}
                         onChange={(e) => setPercEmpresa(e.target.value)}
                         placeholder="% empresa"
@@ -218,6 +219,7 @@ function TiposTab() {
                         type="number"
                         min={0}
                         max={100}
+                        step="0.01"
                         value={percColab}
                         onChange={(e) => setPercColab(e.target.value)}
                         placeholder="% colaborador"
@@ -310,6 +312,8 @@ function AcademiaTab() {
             <span className="text-text-secondary">Mensalidade</span>
             <input
               type="number"
+              min={0}
+              step="0.01"
               value={valorMensalidade}
               onChange={(e) => setValorMensalidade(e.target.value)}
               required
@@ -480,7 +484,7 @@ function SaudeTab() {
                 >
                   <input type="number" min={0} placeholder="Idade mín." value={idadeMin} onChange={(e) => setIdadeMin(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
                   <input type="number" min={0} placeholder="Idade máx." value={idadeMax} onChange={(e) => setIdadeMax(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
-                  <input type="number" min={0} placeholder="Valor" value={valorFaixa} onChange={(e) => setValorFaixa(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                  <input type="number" min={0} step="0.01" placeholder="Valor" value={valorFaixa} onChange={(e) => setValorFaixa(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
                   <Button type="submit" variant="secondary" disabled={addFaixa.isPending}>
                     Adicionar faixa
                   </Button>

@@ -11,8 +11,8 @@ import { useAuth } from '@/lib/auth-context';
 const NAV_ITEMS = [
   { label: 'Área de trabalho', href: '/painel', enabled: true },
   { label: 'Gestão de Pessoas', href: '/gestao-de-pessoas', enabled: true },
-  { label: 'DP', href: '/dp', enabled: true },
-  { label: 'SST', href: '/sst', enabled: true },
+  { label: 'Departamento Pessoal', href: '/dp', enabled: true },
+  { label: 'Saúde e Segurança do Trabalho', href: '/sst', enabled: true },
   { label: 'Compliance', href: '/compliance', enabled: true },
   { label: 'Psicologia', href: '/psicologia', enabled: false },
   { label: 'Indicadores', href: '/indicadores', enabled: true },

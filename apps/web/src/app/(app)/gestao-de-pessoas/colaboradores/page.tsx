@@ -451,7 +451,7 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Salário</span>
-              <input type="number" value={salario} onChange={(e) => setSalario(e.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" min={0} step="0.01" value={salario} onChange={(e) => setSalario(e.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tipo de contrato</span>

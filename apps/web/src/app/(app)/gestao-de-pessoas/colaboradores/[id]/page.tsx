@@ -367,7 +367,7 @@ export default function EmployeeProfilePage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Novo salário</span>
-              <input type="number" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={promote.isPending}>
               Confirmar
@@ -560,7 +560,7 @@ export default function EmployeeProfilePage() {
                   <EditField label="Cargo" value={edit.cargo} onChange={(v) => setEdit({ ...edit, cargo: v })} />
                   <EditField label="Departamento" value={edit.departamento} onChange={(v) => setEdit({ ...edit, departamento: v })} />
                   <EditField label="Filial" value={edit.filial} onChange={(v) => setEdit({ ...edit, filial: v })} />
-                  <EditField label="Salário" type="number" value={edit.salario} onChange={(v) => setEdit({ ...edit, salario: v })} />
+                  <EditField label="Salário" type="number" step="0.01" value={edit.salario} onChange={(v) => setEdit({ ...edit, salario: v })} />
                   <label className="flex flex-col gap-1.5 text-sm">
                     <span className="text-text-secondary">Tipo de contrato</span>
                     <select
@@ -1064,7 +1064,7 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
                 ))}
               </select>
             </label>
-            <input type="number" placeholder="Valor diário" value={valeValorDiario} onChange={(ev) => setValeValorDiario(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input type="number" min={0} step="0.01" placeholder="Valor diário" value={valeValorDiario} onChange={(ev) => setValeValorDiario(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
             <input type="date" value={valeDataInicio} onChange={(ev) => setValeDataInicio(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
             <Button type="submit" disabled={addVale.isPending}>
               Adicionar
@@ -1277,7 +1277,7 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
                 ))}
               </select>
             </label>
-            <input type="number" placeholder="Valor mensal" value={fixoValorMensal} onChange={(ev) => setFixoValorMensal(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input type="number" min={0} step="0.01" placeholder="Valor mensal" value={fixoValorMensal} onChange={(ev) => setFixoValorMensal(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
             <input type="date" value={fixoDataInicio} onChange={(ev) => setFixoDataInicio(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
             <Button type="submit" disabled={addFixo.isPending}>
               Adicionar
@@ -1360,6 +1360,7 @@ function EditField({
   type = 'text',
   className = '',
   placeholder,
+  step,
 }: {
   label: string;
   value: string;
@@ -1367,6 +1368,7 @@ function EditField({
   type?: string;
   className?: string;
   placeholder?: string;
+  step?: string;
 }) {
   return (
     <label className={`flex flex-col gap-1.5 text-sm ${className}`}>
@@ -1375,6 +1377,8 @@ function EditField({
         type={type}
         value={value}
         placeholder={placeholder}
+        step={step}
+        min={type === 'number' ? 0 : undefined}
         onChange={(e) => onChange(e.target.value)}
         className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
       />
