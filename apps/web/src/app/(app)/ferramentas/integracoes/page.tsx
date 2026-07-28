@@ -29,7 +29,10 @@ export default function IntegracoesPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h3 className="text-sm font-semibold">Conectores</h3>
-        <p className="text-sm text-text-secondary">Integrações com ERP, sistemas bancários e plataformas de benefícios.</p>
+        <p className="text-sm text-text-secondary">
+          Integrações com ERP, sistemas bancários e plataformas de benefícios. Nenhuma delas é ativada automaticamente
+          por aqui — ao solicitar, nossa equipe entra em contato para configurar a conexão com seu ambiente.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -42,20 +45,23 @@ export default function IntegracoesPage() {
               </div>
               <button
                 onClick={() => toggle.mutate({ id: i.id, conectado: !i.conectado })}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition ${i.conectado ? 'bg-success' : 'bg-surface-alt'}`}
+                title={i.conectado ? 'Cancelar solicitação' : 'Solicitar integração'}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition ${i.conectado ? 'bg-accent' : 'bg-surface-alt'}`}
               >
                 <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${i.conectado ? 'left-[22px]' : 'left-0.5'}`} />
               </button>
             </div>
             <p className="text-sm text-text-secondary">{i.descricao}</p>
             <div className="text-xs">
-              <span className={i.conectado ? 'font-medium text-success' : 'font-medium text-text-tertiary'}>
-                {i.conectado ? 'Conectado' : 'Desconectado'}
+              <span className={i.conectado ? 'font-medium text-accent' : 'font-medium text-text-tertiary'}>
+                {i.conectado ? 'Solicitado' : 'Não solicitado'}
               </span>
-              <span className="text-text-tertiary">
-                {' '}
-                · Última sincronização: {i.ultimaSincronizacaoEm ? new Date(i.ultimaSincronizacaoEm).toLocaleString('pt-BR') : '—'}
-              </span>
+              {i.conectado && (
+                <span className="text-text-tertiary">
+                  {' '}
+                  · Solicitado em: {i.ultimaSincronizacaoEm ? new Date(i.ultimaSincronizacaoEm).toLocaleString('pt-BR') : '—'}
+                </span>
+              )}
             </div>
           </Card>
         ))}
