@@ -1,9 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { BenefitsService } from './benefits.service';
 import {
   AddDependentePlanoSaudeDto,
+  CalcularApuracaoDto,
   CreateAdesaoAcademiaDto,
+  CreateAdesaoBeneficioFixoDto,
   CreateAdesaoPlanoSaudeDto,
   CreateAdesaoValeDiarioDto,
   CreateBeneficioTipoDto,
@@ -140,5 +142,25 @@ export class BenefitsController {
     @Param('dependenteId') dependenteId: string,
   ) {
     return this.service.removeDependentePlanoSaude(employeeId, adesaoId, dependenteId);
+  }
+
+  @Post('employees/:employeeId/outros')
+  createAdesaoBeneficioFixo(@Param('employeeId') employeeId: string, @Body() dto: CreateAdesaoBeneficioFixoDto) {
+    return this.service.createAdesaoBeneficioFixo(employeeId, dto);
+  }
+
+  @Delete('employees/:employeeId/outros/:adesaoId')
+  cancelAdesaoBeneficioFixo(@Param('employeeId') employeeId: string, @Param('adesaoId') adesaoId: string) {
+    return this.service.cancelAdesaoBeneficioFixo(employeeId, adesaoId);
+  }
+
+  @Get('apuracao')
+  listApuracao(@Query('competencia') competencia: string) {
+    return this.service.listApuracao(competencia);
+  }
+
+  @Post('apuracao/calcular')
+  calcularApuracao(@Body() dto: CalcularApuracaoDto) {
+    return this.service.calcularApuracao(dto);
   }
 }

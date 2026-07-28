@@ -68,6 +68,8 @@ model Tenant {
   adesoesAcademia         AdesaoAcademia[]
   adesoesPlanoSaude       AdesaoPlanoSaude[]
   dependentesPlanoSaude   DependentePlanoSaude[]
+  adesoesBeneficioFixo    AdesaoBeneficioFixo[]
+  apuracoesBeneficios     ApuracaoBeneficio[]
   equipmentItems       EquipmentItem[]
   timeJustifications   TimeJustification[]
   payrollRuns          PayrollRun[]
@@ -483,6 +485,8 @@ model Employee {
   adesoesValeDiario  AdesaoValeDiario[]
   adesoesAcademia    AdesaoAcademia[]
   adesoesPlanoSaude  AdesaoPlanoSaude[]
+  adesoesBeneficioFixo AdesaoBeneficioFixo[]
+  apuracoesBeneficios ApuracaoBeneficio[]
   equipmentItems     EquipmentItem[]
   timeJustifications TimeJustification[]
   payslipItems       PayslipItem[]
@@ -813,6 +817,7 @@ enum BeneficioCategoria {
   ALIMENTACAO
   ACADEMIA
   SAUDE
+  OUTRO
 
   @@map("beneficio_categoria")
 }
@@ -834,6 +839,8 @@ model BeneficioTipo {
   tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   coparticipacao CoparticipacaoRegra?
   adesoesValeDiario AdesaoValeDiario[]
+  adesoesBeneficioFixo AdesaoBeneficioFixo[]
+  apuracoes         ApuracaoBeneficio[]
 
   @@unique([tenantId, nome])
   @@index([tenantId])
@@ -930,6 +937,24 @@ model AdesaoValeDiario {
   @@map("adesoes_vale_diario")
 }
 
+model AdesaoBeneficioFixo {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @db.Uuid
+  employeeId      String    @db.Uuid
+  beneficioTipoId String    @db.Uuid
+  valorMensal     Decimal   @db.Decimal(10, 2)
+  dataInicio      DateTime  @db.Date
+  dataFim         DateTime? @db.Date
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  beneficioTipo BeneficioTipo @relation(fields: [beneficioTipoId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([employeeId])
+  @@map("adesoes_beneficio_fixo")
+}
+
 model AdesaoAcademia {
   id               String    @id @default(uuid()) @db.Uuid
   tenantId         String    @db.Uuid
@@ -979,6 +1004,28 @@ model DependentePlanoSaude {
   @@index([tenantId])
   @@index([adesaoId])
   @@map("dependentes_plano_saude")
+}
+
+model ApuracaoBeneficio {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  employeeId       String   @db.Uuid
+  beneficioTipoId  String   @db.Uuid
+  competencia      String // "2026-07"
+  valorEmpresa     Decimal  @db.Decimal(10, 2)
+  valorColaborador Decimal  @db.Decimal(10, 2)
+  valorTotal       Decimal  @db.Decimal(10, 2)
+  detalhamento     Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  beneficioTipo BeneficioTipo @relation(fields: [beneficioTipoId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, employeeId, beneficioTipoId, competencia])
+  @@index([tenantId, competencia])
+  @@map("apuracoes_beneficios")
 }
 
 model EquipmentItem {

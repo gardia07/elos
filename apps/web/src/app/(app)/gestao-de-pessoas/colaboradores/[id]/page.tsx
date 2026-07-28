@@ -832,7 +832,7 @@ export default function EmployeeProfilePage() {
 interface BeneficioTipoOption {
   id: string;
   nome: string;
-  categoria: 'ALIMENTACAO' | 'ACADEMIA' | 'SAUDE';
+  categoria: 'ALIMENTACAO' | 'ACADEMIA' | 'SAUDE' | 'OUTRO';
 }
 interface ConvenioOption {
   id: string;
@@ -870,10 +870,18 @@ interface AdesaoPlanoSaude {
   plano: { id: string; nome: string };
   dependentes: DependentePlanoSaude[];
 }
+interface AdesaoBeneficioFixo {
+  id: string;
+  valorMensal: string;
+  dataInicio: string;
+  dataFim: string | null;
+  beneficioTipo: { id: string; nome: string };
+}
 interface ResumoBeneficios {
   valeDiario: AdesaoValeDiario[];
   academia: AdesaoAcademia[];
   planoSaude: AdesaoPlanoSaude[];
+  beneficioFixo: AdesaoBeneficioFixo[];
 }
 
 function BeneficiosTab({ employeeId }: { employeeId: string }) {
@@ -898,6 +906,7 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['dp', 'benefits', 'employee', employeeId] });
   const tiposAlimentacao = tipos?.filter((t) => t.categoria === 'ALIMENTACAO') ?? [];
+  const tiposOutro = tipos?.filter((t) => t.categoria === 'OUTRO') ?? [];
 
   const [showValeForm, setShowValeForm] = useState(false);
   const [valeBeneficioTipoId, setValeBeneficioTipoId] = useState('');
@@ -954,6 +963,30 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
   });
   const cancelSaude = useMutation({
     mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/plano-saude/${adesaoId}`),
+    onSuccess: invalidate,
+  });
+
+  const [showFixoForm, setShowFixoForm] = useState(false);
+  const [fixoBeneficioTipoId, setFixoBeneficioTipoId] = useState('');
+  const [fixoValorMensal, setFixoValorMensal] = useState('');
+  const [fixoDataInicio, setFixoDataInicio] = useState('');
+  const addFixo = useMutation({
+    mutationFn: async () =>
+      api.post(`/dp/benefits/employees/${employeeId}/outros`, {
+        beneficioTipoId: fixoBeneficioTipoId,
+        valorMensal: Number(fixoValorMensal),
+        dataInicio: fixoDataInicio,
+      }),
+    onSuccess: () => {
+      invalidate();
+      setShowFixoForm(false);
+      setFixoBeneficioTipoId('');
+      setFixoValorMensal('');
+      setFixoDataInicio('');
+    },
+  });
+  const cancelFixo = useMutation({
+    mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/outros/${adesaoId}`),
     onSuccess: invalidate,
   });
 
@@ -1187,6 +1220,69 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
               Adicionar
             </Button>
             <Button type="button" variant="secondary" onClick={() => setShowSaudeForm(false)}>
+              Cancelar
+            </Button>
+          </form>
+        )}
+      </Section>
+
+      <Section title="Outros benefícios">
+        <ul className="flex flex-col gap-1.5 text-sm">
+          {resumo?.beneficioFixo.map((f) => (
+            <li key={f.id} className="flex items-center justify-between">
+              <span>
+                {f.beneficioTipo.nome} · {formatBRL(Number(f.valorMensal))}/mês · desde {formatDate(f.dataInicio)}
+                {f.dataFim && ` até ${formatDate(f.dataFim)}`}
+              </span>
+              {!f.dataFim ? (
+                <button onClick={() => cancelFixo.mutate(f.id)} className="text-xs text-danger hover:underline">
+                  cancelar
+                </button>
+              ) : (
+                <span className="text-xs text-text-tertiary">encerrado</span>
+              )}
+            </li>
+          ))}
+          {resumo?.beneficioFixo.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
+        </ul>
+        {tiposOutro.length === 0 ? (
+          <p className="text-xs text-text-tertiary">
+            Nenhum tipo cadastrado ainda. Cadastre um em Benefícios → Tipos e coparticipação, categoria &quot;Outro&quot;.
+          </p>
+        ) : !showFixoForm ? (
+          <Button variant="secondary" className="self-start" onClick={() => setShowFixoForm(true)}>
+            Adicionar adesão
+          </Button>
+        ) : (
+          <form
+            className="flex flex-wrap items-end gap-2"
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              addFixo.mutate();
+            }}
+          >
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Tipo</span>
+              <select
+                value={fixoBeneficioTipoId}
+                onChange={(ev) => setFixoBeneficioTipoId(ev.target.value)}
+                required
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              >
+                <option value="">Selecione…</option>
+                {tiposOutro.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <input type="number" placeholder="Valor mensal" value={fixoValorMensal} onChange={(ev) => setFixoValorMensal(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input type="date" value={fixoDataInicio} onChange={(ev) => setFixoDataInicio(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <Button type="submit" disabled={addFixo.isPending}>
+              Adicionar
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowFixoForm(false)}>
               Cancelar
             </Button>
           </form>

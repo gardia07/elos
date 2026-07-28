@@ -14,7 +14,7 @@ interface CoparticipacaoRegra {
 interface BeneficioTipo {
   id: string;
   nome: string;
-  categoria: 'ALIMENTACAO' | 'ACADEMIA' | 'SAUDE';
+  categoria: 'ALIMENTACAO' | 'ACADEMIA' | 'SAUDE' | 'OUTRO';
   coparticipacao: CoparticipacaoRegra | null;
 }
 
@@ -51,6 +51,7 @@ const CATEGORIA_LABEL: Record<BeneficioTipo['categoria'], string> = {
   ALIMENTACAO: 'Alimentação',
   ACADEMIA: 'Academia',
   SAUDE: 'Saúde',
+  OUTRO: 'Outro',
 };
 
 const ABRANGENCIA_LABEL: Record<Feriado['abrangencia'], string> = {
@@ -66,13 +67,14 @@ function formatDate(v: string) {
   return new Date(v).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
-const TABS = ['tipos', 'academia', 'saude', 'feriados'] as const;
+const TABS = ['tipos', 'academia', 'saude', 'feriados', 'apuracao'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   tipos: 'Tipos e coparticipação',
   academia: 'Convênios de academia',
   saude: 'Planos de saúde',
   feriados: 'Feriados',
+  apuracao: 'Apuração mensal',
 };
 
 export default function BeneficiosPage() {
@@ -96,6 +98,7 @@ export default function BeneficiosPage() {
       {tab === 'academia' && <AcademiaTab />}
       {tab === 'saude' && <SaudeTab />}
       {tab === 'feriados' && <FeriadosTab />}
+      {tab === 'apuracao' && <ApuracaoTab />}
     </div>
   );
 }
@@ -620,6 +623,130 @@ function FeriadosTab() {
               </tr>
             )}
           </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+
+interface ApuracaoItem {
+  id: string;
+  competencia: string;
+  valorEmpresa: string;
+  valorColaborador: string;
+  valorTotal: string;
+  employee: { id: string; nome: string; matricula: string; departamento: string };
+  beneficioTipo: { id: string; nome: string; categoria: BeneficioTipo['categoria'] };
+}
+
+function mesAtual() {
+  const hoje = new Date();
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function ApuracaoTab() {
+  const queryClient = useQueryClient();
+  const [competencia, setCompetencia] = useState(mesAtual());
+
+  const { data: itens, isLoading } = useQuery({
+    queryKey: ['dp', 'benefits', 'apuracao', competencia],
+    queryFn: async () => (await api.get<ApuracaoItem[]>('/dp/benefits/apuracao', { params: { competencia } })).data,
+  });
+
+  const calcular = useMutation({
+    mutationFn: async () => api.post('/dp/benefits/apuracao/calcular', { competencia }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dp', 'benefits', 'apuracao', competencia] }),
+  });
+
+  const totais = (itens ?? []).reduce(
+    (acc, i) => ({
+      empresa: acc.empresa + Number(i.valorEmpresa),
+      colaborador: acc.colaborador + Number(i.valorColaborador),
+      total: acc.total + Number(i.valorTotal),
+    }),
+    { empresa: 0, colaborador: 0, total: 0 },
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <form
+          className="flex flex-wrap items-end gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            calcular.mutate();
+          }}
+        >
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-text-secondary">Competência</span>
+            <input
+              type="month"
+              value={competencia}
+              onChange={(e) => setCompetencia(e.target.value)}
+              required
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            />
+          </label>
+          <Button type="submit" disabled={calcular.isPending}>
+            {calcular.isPending ? 'Calculando…' : 'Calcular apuração'}
+          </Button>
+          {calcular.isSuccess && (
+            <span className="text-sm text-text-secondary">
+              {calcular.data.data.colaboradoresProcessados} colaboradores processados, {calcular.data.data.itensApurados} itens apurados.
+            </span>
+          )}
+        </form>
+        <p className="mt-3 text-xs text-text-tertiary">
+          Recalcula com base nas adesões ativas, feriados cadastrados e férias/afastamentos da competência. Pode rodar de novo quantas vezes precisar — o resultado anterior é substituído.
+        </p>
+      </Card>
+
+      <Card className="p-0">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-divider text-left text-text-tertiary">
+              <th className="px-5 py-3 font-medium">Colaborador</th>
+              <th className="px-5 py-3 font-medium">Benefício</th>
+              <th className="px-5 py-3 font-medium">Empresa</th>
+              <th className="px-5 py-3 font-medium">Colaborador</th>
+              <th className="px-5 py-3 font-medium">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {itens?.map((i) => (
+              <tr key={i.id} className="border-b border-divider last:border-0">
+                <td className="px-5 py-3">
+                  <div className="font-medium">{i.employee.nome}</div>
+                  <div className="text-xs text-text-tertiary">{i.employee.departamento}</div>
+                </td>
+                <td className="px-5 py-3">
+                  <Badge tone="blue">{i.beneficioTipo.nome}</Badge>
+                </td>
+                <td className="px-5 py-3">{formatBRL(Number(i.valorEmpresa))}</td>
+                <td className="px-5 py-3">{formatBRL(Number(i.valorColaborador))}</td>
+                <td className="px-5 py-3 font-medium">{formatBRL(Number(i.valorTotal))}</td>
+              </tr>
+            ))}
+            {!isLoading && itens?.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-5 py-6 text-center text-text-tertiary">
+                  Nenhuma apuração para essa competência ainda. Clique em &quot;Calcular apuração&quot;.
+                </td>
+              </tr>
+            )}
+          </tbody>
+          {itens && itens.length > 0 && (
+            <tfoot>
+              <tr className="border-t border-divider font-medium">
+                <td className="px-5 py-3" colSpan={2}>
+                  Total
+                </td>
+                <td className="px-5 py-3">{formatBRL(totais.empresa)}</td>
+                <td className="px-5 py-3">{formatBRL(totais.colaborador)}</td>
+                <td className="px-5 py-3">{formatBRL(totais.total)}</td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </Card>
     </div>

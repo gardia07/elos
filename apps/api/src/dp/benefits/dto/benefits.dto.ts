@@ -2,7 +2,7 @@ import { IsDateString, IsIn, IsNumber, IsOptional, IsString, IsUUID, Min } from 
 
 export class CreateBeneficioTipoDto {
   @IsString() nome!: string;
-  @IsIn(['ALIMENTACAO', 'ACADEMIA', 'SAUDE']) categoria!: 'ALIMENTACAO' | 'ACADEMIA' | 'SAUDE';
+  @IsIn(['ALIMENTACAO', 'ACADEMIA', 'SAUDE', 'OUTRO']) categoria!: 'ALIMENTACAO' | 'ACADEMIA' | 'SAUDE' | 'OUTRO';
 }
 
 export class SetCoparticipacaoDto {
@@ -54,4 +54,14 @@ export class AddDependentePlanoSaudeDto {
   @IsString() nome!: string;
   @IsDateString() dataNascimento!: string;
   @IsOptional() @IsString() parentesco?: string;
+}
+
+export class CreateAdesaoBeneficioFixoDto {
+  @IsUUID() beneficioTipoId!: string;
+  @IsNumber() @Min(0) valorMensal!: number;
+  @IsDateString() dataInicio!: string;
+}
+
+export class CalcularApuracaoDto {
+  @IsString() competencia!: string; // "2026-07"
 }
