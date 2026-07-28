@@ -15,6 +15,18 @@ const ESCOLARIDADE_OPTIONS = [
 const ESTADO_CIVIL_OPTIONS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União estável'];
 const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 
+const TIPO_CONTRATO_LABEL: Record<'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE', string> = {
+  CLT: 'CLT',
+  ESTAGIO: 'Estágio',
+  PJ: 'PJ',
+  INTERMITENTE: 'Intermitente',
+};
+const TIPO_SALARIO_LABEL: Record<'MENSALISTA' | 'HORISTA' | 'DIARISTA', string> = {
+  MENSALISTA: 'Mensalista',
+  HORISTA: 'Horista',
+  DIARISTA: 'Diarista',
+};
+
 interface DocumentRequirementStatus {
   id: string;
   requirementId: string;
@@ -75,7 +87,8 @@ interface EmployeeDetail {
   conjugeNome: string | null;
   conjugeCpf: string | null;
   salario: string;
-  tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ';
+  tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   feriasSaldo: number;
   feriasVencimento: string;
   feriasVencimentoAlerta: boolean;
@@ -97,7 +110,9 @@ type EditFields = {
   tituloEleitor: string; pis: string; ctps: string; cpf: string;
   conjugeNome: string; conjugeCpf: string;
   matricula: string; dataAdmissao: string;
-  cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ';
+  cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
+  salario: string;
 };
 
 function toEditFields(e: EmployeeDetail): EditFields {
@@ -112,6 +127,8 @@ function toEditFields(e: EmployeeDetail): EditFields {
     matricula: e.matricula, dataAdmissao: e.dataAdmissao.slice(0, 10),
     cargo: e.cargo, departamento: e.departamento, filial: e.filial ?? '', gestorDireto: e.gestorDireto ?? '',
     tipoContrato: e.tipoContrato,
+    tipoSalario: e.tipoSalario,
+    salario: String(Number(e.salario)),
   };
 }
 
@@ -142,8 +159,10 @@ export default function EmployeeProfilePage() {
   const [showPromote, setShowPromote] = useState(false);
   const [novoCargo, setNovoCargo] = useState('');
   const [novoSalario, setNovoSalario] = useState('');
+  const [motivoPromocao, setMotivoPromocao] = useState<'Promoção' | 'Reajuste anual' | 'Dissídio coletivo' | 'Outro'>('Promoção');
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState<EditFields | null>(null);
+  const [motivoSalario, setMotivoSalario] = useState('');
   const [showDependenteForm, setShowDependenteForm] = useState(false);
   const [depNome, setDepNome] = useState('');
   const [depParentesco, setDepParentesco] = useState('');
@@ -168,18 +187,30 @@ export default function EmployeeProfilePage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['employee', id] });
 
   const promote = useMutation({
-    mutationFn: async () => api.post(`/rh/employees/${id}/promote`, { cargo: novoCargo, salario: Number(novoSalario) }),
+    mutationFn: async () =>
+      api.post(`/rh/employees/${id}/promote`, { cargo: novoCargo || undefined, salario: Number(novoSalario), motivo: motivoPromocao }),
     onSuccess: () => {
       invalidate();
       setShowPromote(false);
+      setNovoCargo('');
+      setNovoSalario('');
+      setMotivoPromocao('Promoção');
     },
   });
 
+  const salarioAlterado = !!edit && !!e && Number(edit.salario) !== Number(e.salario);
+
   const saveEdit = useMutation({
-    mutationFn: async () => api.patch(`/rh/employees/${id}`, edit),
+    mutationFn: async () =>
+      api.patch(`/rh/employees/${id}`, {
+        ...edit,
+        salario: edit ? Number(edit.salario) : undefined,
+        motivoAlteracaoSalario: salarioAlterado ? motivoSalario : undefined,
+      }),
     onSuccess: () => {
       invalidate();
       setEditing(false);
+      setMotivoSalario('');
     },
   });
 
@@ -263,7 +294,7 @@ export default function EmployeeProfilePage() {
                 setShowPromote((s) => !s);
               }}
             >
-              Promover
+              Alterar salário
             </Button>
           )}
           <Button
@@ -271,6 +302,7 @@ export default function EmployeeProfilePage() {
             onClick={() => {
               setShowPromote(false);
               setEdit(toEditFields(e));
+              setMotivoSalario('');
               setEditing(true);
               setTab('geral');
             }}
@@ -287,7 +319,11 @@ export default function EmployeeProfilePage() {
 
       {showPromote && (
         <Card>
-          <h3 className="mb-3 text-sm font-semibold">Promover colaborador</h3>
+          <h3 className="mb-3 text-sm font-semibold">Alterar salário</h3>
+          <p className="mb-3 text-xs text-text-tertiary">
+            Use para reajustes anuais, promoções ou dissídios coletivos — fica registrado no histórico do colaborador. Para corrigir um dado
+            cadastrado errado, use &quot;Editar dados&quot;.
+          </p>
           <form
             className="flex flex-wrap items-end gap-3"
             onSubmit={(ev) => {
@@ -296,15 +332,28 @@ export default function EmployeeProfilePage() {
             }}
           >
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Novo cargo</span>
-              <input value={novoCargo} onChange={(ev) => setNovoCargo(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <span className="text-text-secondary">Motivo</span>
+              <select
+                value={motivoPromocao}
+                onChange={(ev) => setMotivoPromocao(ev.target.value as typeof motivoPromocao)}
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              >
+                <option value="Promoção">Promoção</option>
+                <option value="Reajuste anual">Reajuste anual</option>
+                <option value="Dissídio coletivo">Dissídio coletivo</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Novo cargo (se houver)</span>
+              <input value={novoCargo} onChange={(ev) => setNovoCargo(ev.target.value)} placeholder={e.cargo} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Novo salário</span>
               <input type="number" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={promote.isPending}>
-              Confirmar promoção
+              Confirmar
             </Button>
             <Button type="button" variant="secondary" onClick={() => setShowPromote(false)}>
               Cancelar
@@ -336,10 +385,16 @@ export default function EmployeeProfilePage() {
 
           {editing && (
             <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setEditing(false)}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setEditing(false);
+                  setMotivoSalario('');
+                }}
+              >
                 Cancelar
               </Button>
-              <Button disabled={saveEdit.isPending} onClick={() => saveEdit.mutate()}>
+              <Button disabled={saveEdit.isPending || (salarioAlterado && !motivoSalario)} onClick={() => saveEdit.mutate()}>
                 Salvar alterações
               </Button>
             </div>
@@ -413,7 +468,8 @@ export default function EmployeeProfilePage() {
                 <Row label="Departamento" value={e.departamento} />
                 <Row label="Filial" value={e.filial ?? '—'} />
                 <Row label="Gestor direto" value={e.gestorDireto ?? 'Não atribuído'} />
-                <Row label="Tipo de contrato" value={e.tipoContrato} />
+                <Row label="Tipo de contrato" value={TIPO_CONTRATO_LABEL[e.tipoContrato]} />
+                <Row label="Tipo de salário" value={TIPO_SALARIO_LABEL[e.tipoSalario]} />
                 <Row label="Matrícula" value={e.matricula} />
               </Section>
             </>
@@ -469,6 +525,32 @@ export default function EmployeeProfilePage() {
                   <EditField label="Cargo" value={edit.cargo} onChange={(v) => setEdit({ ...edit, cargo: v })} />
                   <EditField label="Departamento" value={edit.departamento} onChange={(v) => setEdit({ ...edit, departamento: v })} />
                   <EditField label="Filial" value={edit.filial} onChange={(v) => setEdit({ ...edit, filial: v })} />
+                  <EditField label="Salário" type="number" value={edit.salario} onChange={(v) => setEdit({ ...edit, salario: v })} />
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-text-secondary">Tipo de contrato</span>
+                    <select
+                      value={edit.tipoContrato}
+                      onChange={(ev) => setEdit({ ...edit, tipoContrato: ev.target.value as EditFields['tipoContrato'] })}
+                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                    >
+                      <option value="CLT">CLT</option>
+                      <option value="ESTAGIO">Estágio</option>
+                      <option value="PJ">PJ</option>
+                      <option value="INTERMITENTE">Intermitente</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-text-secondary">Tipo de salário</span>
+                    <select
+                      value={edit.tipoSalario}
+                      onChange={(ev) => setEdit({ ...edit, tipoSalario: ev.target.value as EditFields['tipoSalario'] })}
+                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                    >
+                      <option value="MENSALISTA">Mensalista</option>
+                      <option value="HORISTA">Horista</option>
+                      <option value="DIARISTA">Diarista</option>
+                    </select>
+                  </label>
                   <label className="flex flex-col gap-1.5 text-sm">
                     <span className="text-text-secondary">Gestor direto</span>
                     <select
@@ -488,6 +570,21 @@ export default function EmployeeProfilePage() {
                     </select>
                   </label>
                 </div>
+                {salarioAlterado && (
+                  <label className="mt-3 flex flex-col gap-1.5 text-sm">
+                    <span className="text-text-secondary">Motivo da correção do salário (obrigatório)</span>
+                    <input
+                      value={motivoSalario}
+                      onChange={(ev) => setMotivoSalario(ev.target.value)}
+                      placeholder="Ex.: erro de digitação no cadastro inicial"
+                      required
+                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    />
+                    <span className="text-xs text-text-tertiary">
+                      Para reajustes anuais, promoções ou dissídios, use o botão &quot;Alterar salário&quot; em vez de editar aqui.
+                    </span>
+                  </label>
+                )}
               </Section>
             </form>
           )}

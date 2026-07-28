@@ -139,7 +139,7 @@ function DocumentRequirementsConfig() {
         <div className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Aplica a</span>
           <div className="flex gap-3 py-2">
-            {(['CLT', 'ESTAGIO', 'PJ'] as const).map((tipo) => (
+            {(['CLT', 'ESTAGIO', 'PJ', 'INTERMITENTE'] as const).map((tipo) => (
               <label key={tipo} className="flex items-center gap-1.5 text-xs">
                 <input
                   type="checkbox"
@@ -175,6 +175,8 @@ interface Employee {
   status: 'ATIVO' | 'INATIVO';
   feriasVencimentoAlerta: boolean;
   conformidadeDocumental: number;
+  tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
 }
 
 interface FilterOptions {
@@ -202,6 +204,7 @@ export default function ColaboradoresPage() {
   const [cargoFiltro, setCargoFiltro] = useState('');
   const [filial, setFilial] = useState('');
   const [tipoContrato, setTipoContrato] = useState('');
+  const [tipoSalario, setTipoSalario] = useState('');
   const [admissaoDe, setAdmissaoDe] = useState('');
   const [admissaoAte, setAdmissaoAte] = useState('');
   const [tempoDeCasaMinAnos, setTempoDeCasaMinAnos] = useState('');
@@ -216,9 +219,11 @@ export default function ColaboradoresPage() {
   const [novoDepartamento, setNovoDepartamento] = useState('');
   const [dataAdmissao, setDataAdmissao] = useState('');
   const [salario, setSalario] = useState('');
+  const [novoTipoContrato, setNovoTipoContrato] = useState('CLT');
+  const [novoTipoSalario, setNovoTipoSalario] = useState('MENSALISTA');
   const [email, setEmail] = useState('');
 
-  const activeFilterCount = [departamento, cargoFiltro, filial, tipoContrato, admissaoDe, admissaoAte, tempoDeCasaMinAnos].filter(Boolean).length + (feriasVencendo ? 1 : 0);
+  const activeFilterCount = [departamento, cargoFiltro, filial, tipoContrato, tipoSalario, admissaoDe, admissaoAte, tempoDeCasaMinAnos].filter(Boolean).length + (feriasVencendo ? 1 : 0);
 
   const filters = {
     nome: nome || undefined,
@@ -227,6 +232,7 @@ export default function ColaboradoresPage() {
     cargo: cargoFiltro || undefined,
     filial: filial || undefined,
     tipoContrato: tipoContrato || undefined,
+    tipoSalario: tipoSalario || undefined,
     admissaoDe: admissaoDe || undefined,
     admissaoAte: admissaoAte || undefined,
     tempoDeCasaMinAnos: tempoDeCasaMinAnos || undefined,
@@ -259,6 +265,8 @@ export default function ColaboradoresPage() {
         departamento: novoDepartamento,
         dataAdmissao,
         salario: Number(salario),
+        tipoContrato: novoTipoContrato,
+        tipoSalario: novoTipoSalario,
         email: email || undefined,
       }),
     onSuccess: () => {
@@ -270,6 +278,8 @@ export default function ColaboradoresPage() {
       setNovoDepartamento('');
       setDataAdmissao('');
       setSalario('');
+      setNovoTipoContrato('CLT');
+      setNovoTipoSalario('MENSALISTA');
       setEmail('');
     },
   });
@@ -279,6 +289,7 @@ export default function ColaboradoresPage() {
     setCargoFiltro('');
     setFilial('');
     setTipoContrato('');
+    setTipoSalario('');
     setAdmissaoDe('');
     setAdmissaoAte('');
     setTempoDeCasaMinAnos('');
@@ -361,6 +372,16 @@ export default function ColaboradoresPage() {
                 <option value="CLT">CLT</option>
                 <option value="ESTAGIO">Estágio</option>
                 <option value="PJ">PJ</option>
+                <option value="INTERMITENTE">Intermitente</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Tipo de salário</span>
+              <select value={tipoSalario} onChange={(e) => setTipoSalario(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+                <option value="">Todos</option>
+                <option value="MENSALISTA">Mensalista</option>
+                <option value="HORISTA">Horista</option>
+                <option value="DIARISTA">Diarista</option>
               </select>
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
@@ -431,6 +452,23 @@ export default function ColaboradoresPage() {
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Salário</span>
               <input type="number" value={salario} onChange={(e) => setSalario(e.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Tipo de contrato</span>
+              <select value={novoTipoContrato} onChange={(e) => setNovoTipoContrato(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+                <option value="CLT">CLT</option>
+                <option value="ESTAGIO">Estágio</option>
+                <option value="PJ">PJ</option>
+                <option value="INTERMITENTE">Intermitente</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Tipo de salário</span>
+              <select value={novoTipoSalario} onChange={(e) => setNovoTipoSalario(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+                <option value="MENSALISTA">Mensalista</option>
+                <option value="HORISTA">Horista</option>
+                <option value="DIARISTA">Diarista</option>
+              </select>
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">E-mail</span>

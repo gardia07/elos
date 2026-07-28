@@ -11,7 +11,8 @@ export class CreateEmployeeDto {
   @IsString() departamento!: string;
   @IsDateString() dataAdmissao!: string;
   @IsNumber() @Min(0) salario!: number;
-  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ';
+  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ', 'INTERMITENTE']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  @IsOptional() @IsIn(['MENSALISTA', 'HORISTA', 'DIARISTA']) tipoSalario?: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   @IsOptional() @IsString() filial?: string;
   @IsOptional() @IsString() email?: string;
   @IsOptional() @IsString() telefone?: string;
@@ -22,7 +23,8 @@ export class ListEmployeesQueryDto {
   @IsOptional() @IsString() departamento?: string;
   @IsOptional() @IsString() cargo?: string;
   @IsOptional() @IsString() filial?: string;
-  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ';
+  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ', 'INTERMITENTE']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  @IsOptional() @IsIn(['MENSALISTA', 'HORISTA', 'DIARISTA']) tipoSalario?: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   @IsOptional() @IsIn(['ATIVO', 'INATIVO']) status?: 'ATIVO' | 'INATIVO';
   @IsOptional() @IsDateString() admissaoDe?: string;
   @IsOptional() @IsDateString() admissaoAte?: string;
@@ -41,7 +43,10 @@ export class UpdateEmployeeDto {
   @IsOptional() @IsString() departamento?: string;
   @IsOptional() @IsString() filial?: string;
   @IsOptional() @IsString() gestorDireto?: string;
-  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ';
+  @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ', 'INTERMITENTE']) tipoContrato?: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  @IsOptional() @IsIn(['MENSALISTA', 'HORISTA', 'DIARISTA']) tipoSalario?: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
+  @IsOptional() @IsNumber() @Min(0) salario?: number;
+  @IsOptional() @IsString() motivoAlteracaoSalario?: string;
 
   // Contato
   @IsOptional() @IsString() email?: string;
@@ -71,8 +76,9 @@ export class UpdateEmployeeDto {
 }
 
 export class PromoteEmployeeDto {
-  @IsString() cargo!: string;
+  @IsOptional() @IsString() cargo?: string;
   @IsNumber() @Min(0) salario!: number;
+  @IsIn(['Promoção', 'Reajuste anual', 'Dissídio coletivo', 'Outro']) motivo!: 'Promoção' | 'Reajuste anual' | 'Dissídio coletivo' | 'Outro';
 }
 
 export class AddDependenteDto {

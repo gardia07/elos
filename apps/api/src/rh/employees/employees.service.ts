@@ -13,6 +13,10 @@ import {
   UpdateEmployeeDto,
 } from './dto/employees.dto';
 
+function formatBRL(v: number) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
 function monthsBetween(from: Date, to: Date): { anos: number; meses: number } {
   let months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
   if (to.getDate() < from.getDate()) months -= 1;
@@ -54,6 +58,7 @@ export class EmployeesService {
         telefone: dto.telefone,
         salario: dto.salario,
         tipoContrato: dto.tipoContrato ?? 'CLT',
+        tipoSalario: dto.tipoSalario ?? 'MENSALISTA',
         feriasSaldo: 30,
         feriasVencimento: addMonths(dataAdmissao, 12),
         historico: {
@@ -71,6 +76,7 @@ export class EmployeesService {
     if (query.cargo) where.cargo = { contains: query.cargo, mode: 'insensitive' };
     if (query.filial) where.filial = query.filial;
     if (query.tipoContrato) where.tipoContrato = query.tipoContrato;
+    if (query.tipoSalario) where.tipoSalario = query.tipoSalario;
     if (query.status) where.status = query.status;
     if (query.admissaoDe || query.admissaoAte) {
       where.dataAdmissao = {
@@ -162,27 +168,42 @@ export class EmployeesService {
   }
 
   async update(id: string, dto: UpdateEmployeeDto) {
-    await this.mustFind(id);
-    const { dataNascimento, dataAdmissao, ...rest } = dto;
+    const current = await this.mustFind(id);
+    const { dataNascimento, dataAdmissao, salario, motivoAlteracaoSalario, ...rest } = dto;
+    const salarioMudou = salario != null && Number(salario) !== Number(current.salario);
     const updated = await this.db().employee.update({
       where: { id },
       data: {
         ...rest,
         ...(dataNascimento ? { dataNascimento: new Date(dataNascimento) } : {}),
         ...(dataAdmissao ? { dataAdmissao: new Date(dataAdmissao) } : {}),
+        ...(salario != null ? { salario } : {}),
       },
     });
+    if (salarioMudou) {
+      const detalhe = motivoAlteracaoSalario ? ` — ${motivoAlteracaoSalario}` : '';
+      await this.addHistorico(
+        id,
+        `Salário corrigido de ${formatBRL(Number(current.salario))} para ${formatBRL(salario!)}${detalhe}`,
+        'Correção cadastral',
+      );
+    }
     await this.addHistorico(id, 'Dados cadastrais atualizados', 'Documento');
     return updated;
   }
 
   async promote(id: string, dto: PromoteEmployeeDto) {
-    await this.mustFind(id);
+    const current = await this.mustFind(id);
     const updated = await this.db().employee.update({
       where: { id },
-      data: { cargo: dto.cargo, salario: dto.salario },
+      data: { ...(dto.cargo ? { cargo: dto.cargo } : {}), salario: dto.salario },
     });
-    await this.addHistorico(id, `Promoção para ${dto.cargo}`, 'Promoção');
+    const cargoTxt = dto.cargo && dto.cargo !== current.cargo ? ` — novo cargo: ${dto.cargo}` : '';
+    await this.addHistorico(
+      id,
+      `${dto.motivo}: salário de ${formatBRL(Number(current.salario))} para ${formatBRL(dto.salario)}${cargoTxt}`,
+      dto.motivo,
+    );
     return updated;
   }
 
