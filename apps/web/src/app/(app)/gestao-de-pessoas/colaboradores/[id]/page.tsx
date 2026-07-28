@@ -98,7 +98,7 @@ interface EmployeeDetail {
   feriasVencimentoAlerta: boolean;
   proximasFerias: { inicio: string; fim: string } | null;
   tempoDeCasa: { anos: number; meses: number };
-  dependentes: { id: string; nome: string; parentesco: string }[];
+  dependentes: { id: string; nome: string; parentesco: string; cpf: string | null }[];
   historico: { id: string; evento: string; categoria: string; autor: string; data: string }[];
   documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
@@ -174,6 +174,7 @@ export default function EmployeeProfilePage() {
   const [showDependenteForm, setShowDependenteForm] = useState(false);
   const [depNome, setDepNome] = useState('');
   const [depParentesco, setDepParentesco] = useState('');
+  const [depCpf, setDepCpf] = useState('');
   const [vacInicio, setVacInicio] = useState('');
   const [vacFim, setVacFim] = useState('');
   const [docNome, setDocNome] = useState('');
@@ -229,12 +230,13 @@ export default function EmployeeProfilePage() {
   });
 
   const addDependente = useMutation({
-    mutationFn: async () => api.post(`/rh/employees/${id}/dependentes`, { nome: depNome, parentesco: depParentesco }),
+    mutationFn: async () => api.post(`/rh/employees/${id}/dependentes`, { nome: depNome, parentesco: depParentesco, cpf: depCpf }),
     onSuccess: () => {
       invalidate();
       setShowDependenteForm(false);
       setDepNome('');
       setDepParentesco('');
+      setDepCpf('');
     },
   });
 
@@ -441,7 +443,9 @@ export default function EmployeeProfilePage() {
                     {e.dependentes.map((d) => (
                       <div key={d.id} className="flex justify-between text-sm text-text-secondary">
                         <span>{d.nome}</span>
-                        <span>{d.parentesco}</span>
+                        <span>
+                          {d.parentesco} · {d.cpf ?? '—'}
+                        </span>
                       </div>
                     ))}
                     {e.dependentes.length === 0 && <p className="text-sm text-text-tertiary">Nenhum dependente cadastrado.</p>}
@@ -459,6 +463,7 @@ export default function EmployeeProfilePage() {
                       >
                         <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
                         <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                        <input placeholder="CPF" value={depCpf} onChange={(ev) => setDepCpf(maskCPF(ev.target.value))} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
                         <Button type="submit" disabled={addDependente.isPending}>
                           Adicionar
                         </Button>

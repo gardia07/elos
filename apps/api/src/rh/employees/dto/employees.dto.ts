@@ -88,7 +88,7 @@ export class PromoteEmployeeDto {
 export class AddDependenteDto {
   @IsString() nome!: string;
   @IsString() parentesco!: string;
-  @IsOptional() @IsString() cpf?: string;
+  @IsString() cpf!: string;
   @IsOptional() @EmptyStringToUndefined() @IsDateString() dataNascimento?: string;
 }
 
