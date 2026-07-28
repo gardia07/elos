@@ -428,6 +428,8 @@ model Employee {
   endereco                  String?
   cpf                       String?
   rg                        String?
+  rgOrgaoExpedidor          String?
+  rgDataExpedicao           DateTime?      @db.Date
   dataNascimento            DateTime?      @db.Date
   nacionalidade             String?
   estadoCivil               String?
@@ -436,6 +438,8 @@ model Employee {
   pis                       String?
   ctps                      String?
   tituloEleitor             String?
+  tituloEleitorZona         String?
+  tituloEleitorSecao        String?
   genero                    String?
   escolaridade              String?
   cnh                       String?

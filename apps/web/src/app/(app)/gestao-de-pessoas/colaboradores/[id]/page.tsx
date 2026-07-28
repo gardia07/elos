@@ -73,6 +73,8 @@ interface EmployeeDetail {
   contatoEmergenciaTelefone: string | null;
   cpf: string | null;
   rg: string | null;
+  rgOrgaoExpedidor: string | null;
+  rgDataExpedicao: string | null;
   dataNascimento: string | null;
   nacionalidade: string | null;
   estadoCivil: string | null;
@@ -84,6 +86,8 @@ interface EmployeeDetail {
   pis: string | null;
   ctps: string | null;
   tituloEleitor: string | null;
+  tituloEleitorZona: string | null;
+  tituloEleitorSecao: string | null;
   conjugeNome: string | null;
   conjugeCpf: string | null;
   salario: string;
@@ -107,7 +111,8 @@ type EditFields = {
   contatoEmergenciaNome: string; contatoEmergenciaTelefone: string;
   dataNascimento: string; escolaridade: string; estadoCivil: string; nacionalidade: string;
   nomeMae: string; nomePai: string; genero: string; cnh: string; rg: string;
-  tituloEleitor: string; pis: string; ctps: string; cpf: string;
+  rgOrgaoExpedidor: string; rgDataExpedicao: string;
+  tituloEleitor: string; tituloEleitorZona: string; tituloEleitorSecao: string; pis: string; ctps: string; cpf: string;
   conjugeNome: string; conjugeCpf: string;
   matricula: string; dataAdmissao: string;
   cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
@@ -122,7 +127,9 @@ function toEditFields(e: EmployeeDetail): EditFields {
     dataNascimento: e.dataNascimento ? e.dataNascimento.slice(0, 10) : '',
     escolaridade: e.escolaridade ?? '', estadoCivil: e.estadoCivil ?? '', nacionalidade: e.nacionalidade ?? '',
     nomeMae: e.nomeMae ?? '', nomePai: e.nomePai ?? '', genero: e.genero ?? '', cnh: e.cnh ?? '', rg: e.rg ?? '',
-    tituloEleitor: e.tituloEleitor ?? '', pis: e.pis ?? '', ctps: e.ctps ?? '', cpf: e.cpf ?? '',
+    rgOrgaoExpedidor: e.rgOrgaoExpedidor ?? '', rgDataExpedicao: e.rgDataExpedicao ? e.rgDataExpedicao.slice(0, 10) : '',
+    tituloEleitor: e.tituloEleitor ?? '', tituloEleitorZona: e.tituloEleitorZona ?? '', tituloEleitorSecao: e.tituloEleitorSecao ?? '',
+    pis: e.pis ?? '', ctps: e.ctps ?? '', cpf: e.cpf ?? '',
     conjugeNome: e.conjugeNome ?? '', conjugeCpf: e.conjugeCpf ?? '',
     matricula: e.matricula, dataAdmissao: e.dataAdmissao.slice(0, 10),
     cargo: e.cargo, departamento: e.departamento, filial: e.filial ?? '', gestorDireto: e.gestorDireto ?? '',
@@ -163,6 +170,7 @@ export default function EmployeeProfilePage() {
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState<EditFields | null>(null);
   const [motivoSalario, setMotivoSalario] = useState('');
+  const [saveEditError, setSaveEditError] = useState('');
   const [showDependenteForm, setShowDependenteForm] = useState(false);
   const [depNome, setDepNome] = useState('');
   const [depParentesco, setDepParentesco] = useState('');
@@ -201,16 +209,22 @@ export default function EmployeeProfilePage() {
   const salarioAlterado = !!edit && !!e && Number(edit.salario) !== Number(e.salario);
 
   const saveEdit = useMutation({
-    mutationFn: async () =>
-      api.patch(`/rh/employees/${id}`, {
+    mutationFn: async () => {
+      setSaveEditError('');
+      return api.patch(`/rh/employees/${id}`, {
         ...edit,
         salario: edit ? Number(edit.salario) : undefined,
         motivoAlteracaoSalario: salarioAlterado ? motivoSalario : undefined,
-      }),
+      });
+    },
     onSuccess: () => {
       invalidate();
       setEditing(false);
       setMotivoSalario('');
+    },
+    onError: (err: unknown) => {
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setSaveEditError(Array.isArray(message) ? message.join(' ') : message || 'Não foi possível salvar as alterações.');
     },
   });
 
@@ -384,19 +398,26 @@ export default function EmployeeProfilePage() {
           </div>
 
           {editing && (
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setEditing(false);
-                  setMotivoSalario('');
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button disabled={saveEdit.isPending || (salarioAlterado && !motivoSalario)} onClick={() => saveEdit.mutate()}>
-                Salvar alterações
-              </Button>
+            <div className="flex flex-col items-end gap-2">
+              {salarioAlterado && !motivoSalario && (
+                <p className="text-xs text-danger">Preencha o motivo da correção do salário (em Dados contratuais) para salvar.</p>
+              )}
+              {saveEditError && <p className="text-xs text-danger">{saveEditError}</p>}
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setEditing(false);
+                    setMotivoSalario('');
+                    setSaveEditError('');
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button disabled={saveEdit.isPending || (salarioAlterado && !motivoSalario)} onClick={() => saveEdit.mutate()}>
+                  {saveEdit.isPending ? 'Salvando…' : 'Salvar alterações'}
+                </Button>
+              </div>
             </div>
           )}
 
@@ -457,7 +478,11 @@ export default function EmployeeProfilePage() {
                 <Row label="Gênero" value={e.genero ?? '—'} />
                 <Row label="CNH" value={e.cnh ?? '—'} />
                 <Row label="RG" value={e.rg ?? '—'} />
+                <Row label="Órgão expedidor do RG" value={e.rgOrgaoExpedidor ?? '—'} />
+                <Row label="Data de expedição do RG" value={e.rgDataExpedicao ? formatDate(e.rgDataExpedicao) : '—'} />
                 <Row label="Título de eleitor" value={e.tituloEleitor ?? '—'} />
+                <Row label="Zona eleitoral" value={e.tituloEleitorZona ?? '—'} />
+                <Row label="Seção eleitoral" value={e.tituloEleitorSecao ?? '—'} />
                 <Row label="PIS" value={e.pis ?? '—'} />
                 <Row label="CTPS" value={e.ctps ?? '—'} />
                 <Row label="CPF" value={e.cpf ?? '—'} />
@@ -511,7 +536,11 @@ export default function EmployeeProfilePage() {
                   <SelectField label="Gênero" value={edit.genero} onChange={(v) => setEdit({ ...edit, genero: v })} options={GENERO_OPTIONS} />
                   <EditField label="CNH" value={edit.cnh} onChange={(v) => setEdit({ ...edit, cnh: v })} />
                   <EditField label="RG" value={edit.rg} onChange={(v) => setEdit({ ...edit, rg: v })} />
+                  <EditField label="Órgão expedidor do RG" value={edit.rgOrgaoExpedidor} onChange={(v) => setEdit({ ...edit, rgOrgaoExpedidor: v })} placeholder="SSP/SP" />
+                  <EditField label="Data de expedição do RG" type="date" value={edit.rgDataExpedicao} onChange={(v) => setEdit({ ...edit, rgDataExpedicao: v })} />
                   <EditField label="Título de eleitor" value={edit.tituloEleitor} onChange={(v) => setEdit({ ...edit, tituloEleitor: v })} />
+                  <EditField label="Zona eleitoral" value={edit.tituloEleitorZona} onChange={(v) => setEdit({ ...edit, tituloEleitorZona: v })} />
+                  <EditField label="Seção eleitoral" value={edit.tituloEleitorSecao} onChange={(v) => setEdit({ ...edit, tituloEleitorSecao: v })} />
                   <EditField label="PIS" value={edit.pis} onChange={(v) => setEdit({ ...edit, pis: v })} />
                   <EditField label="CTPS" value={edit.ctps} onChange={(v) => setEdit({ ...edit, ctps: v })} />
                   <EditField label="CPF" value={edit.cpf} onChange={(v) => setEdit({ ...edit, cpf: maskCPF(v) })} />
@@ -859,17 +888,25 @@ function EditField({
   onChange,
   type = 'text',
   className = '',
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   className?: string;
+  placeholder?: string;
 }) {
   return (
     <label className={`flex flex-col gap-1.5 text-sm ${className}`}>
       <span className="text-text-secondary">{label}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+      />
     </label>
   );
 }

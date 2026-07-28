@@ -323,10 +323,10 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
           }}
         >
           <p className="text-sm text-text-secondary">
-            Informe o identificador (slug) da outra empresa onde você tem uma conta com este mesmo e-mail.
+            Informe o código da outra empresa onde você tem uma conta com este mesmo e-mail.
           </p>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-text-secondary">Empresa (slug)</span>
+            <span className="text-text-secondary">Código da empresa</span>
             <input
               value={switchSlug}
               onChange={(e) => setSwitchSlug(e.target.value)}

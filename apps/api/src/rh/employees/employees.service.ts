@@ -169,7 +169,7 @@ export class EmployeesService {
 
   async update(id: string, dto: UpdateEmployeeDto) {
     const current = await this.mustFind(id);
-    const { dataNascimento, dataAdmissao, salario, motivoAlteracaoSalario, ...rest } = dto;
+    const { dataNascimento, dataAdmissao, rgDataExpedicao, salario, motivoAlteracaoSalario, ...rest } = dto;
     const salarioMudou = salario != null && Number(salario) !== Number(current.salario);
     const updated = await this.db().employee.update({
       where: { id },
@@ -177,6 +177,7 @@ export class EmployeesService {
         ...rest,
         ...(dataNascimento ? { dataNascimento: new Date(dataNascimento) } : {}),
         ...(dataAdmissao ? { dataAdmissao: new Date(dataAdmissao) } : {}),
+        ...(rgDataExpedicao ? { rgDataExpedicao: new Date(rgDataExpedicao) } : {}),
         ...(salario != null ? { salario } : {}),
       },
     });

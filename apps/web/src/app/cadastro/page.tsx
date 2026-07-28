@@ -61,9 +61,9 @@ export default function CadastroPage() {
         ) : (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-text-secondary">
-              Empresa criada. Use este identificador para entrar:
+              Empresa criada. Guarde este código — é ele que você (e sua equipe) vai usar para entrar:
             </p>
-            <p className="rounded-[10px] bg-tint-blue px-3 py-2 text-sm font-semibold text-text">{tenantSlug}</p>
+            <p className="rounded-[10px] bg-tint-blue px-3 py-2 text-center text-lg font-semibold tracking-[0.15em] text-text">{tenantSlug}</p>
             <Link
               href="/login"
               className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-center text-sm font-semibold text-on-accent transition"

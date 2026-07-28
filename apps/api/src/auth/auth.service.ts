@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes, createHash } from 'node:crypto';
@@ -15,23 +15,16 @@ import { UpdateTenantDto } from '../tenant/dto/tenant.dto';
 import { CLT_DOCUMENT_REQUIREMENTS } from '../rh/documents/clt-requirements';
 import { JwtPayload } from '../common/jwt-payload';
 
-const DIACRITICS: Record<string, string> = {
-  á: 'a', à: 'a', â: 'a', ã: 'a', ä: 'a',
-  é: 'e', è: 'e', ê: 'e', ë: 'e',
-  í: 'i', ì: 'i', î: 'i', ï: 'i',
-  ó: 'o', ò: 'o', ô: 'o', õ: 'o', ö: 'o',
-  ú: 'u', ù: 'u', û: 'u', ü: 'u',
-  ç: 'c', ñ: 'n',
-};
+// Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
+const COMPANY_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .split('')
-    .map((ch) => DIACRITICS[ch] ?? ch)
-    .join('')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+function generateCompanyCode(): string {
+  const length = 4 + Math.floor(Math.random() * 3); // 4 a 6 caracteres
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += COMPANY_CODE_CHARS[Math.floor(Math.random() * COMPANY_CODE_CHARS.length)];
+  }
+  return code;
 }
 
 function generateSixDigitCode(): string {
@@ -55,12 +48,16 @@ export class AuthService {
     private readonly email: EmailService,
   ) {}
 
-  async registerTenant(dto: RegisterTenantDto) {
-    const slug = slugify(dto.companyName);
-    const existing = await this.prisma.tenant.findUnique({ where: { slug } });
-    if (existing) {
-      throw new ConflictException('Já existe uma empresa cadastrada com esse nome.');
+  private async generateUniqueCompanyCode(): Promise<string> {
+    let code = generateCompanyCode();
+    while (await this.prisma.tenant.findUnique({ where: { slug: code } })) {
+      code = generateCompanyCode();
     }
+    return code;
+  }
+
+  async registerTenant(dto: RegisterTenantDto) {
+    const slug = await this.generateUniqueCompanyCode();
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
@@ -87,7 +84,7 @@ export class AuthService {
     await this.email.send(
       dto.email,
       'Bem-vindo à Plataforma Elos',
-      `<p>Olá, ${dto.adminName}!</p><p>Sua empresa <strong>${dto.companyName}</strong> foi cadastrada com sucesso na Plataforma Elos.</p><p>Para entrar, use o identificador da empresa: <strong>${slug}</strong></p>`,
+      `<p>Olá, ${dto.adminName}!</p><p>Sua empresa <strong>${dto.companyName}</strong> foi cadastrada com sucesso na Plataforma Elos.</p><p>Para entrar, use o código da empresa: <strong>${slug}</strong></p>`,
     );
 
     return { tenantSlug: tenant.slug };
@@ -163,11 +160,7 @@ export class AuthService {
   async createCompany(userId: string, dto: CreateCompanyDto) {
     const me = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-    const slug = slugify(dto.companyName);
-    const existing = await this.prisma.tenant.findUnique({ where: { slug } });
-    if (existing) {
-      throw new ConflictException('Já existe uma empresa cadastrada com esse nome.');
-    }
+    const slug = await this.generateUniqueCompanyCode();
 
     const trialPlan = await this.prisma.licensePlan.findUnique({ where: { code: 'trial' } });
 
@@ -195,7 +188,7 @@ export class AuthService {
   async login(dto: LoginDto, ip: string) {
     await this.assertLoginAllowed(dto.email.toLowerCase(), ip);
 
-    const tenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug } });
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug.trim().toUpperCase() }  });
     if (!tenant) {
       await this.recordLoginAttempt(dto.email, ip, false);
       throw new UnauthorizedException('Credenciais inválidas.');
@@ -302,7 +295,7 @@ export class AuthService {
   async forgotPassword(dto: ForgotPasswordDto) {
     const generic = { ok: true, message: 'Se o e-mail informado existir, enviamos um link de recuperação.' };
 
-    const tenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug } });
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug.trim().toUpperCase() }  });
     if (!tenant) return generic;
 
     const user = await this.prisma.user.findUnique({
@@ -353,7 +346,7 @@ export class AuthService {
   async switchTenant(userId: string, dto: SwitchTenantDto) {
     const me = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-    const targetTenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug } });
+    const targetTenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug.trim().toUpperCase() }  });
     if (!targetTenant) throw new BadRequestException('Empresa não encontrada.');
 
     const targetUser = await this.prisma.user.findUnique({

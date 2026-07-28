@@ -71,7 +71,7 @@ export default function LoginPage() {
               loginMutation.mutate();
             }}
           >
-            <Field label="Empresa (slug)" value={tenantSlug} onChange={setTenantSlug} />
+            <Field label="Código da empresa" value={tenantSlug} onChange={setTenantSlug} />
             <Field label="E-mail" type="email" value={email} onChange={setEmail} />
             <Field label="Senha" type="password" value={password} onChange={setPassword} />
             {error && <p className="text-sm text-danger">{error}</p>}
@@ -139,7 +139,7 @@ export default function LoginPage() {
                 }}
               >
                 <p className="text-sm text-text-secondary">Informe sua empresa e e-mail para receber o link de redefinição.</p>
-                <Field label="Empresa (slug)" value={tenantSlug} onChange={setTenantSlug} />
+                <Field label="Código da empresa" value={tenantSlug} onChange={setTenantSlug} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} />
                 <button
                   type="submit"

@@ -168,7 +168,7 @@ export default function ConfiguracoesCadastrosPage() {
                 )}
                 <div>
                   <div className="text-sm font-medium">{c.nomeFantasia || c.name}</div>
-                  <div className="text-xs text-text-tertiary">{c.slug}</div>
+                  <div className="text-xs text-text-tertiary">Código: {c.slug}</div>
                 </div>
               </div>
               {c.current ? (

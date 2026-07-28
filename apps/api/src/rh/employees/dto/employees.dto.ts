@@ -58,6 +58,8 @@ export class UpdateEmployeeDto {
   // Dados pessoais
   @IsOptional() @IsString() cpf?: string;
   @IsOptional() @IsString() rg?: string;
+  @IsOptional() @IsString() rgOrgaoExpedidor?: string;
+  @IsOptional() @EmptyStringToUndefined() @IsDateString() rgDataExpedicao?: string;
   @IsOptional() @EmptyStringToUndefined() @IsDateString() dataNascimento?: string;
   @IsOptional() @IsString() nacionalidade?: string;
   @IsOptional() @IsString() estadoCivil?: string;
@@ -69,6 +71,8 @@ export class UpdateEmployeeDto {
   @IsOptional() @IsString() pis?: string;
   @IsOptional() @IsString() ctps?: string;
   @IsOptional() @IsString() tituloEleitor?: string;
+  @IsOptional() @IsString() tituloEleitorZona?: string;
+  @IsOptional() @IsString() tituloEleitorSecao?: string;
 
   // Cônjuge
   @IsOptional() @IsString() conjugeNome?: string;

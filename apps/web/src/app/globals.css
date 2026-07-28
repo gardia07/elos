@@ -35,6 +35,8 @@
   --divider: #2b2c30;
   --tint-blue: #253240;
   --on-accent: #18191b;
+  --success-bg: #212a1c;
+  --warning-bg: #2e2818;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -50,6 +52,8 @@
     --divider: #2b2c30;
     --tint-blue: #253240;
     --on-accent: #18191b;
+    --success-bg: #212a1c;
+    --warning-bg: #2e2818;
   }
 }
 
