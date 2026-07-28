@@ -105,10 +105,10 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
     mutationFn: async () => api.post('/auth/switch-tenant', { tenantSlug: switchSlug }),
     onSuccess: () => {
       queryClient.clear();
-      setShowSwitchDrawer(false);
-      setSwitchSlug('');
-      setSwitchError('');
-      router.replace('/painel');
+      // Reload completo: troca de tenant muda todo o contexto, e um
+      // router.replace client-side deixava telas com dado em cache da
+      // empresa anterior até o usuário atualizar a página manualmente.
+      window.location.href = '/painel';
     },
     onError: () => setSwitchError('Você não tem uma conta nessa empresa.'),
   });

@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 
 const NAV_ITEMS = [
@@ -20,12 +23,40 @@ const NAV_ITEMS = [
   { label: 'Portal do Colaborador', href: '/portal', enabled: true },
 ];
 
+interface Company {
+  id: string;
+  slug: string;
+  name: string;
+  nomeFantasia: string | null;
+  logoUrl: string | null;
+  current: boolean;
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { tenant } = useAuth();
+  const queryClient = useQueryClient();
+  const [showSwitcher, setShowSwitcher] = useState(false);
 
   const nomeEmpresa = tenant?.nomeFantasia || tenant?.name;
   const inicialEmpresa = nomeEmpresa?.[0]?.toUpperCase();
+
+  const { data: companies } = useQuery({
+    queryKey: ['auth', 'companies'],
+    queryFn: async () => (await api.get<Company[]>('/auth/companies')).data,
+    enabled: showSwitcher,
+  });
+
+  const switchCompany = useMutation({
+    mutationFn: async (slug: string) => api.post('/auth/switch-tenant', { tenantSlug: slug }),
+    onSuccess: () => {
+      queryClient.clear();
+      // Troca de tenant muda todo o contexto (dados, permissões, tema da
+      // empresa) — um reload completo evita qualquer tela ficar com dado
+      // em cache da empresa anterior até o usuário atualizar manualmente.
+      window.location.href = '/painel';
+    },
+  });
 
   return (
     <aside className="flex w-60 shrink-0 flex-col bg-accent py-6 text-on-accent">
@@ -42,11 +73,12 @@ export function Sidebar() {
       </div>
 
       {nomeEmpresa && (
-        <>
+        <div className="relative px-4">
           <div className="mt-4 border-t border-on-accent/15" />
-          <Link
-            href="/configuracoes"
-            className="flex items-center gap-2.5 px-4 pt-4 transition hover:opacity-80"
+          <button
+            type="button"
+            onClick={() => setShowSwitcher((s) => !s)}
+            className="flex w-full items-center gap-2.5 pt-4 text-left transition hover:opacity-80"
           >
             {tenant?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -56,9 +88,48 @@ export function Sidebar() {
                 {inicialEmpresa}
               </span>
             )}
-            <span className="truncate text-sm font-medium text-on-accent">{nomeEmpresa}</span>
-          </Link>
-        </>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-on-accent">{nomeEmpresa}</span>
+            <span className="text-on-accent/60">{showSwitcher ? '▾' : '▴'}</span>
+          </button>
+
+          {showSwitcher && (
+            <div className="absolute bottom-full left-4 right-4 z-40 mb-2 rounded-[10px] border border-border bg-surface text-text shadow-lg">
+              <div className="max-h-64 overflow-y-auto py-1">
+                {companies?.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      if (c.current) return;
+                      switchCompany.mutate(c.slug);
+                    }}
+                    disabled={switchCompany.isPending}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-surface-alt disabled:cursor-default"
+                  >
+                    {c.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={c.logoUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tint-blue text-[10px] font-semibold text-accent">
+                        {(c.nomeFantasia || c.name)[0]?.toUpperCase()}
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1 truncate">{c.nomeFantasia || c.name}</span>
+                    {c.current && <span className="text-xs font-semibold text-accent">Atual</span>}
+                  </button>
+                ))}
+                {companies?.length === 0 && <p className="px-3 py-2 text-xs text-text-tertiary">Nenhuma empresa encontrada.</p>}
+              </div>
+              <Link
+                href="/configuracoes"
+                onClick={() => setShowSwitcher(false)}
+                className="block border-t border-divider px-3 py-2 text-sm text-accent hover:bg-surface-alt"
+              >
+                Ver perfil da empresa →
+              </Link>
+            </div>
+          )}
+        </div>
       )}
     </aside>
   );

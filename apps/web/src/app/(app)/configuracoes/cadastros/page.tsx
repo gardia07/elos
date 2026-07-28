@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Button, Card } from '@/components/ui';
@@ -47,7 +46,6 @@ const OUTROS_CADASTROS = [
 ];
 
 export default function ConfiguracoesCadastrosPage() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   // --- Perfis de usuário ---
@@ -106,7 +104,9 @@ export default function ConfiguracoesCadastrosPage() {
     mutationFn: async (slug: string) => api.post('/auth/switch-tenant', { tenantSlug: slug }),
     onSuccess: () => {
       queryClient.clear();
-      router.replace('/painel');
+      // Reload completo: evita telas ficarem com dado em cache da empresa
+      // anterior até o usuário atualizar a página manualmente.
+      window.location.href = '/painel';
     },
   });
 
