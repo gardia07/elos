@@ -16,6 +16,12 @@ import {
   CreateFeriadoDto,
   CreatePlanoSaudeDto,
   SetCoparticipacaoDto,
+  UpdateAdesaoBeneficioFixoDto,
+  UpdateAdesaoValeDiarioDto,
+  UpdateBeneficioTipoDto,
+  UpdateConvenioAcademiaDto,
+  UpdateFaixaEtariaDto,
+  UpdatePlanoSaudeDto,
 } from './dto/benefits.dto';
 
 @Injectable()
@@ -43,6 +49,12 @@ export class BenefitsService {
     return this.db().beneficioTipo.create({ data: { ...dto, tenantId: this.tenantId() } });
   }
 
+  async updateTipo(id: string, dto: UpdateBeneficioTipoDto) {
+    const tipo = await this.db().beneficioTipo.findUnique({ where: { id } });
+    if (!tipo) throw new NotFoundException('Tipo de benefício não encontrado.');
+    return this.db().beneficioTipo.update({ where: { id }, data: dto });
+  }
+
   async setCoparticipacao(tipoId: string, dto: SetCoparticipacaoDto) {
     const tipo = await this.db().beneficioTipo.findUnique({ where: { id: tipoId } });
     if (!tipo) throw new NotFoundException('Tipo de benefício não encontrado.');
@@ -63,6 +75,12 @@ export class BenefitsService {
     return this.db().convenioAcademia.create({ data: { ...dto, tenantId: this.tenantId() } });
   }
 
+  async updateConvenioAcademia(id: string, dto: UpdateConvenioAcademiaDto) {
+    const convenio = await this.db().convenioAcademia.findUnique({ where: { id } });
+    if (!convenio) throw new NotFoundException('Convênio não encontrado.');
+    return this.db().convenioAcademia.update({ where: { id }, data: dto });
+  }
+
   async removeConvenioAcademia(id: string) {
     await this.db().convenioAcademia.delete({ where: { id } });
     return { ok: true };
@@ -81,6 +99,12 @@ export class BenefitsService {
     return this.db().planoSaude.create({ data: { ...dto, tenantId: this.tenantId() } });
   }
 
+  async updatePlanoSaude(id: string, dto: UpdatePlanoSaudeDto) {
+    const plano = await this.db().planoSaude.findUnique({ where: { id } });
+    if (!plano) throw new NotFoundException('Plano de saúde não encontrado.');
+    return this.db().planoSaude.update({ where: { id }, data: dto });
+  }
+
   async removePlanoSaude(id: string) {
     await this.db().planoSaude.delete({ where: { id } });
     return { ok: true };
@@ -90,6 +114,12 @@ export class BenefitsService {
     const plano = await this.db().planoSaude.findUnique({ where: { id: planoId } });
     if (!plano) throw new NotFoundException('Plano de saúde não encontrado.');
     return this.db().planoSaudeFaixaEtaria.create({ data: { ...dto, planoId, tenantId: this.tenantId() } });
+  }
+
+  async updateFaixaEtaria(planoId: string, faixaId: string, dto: UpdateFaixaEtariaDto) {
+    const faixa = await this.db().planoSaudeFaixaEtaria.findUnique({ where: { id: faixaId } });
+    if (!faixa || faixa.planoId !== planoId) throw new NotFoundException('Faixa etária não encontrada.');
+    return this.db().planoSaudeFaixaEtaria.update({ where: { id: faixaId }, data: dto });
   }
 
   async removeFaixaEtaria(planoId: string, faixaId: string) {
@@ -159,6 +189,12 @@ export class BenefitsService {
         dataInicio: new Date(dto.dataInicio),
       },
     });
+  }
+
+  async updateAdesaoValeDiario(employeeId: string, adesaoId: string, dto: UpdateAdesaoValeDiarioDto) {
+    const adesao = await this.db().adesaoValeDiario.findUnique({ where: { id: adesaoId } });
+    if (!adesao || adesao.employeeId !== employeeId) throw new NotFoundException('Adesão não encontrada.');
+    return this.db().adesaoValeDiario.update({ where: { id: adesaoId }, data: dto });
   }
 
   async cancelAdesaoValeDiario(employeeId: string, adesaoId: string) {
@@ -234,6 +270,12 @@ export class BenefitsService {
         dataInicio: new Date(dto.dataInicio),
       },
     });
+  }
+
+  async updateAdesaoBeneficioFixo(employeeId: string, adesaoId: string, dto: UpdateAdesaoBeneficioFixoDto) {
+    const adesao = await this.db().adesaoBeneficioFixo.findUnique({ where: { id: adesaoId } });
+    if (!adesao || adesao.employeeId !== employeeId) throw new NotFoundException('Adesão não encontrada.');
+    return this.db().adesaoBeneficioFixo.update({ where: { id: adesaoId }, data: dto });
   }
 
   async cancelAdesaoBeneficioFixo(employeeId: string, adesaoId: string) {

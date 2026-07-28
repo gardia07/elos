@@ -294,6 +294,17 @@ function AcademiaTab() {
     onSuccess: invalidate,
   });
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editNome, setEditNome] = useState('');
+  const [editValor, setEditValor] = useState('');
+  const update = useMutation({
+    mutationFn: async (id: string) => api.patch(`/dp/benefits/convenios-academia/${id}`, { nome: editNome, valorMensalidade: Number(editValor) }),
+    onSuccess: () => {
+      invalidate();
+      setEditingId(null);
+    },
+  });
+
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -336,17 +347,58 @@ function AcademiaTab() {
             </tr>
           </thead>
           <tbody>
-            {convenios?.map((c) => (
-              <tr key={c.id} className="border-b border-divider last:border-0">
-                <td className="px-5 py-3 font-medium">{c.nome}</td>
-                <td className="px-5 py-3">{formatBRL(Number(c.valorMensalidade))}</td>
-                <td className="px-5 py-3 text-right">
-                  <button onClick={() => remove.mutate(c.id)} className="text-xs text-danger hover:underline">
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {convenios?.map((c) =>
+              editingId === c.id ? (
+                <tr key={c.id} className="border-b border-divider last:border-0">
+                  <td className="px-5 py-3" colSpan={3}>
+                    <form
+                      className="flex flex-wrap items-center gap-2"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        update.mutate(c.id);
+                      }}
+                    >
+                      <input value={editNome} onChange={(e) => setEditNome(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={editValor}
+                        onChange={(e) => setEditValor(e.target.value)}
+                        required
+                        className="w-32 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                      />
+                      <Button type="submit" variant="secondary" disabled={update.isPending}>
+                        Salvar
+                      </Button>
+                      <button type="button" onClick={() => setEditingId(null)} className="text-xs text-text-secondary hover:underline">
+                        cancelar
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={c.id} className="border-b border-divider last:border-0">
+                  <td className="px-5 py-3 font-medium">{c.nome}</td>
+                  <td className="px-5 py-3">{formatBRL(Number(c.valorMensalidade))}</td>
+                  <td className="px-5 py-3 text-right">
+                    <button
+                      onClick={() => {
+                        setEditingId(c.id);
+                        setEditNome(c.nome);
+                        setEditValor(String(Number(c.valorMensalidade)));
+                      }}
+                      className="mr-3 text-xs text-accent hover:underline"
+                    >
+                      Editar
+                    </button>
+                    <button onClick={() => remove.mutate(c.id)} className="text-xs text-danger hover:underline">
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+              ),
+            )}
             {convenios?.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-5 py-6 text-center text-text-tertiary">
@@ -412,6 +464,34 @@ function SaudeTab() {
     onSuccess: invalidate,
   });
 
+  const [editingFaixaId, setEditingFaixaId] = useState<string | null>(null);
+  const [editIdadeMin, setEditIdadeMin] = useState('');
+  const [editIdadeMax, setEditIdadeMax] = useState('');
+  const [editValorFaixa, setEditValorFaixa] = useState('');
+  const updateFaixa = useMutation({
+    mutationFn: async (vars: { planoId: string; faixaId: string }) =>
+      api.patch(`/dp/benefits/planos-saude/${vars.planoId}/faixas/${vars.faixaId}`, {
+        idadeMin: Number(editIdadeMin),
+        idadeMax: Number(editIdadeMax),
+        valor: Number(editValorFaixa),
+      }),
+    onSuccess: () => {
+      invalidate();
+      setEditingFaixaId(null);
+    },
+  });
+
+  const [editingPlanoId, setEditingPlanoId] = useState<string | null>(null);
+  const [editPlanoNome, setEditPlanoNome] = useState('');
+  const [editPlanoOperadora, setEditPlanoOperadora] = useState('');
+  const updatePlano = useMutation({
+    mutationFn: async (id: string) => api.patch(`/dp/benefits/planos-saude/${id}`, { nome: editPlanoNome, operadora: editPlanoOperadora || undefined }),
+    onSuccess: () => {
+      invalidate();
+      setEditingPlanoId(null);
+    },
+  });
+
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -439,40 +519,102 @@ function SaudeTab() {
       <div className="flex flex-col gap-3">
         {planos?.map((p) => (
           <Card key={p.id} className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-medium">{p.nome}</span>
-                {p.operadora && <span className="text-sm text-text-tertiary"> · {p.operadora}</span>}
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => setOpenPlanoId((id) => (id === p.id ? null : p.id))} className="text-xs text-accent hover:underline">
-                  {openPlanoId === p.id ? 'Fechar faixas etárias' : 'Faixas etárias'}
+            {editingPlanoId === p.id ? (
+              <form
+                className="flex flex-wrap items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updatePlano.mutate(p.id);
+                }}
+              >
+                <input value={editPlanoNome} onChange={(e) => setEditPlanoNome(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                <input value={editPlanoOperadora} onChange={(e) => setEditPlanoOperadora(e.target.value)} placeholder="Operadora" className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                <Button type="submit" variant="secondary" disabled={updatePlano.isPending}>
+                  Salvar
+                </Button>
+                <button type="button" onClick={() => setEditingPlanoId(null)} className="text-xs text-text-secondary hover:underline">
+                  cancelar
                 </button>
-                <button onClick={() => removePlano.mutate(p.id)} className="text-xs text-danger hover:underline">
-                  Excluir
-                </button>
+              </form>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium">{p.nome}</span>
+                  {p.operadora && <span className="text-sm text-text-tertiary"> · {p.operadora}</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setOpenPlanoId((id) => (id === p.id ? null : p.id))} className="text-xs text-accent hover:underline">
+                    {openPlanoId === p.id ? 'Fechar faixas etárias' : 'Faixas etárias'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingPlanoId(p.id);
+                      setEditPlanoNome(p.nome);
+                      setEditPlanoOperadora(p.operadora ?? '');
+                    }}
+                    className="text-xs text-accent hover:underline"
+                  >
+                    Editar
+                  </button>
+                  <button onClick={() => removePlano.mutate(p.id)} className="text-xs text-danger hover:underline">
+                    Excluir
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {openPlanoId === p.id && (
               <div className="flex flex-col gap-3 border-t border-divider pt-3">
                 <ul className="flex flex-col gap-1.5 text-sm">
-                  {p.faixasEtarias.map((f) => (
-                    <li key={f.id} className="flex items-center justify-between">
-                      <span>
-                        {f.idadeMin} a {f.idadeMax} anos
-                      </span>
-                      <span className="flex items-center gap-3">
-                        <span className="font-medium">{formatBRL(Number(f.valor))}</span>
-                        <button
-                          onClick={() => removeFaixa.mutate({ planoId: p.id, faixaId: f.id })}
-                          className="text-xs text-danger hover:underline"
+                  {p.faixasEtarias.map((f) =>
+                    editingFaixaId === f.id ? (
+                      <li key={f.id}>
+                        <form
+                          className="flex flex-wrap items-center gap-2"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            updateFaixa.mutate({ planoId: p.id, faixaId: f.id });
+                          }}
                         >
-                          remover
-                        </button>
-                      </span>
-                    </li>
-                  ))}
+                          <input type="number" min={0} placeholder="Idade mín." value={editIdadeMin} onChange={(e) => setEditIdadeMin(e.target.value)} required className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                          <input type="number" min={0} placeholder="Idade máx." value={editIdadeMax} onChange={(e) => setEditIdadeMax(e.target.value)} required className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                          <input type="number" min={0} step="0.01" placeholder="Valor" value={editValorFaixa} onChange={(e) => setEditValorFaixa(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                          <Button type="submit" variant="secondary" disabled={updateFaixa.isPending}>
+                            Salvar
+                          </Button>
+                          <button type="button" onClick={() => setEditingFaixaId(null)} className="text-xs text-text-secondary hover:underline">
+                            cancelar
+                          </button>
+                        </form>
+                      </li>
+                    ) : (
+                      <li key={f.id} className="flex items-center justify-between">
+                        <span>
+                          {f.idadeMin} a {f.idadeMax} anos
+                        </span>
+                        <span className="flex items-center gap-3">
+                          <span className="font-medium">{formatBRL(Number(f.valor))}</span>
+                          <button
+                            onClick={() => {
+                              setEditingFaixaId(f.id);
+                              setEditIdadeMin(String(f.idadeMin));
+                              setEditIdadeMax(String(f.idadeMax));
+                              setEditValorFaixa(String(Number(f.valor)));
+                            }}
+                            className="text-xs text-accent hover:underline"
+                          >
+                            editar
+                          </button>
+                          <button
+                            onClick={() => removeFaixa.mutate({ planoId: p.id, faixaId: f.id })}
+                            className="text-xs text-danger hover:underline"
+                          >
+                            remover
+                          </button>
+                        </span>
+                      </li>
+                    ),
+                  )}
                   {p.faixasEtarias.length === 0 && <p className="text-text-tertiary">Nenhuma faixa etária cadastrada.</p>}
                 </ul>
                 <form

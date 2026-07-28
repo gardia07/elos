@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { BenefitsService } from './benefits.service';
 import {
@@ -14,6 +14,12 @@ import {
   CreateFeriadoDto,
   CreatePlanoSaudeDto,
   SetCoparticipacaoDto,
+  UpdateAdesaoBeneficioFixoDto,
+  UpdateAdesaoValeDiarioDto,
+  UpdateBeneficioTipoDto,
+  UpdateConvenioAcademiaDto,
+  UpdateFaixaEtariaDto,
+  UpdatePlanoSaudeDto,
 } from './dto/benefits.dto';
 
 @UseGuards(AuthGuard)
@@ -31,6 +37,11 @@ export class BenefitsController {
     return this.service.createTipo(dto);
   }
 
+  @Patch('tipos/:id')
+  updateTipo(@Param('id') id: string, @Body() dto: UpdateBeneficioTipoDto) {
+    return this.service.updateTipo(id, dto);
+  }
+
   @Post('tipos/:id/coparticipacao')
   setCoparticipacao(@Param('id') id: string, @Body() dto: SetCoparticipacaoDto) {
     return this.service.setCoparticipacao(id, dto);
@@ -44,6 +55,11 @@ export class BenefitsController {
   @Post('convenios-academia')
   createConvenioAcademia(@Body() dto: CreateConvenioAcademiaDto) {
     return this.service.createConvenioAcademia(dto);
+  }
+
+  @Patch('convenios-academia/:id')
+  updateConvenioAcademia(@Param('id') id: string, @Body() dto: UpdateConvenioAcademiaDto) {
+    return this.service.updateConvenioAcademia(id, dto);
   }
 
   @Delete('convenios-academia/:id')
@@ -61,6 +77,11 @@ export class BenefitsController {
     return this.service.createPlanoSaude(dto);
   }
 
+  @Patch('planos-saude/:id')
+  updatePlanoSaude(@Param('id') id: string, @Body() dto: UpdatePlanoSaudeDto) {
+    return this.service.updatePlanoSaude(id, dto);
+  }
+
   @Delete('planos-saude/:id')
   removePlanoSaude(@Param('id') id: string) {
     return this.service.removePlanoSaude(id);
@@ -69,6 +90,11 @@ export class BenefitsController {
   @Post('planos-saude/:id/faixas')
   addFaixaEtaria(@Param('id') id: string, @Body() dto: CreateFaixaEtariaDto) {
     return this.service.addFaixaEtaria(id, dto);
+  }
+
+  @Patch('planos-saude/:id/faixas/:faixaId')
+  updateFaixaEtaria(@Param('id') id: string, @Param('faixaId') faixaId: string, @Body() dto: UpdateFaixaEtariaDto) {
+    return this.service.updateFaixaEtaria(id, faixaId, dto);
   }
 
   @Delete('planos-saude/:id/faixas/:faixaId')
@@ -99,6 +125,15 @@ export class BenefitsController {
   @Post('employees/:employeeId/vale-diario')
   createAdesaoValeDiario(@Param('employeeId') employeeId: string, @Body() dto: CreateAdesaoValeDiarioDto) {
     return this.service.createAdesaoValeDiario(employeeId, dto);
+  }
+
+  @Patch('employees/:employeeId/vale-diario/:adesaoId')
+  updateAdesaoValeDiario(
+    @Param('employeeId') employeeId: string,
+    @Param('adesaoId') adesaoId: string,
+    @Body() dto: UpdateAdesaoValeDiarioDto,
+  ) {
+    return this.service.updateAdesaoValeDiario(employeeId, adesaoId, dto);
   }
 
   @Delete('employees/:employeeId/vale-diario/:adesaoId')
@@ -147,6 +182,15 @@ export class BenefitsController {
   @Post('employees/:employeeId/outros')
   createAdesaoBeneficioFixo(@Param('employeeId') employeeId: string, @Body() dto: CreateAdesaoBeneficioFixoDto) {
     return this.service.createAdesaoBeneficioFixo(employeeId, dto);
+  }
+
+  @Patch('employees/:employeeId/outros/:adesaoId')
+  updateAdesaoBeneficioFixo(
+    @Param('employeeId') employeeId: string,
+    @Param('adesaoId') adesaoId: string,
+    @Body() dto: UpdateAdesaoBeneficioFixoDto,
+  ) {
+    return this.service.updateAdesaoBeneficioFixo(employeeId, adesaoId, dto);
   }
 
   @Delete('employees/:employeeId/outros/:adesaoId')

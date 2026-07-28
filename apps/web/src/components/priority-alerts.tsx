@@ -38,8 +38,8 @@ export function PriorityAlerts({
   onResolver?: (id: string) => void;
 }) {
   return (
-    <div className="flex max-h-[420px] flex-col rounded-[14px] bg-white p-4 shadow-[0_2px_16px_rgba(31,31,31,0.06)]">
-      <h3 className="mb-3 shrink-0 text-sm font-bold text-[#1F1F1F]">Alertas prioritários</h3>
+    <div className="flex max-h-[420px] flex-col rounded-[14px] border border-border bg-surface p-4 shadow-sm">
+      <h3 className="mb-3 shrink-0 text-sm font-bold text-text">Alertas prioritários</h3>
       <div className="flex flex-col gap-2 overflow-y-auto">
         {alertas.map((alerta) => {
           const cor = categoriaColor[alerta.categoria] ?? SEVERIDADE_COLOR[alerta.severidade];
@@ -59,22 +59,22 @@ export function PriorityAlerts({
               )}
               <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: cor }} />
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-[#8A94A6]">{alerta.categoria}</span>
-                <span className="text-xs leading-snug text-[#2D2D2D]">{alerta.mensagem}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-text-tertiary">{alerta.categoria}</span>
+                <span className="text-xs leading-snug text-text">{alerta.mensagem}</span>
               </div>
             </>
           );
           return alerta.href ? (
-            <Link key={alerta.id} href={alerta.href} className="flex items-start gap-2 rounded-[10px] bg-[#FDF9F5] p-2.5 transition hover:bg-[#F7EFE6]">
+            <Link key={alerta.id} href={alerta.href} className="flex items-start gap-2 rounded-[10px] bg-surface-alt p-2.5 transition hover:bg-border">
               {content}
             </Link>
           ) : (
-            <div key={alerta.id} className="flex items-start gap-2 rounded-[10px] bg-[#FDF9F5] p-2.5">
+            <div key={alerta.id} className="flex items-start gap-2 rounded-[10px] bg-surface-alt p-2.5">
               {content}
             </div>
           );
         })}
-        {alertas.length === 0 && <p className="text-xs text-[#8A94A6]">Nenhum alerta prioritário no momento.</p>}
+        {alertas.length === 0 && <p className="text-xs text-text-tertiary">Nenhum alerta prioritário no momento.</p>}
       </div>
     </div>
   );

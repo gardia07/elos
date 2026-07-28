@@ -931,6 +931,16 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
     mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/vale-diario/${adesaoId}`),
     onSuccess: invalidate,
   });
+  const [editingValeId, setEditingValeId] = useState<string | null>(null);
+  const [editValeValorDiario, setEditValeValorDiario] = useState('');
+  const updateVale = useMutation({
+    mutationFn: async (adesaoId: string) =>
+      api.patch(`/dp/benefits/employees/${employeeId}/vale-diario/${adesaoId}`, { valorDiario: Number(editValeValorDiario) }),
+    onSuccess: () => {
+      invalidate();
+      setEditingValeId(null);
+    },
+  });
 
   const [showAcademiaForm, setShowAcademiaForm] = useState(false);
   const [convenioId, setConvenioId] = useState('');
@@ -989,6 +999,16 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
     mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/outros/${adesaoId}`),
     onSuccess: invalidate,
   });
+  const [editingFixoId, setEditingFixoId] = useState<string | null>(null);
+  const [editFixoValorMensal, setEditFixoValorMensal] = useState('');
+  const updateFixo = useMutation({
+    mutationFn: async (adesaoId: string) =>
+      api.patch(`/dp/benefits/employees/${employeeId}/outros/${adesaoId}`, { valorMensal: Number(editFixoValorMensal) }),
+    onSuccess: () => {
+      invalidate();
+      setEditingFixoId(null);
+    },
+  });
 
   const [depFormAdesaoId, setDepFormAdesaoId] = useState<string | null>(null);
   const [depNome, setDepNome] = useState('');
@@ -1019,21 +1039,60 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
     <div className="flex flex-col gap-4">
       <Section title="Vale-alimentação / Vale-refeição">
         <ul className="flex flex-col gap-1.5 text-sm">
-          {resumo?.valeDiario.map((v) => (
-            <li key={v.id} className="flex items-center justify-between">
-              <span>
-                {v.beneficioTipo.nome} · {formatBRL(Number(v.valorDiario))}/dia · desde {formatDate(v.dataInicio)}
-                {v.dataFim && ` até ${formatDate(v.dataFim)}`}
-              </span>
-              {!v.dataFim ? (
-                <button onClick={() => cancelVale.mutate(v.id)} className="text-xs text-danger hover:underline">
-                  cancelar
-                </button>
-              ) : (
-                <span className="text-xs text-text-tertiary">encerrado</span>
-              )}
-            </li>
-          ))}
+          {resumo?.valeDiario.map((v) =>
+            editingValeId === v.id ? (
+              <li key={v.id}>
+                <form
+                  className="flex items-center gap-2"
+                  onSubmit={(ev) => {
+                    ev.preventDefault();
+                    updateVale.mutate(v.id);
+                  }}
+                >
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={editValeValorDiario}
+                    onChange={(ev) => setEditValeValorDiario(ev.target.value)}
+                    required
+                    className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                  />
+                  <Button type="submit" variant="secondary" disabled={updateVale.isPending}>
+                    Salvar
+                  </Button>
+                  <button type="button" onClick={() => setEditingValeId(null)} className="text-xs text-text-secondary hover:underline">
+                    cancelar
+                  </button>
+                </form>
+              </li>
+            ) : (
+              <li key={v.id} className="flex items-center justify-between">
+                <span>
+                  {v.beneficioTipo.nome} · {formatBRL(Number(v.valorDiario))}/dia · desde {formatDate(v.dataInicio)}
+                  {v.dataFim && ` até ${formatDate(v.dataFim)}`}
+                </span>
+                {!v.dataFim ? (
+                  <span className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setEditingValeId(v.id);
+                        setEditValeValorDiario(String(Number(v.valorDiario)));
+                      }}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      editar
+                    </button>
+                    <button onClick={() => cancelVale.mutate(v.id)} className="text-xs text-danger hover:underline">
+                      cancelar
+                    </button>
+                  </span>
+                ) : (
+                  <span className="text-xs text-text-tertiary">encerrado</span>
+                )}
+              </li>
+            ),
+          )}
           {resumo?.valeDiario.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
         </ul>
         {!showValeForm ? (
@@ -1228,21 +1287,60 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
 
       <Section title="Outros benefícios">
         <ul className="flex flex-col gap-1.5 text-sm">
-          {resumo?.beneficioFixo.map((f) => (
-            <li key={f.id} className="flex items-center justify-between">
-              <span>
-                {f.beneficioTipo.nome} · {formatBRL(Number(f.valorMensal))}/mês · desde {formatDate(f.dataInicio)}
-                {f.dataFim && ` até ${formatDate(f.dataFim)}`}
-              </span>
-              {!f.dataFim ? (
-                <button onClick={() => cancelFixo.mutate(f.id)} className="text-xs text-danger hover:underline">
-                  cancelar
-                </button>
-              ) : (
-                <span className="text-xs text-text-tertiary">encerrado</span>
-              )}
-            </li>
-          ))}
+          {resumo?.beneficioFixo.map((f) =>
+            editingFixoId === f.id ? (
+              <li key={f.id}>
+                <form
+                  className="flex items-center gap-2"
+                  onSubmit={(ev) => {
+                    ev.preventDefault();
+                    updateFixo.mutate(f.id);
+                  }}
+                >
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={editFixoValorMensal}
+                    onChange={(ev) => setEditFixoValorMensal(ev.target.value)}
+                    required
+                    className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                  />
+                  <Button type="submit" variant="secondary" disabled={updateFixo.isPending}>
+                    Salvar
+                  </Button>
+                  <button type="button" onClick={() => setEditingFixoId(null)} className="text-xs text-text-secondary hover:underline">
+                    cancelar
+                  </button>
+                </form>
+              </li>
+            ) : (
+              <li key={f.id} className="flex items-center justify-between">
+                <span>
+                  {f.beneficioTipo.nome} · {formatBRL(Number(f.valorMensal))}/mês · desde {formatDate(f.dataInicio)}
+                  {f.dataFim && ` até ${formatDate(f.dataFim)}`}
+                </span>
+                {!f.dataFim ? (
+                  <span className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setEditingFixoId(f.id);
+                        setEditFixoValorMensal(String(Number(f.valorMensal)));
+                      }}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      editar
+                    </button>
+                    <button onClick={() => cancelFixo.mutate(f.id)} className="text-xs text-danger hover:underline">
+                      cancelar
+                    </button>
+                  </span>
+                ) : (
+                  <span className="text-xs text-text-tertiary">encerrado</span>
+                )}
+              </li>
+            ),
+          )}
           {resumo?.beneficioFixo.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
         </ul>
         {tiposOutro.length === 0 ? (
