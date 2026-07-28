@@ -139,11 +139,12 @@ function toEditFields(e: EmployeeDetail): EditFields {
   };
 }
 
-const TABS = ['geral', 'ferias', 'avaliacoes', 'documentos', 'historico'] as const;
+const TABS = ['geral', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
   ferias: 'Férias',
+  beneficios: 'Benefícios',
   avaliacoes: 'Avaliações',
   documentos: 'Documentos',
   historico: 'Histórico',
@@ -684,6 +685,8 @@ export default function EmployeeProfilePage() {
         </div>
       )}
 
+      {tab === 'beneficios' && <BeneficiosTab employeeId={e.id} />}
+
       {tab === 'avaliacoes' && (
         <Card className="max-w-2xl">
           {e.evaluationRecords.length === 0 && <p className="text-sm text-text-tertiary">Sem avaliações.</p>}
@@ -822,6 +825,373 @@ export default function EmployeeProfilePage() {
           </ul>
         </Card>
       )}
+    </div>
+  );
+}
+
+interface BeneficioTipoOption {
+  id: string;
+  nome: string;
+  categoria: 'ALIMENTACAO' | 'ACADEMIA' | 'SAUDE';
+}
+interface ConvenioOption {
+  id: string;
+  nome: string;
+  valorMensalidade: string;
+}
+interface PlanoOption {
+  id: string;
+  nome: string;
+  operadora: string | null;
+}
+interface AdesaoValeDiario {
+  id: string;
+  valorDiario: string;
+  dataInicio: string;
+  dataFim: string | null;
+  beneficioTipo: { id: string; nome: string };
+}
+interface AdesaoAcademia {
+  id: string;
+  dataAdesao: string;
+  dataCancelamento: string | null;
+  convenio: { id: string; nome: string };
+}
+interface DependentePlanoSaude {
+  id: string;
+  nome: string;
+  dataNascimento: string;
+  parentesco: string | null;
+}
+interface AdesaoPlanoSaude {
+  id: string;
+  dataAdesao: string;
+  dataCancelamento: string | null;
+  plano: { id: string; nome: string };
+  dependentes: DependentePlanoSaude[];
+}
+interface ResumoBeneficios {
+  valeDiario: AdesaoValeDiario[];
+  academia: AdesaoAcademia[];
+  planoSaude: AdesaoPlanoSaude[];
+}
+
+function BeneficiosTab({ employeeId }: { employeeId: string }) {
+  const queryClient = useQueryClient();
+
+  const { data: resumo } = useQuery({
+    queryKey: ['dp', 'benefits', 'employee', employeeId],
+    queryFn: async () => (await api.get<ResumoBeneficios>(`/dp/benefits/employees/${employeeId}`)).data,
+  });
+  const { data: tipos } = useQuery({
+    queryKey: ['dp', 'benefits', 'tipos'],
+    queryFn: async () => (await api.get<BeneficioTipoOption[]>('/dp/benefits/tipos')).data,
+  });
+  const { data: convenios } = useQuery({
+    queryKey: ['dp', 'benefits', 'convenios-academia'],
+    queryFn: async () => (await api.get<ConvenioOption[]>('/dp/benefits/convenios-academia')).data,
+  });
+  const { data: planos } = useQuery({
+    queryKey: ['dp', 'benefits', 'planos-saude'],
+    queryFn: async () => (await api.get<PlanoOption[]>('/dp/benefits/planos-saude')).data,
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['dp', 'benefits', 'employee', employeeId] });
+  const tiposAlimentacao = tipos?.filter((t) => t.categoria === 'ALIMENTACAO') ?? [];
+
+  const [showValeForm, setShowValeForm] = useState(false);
+  const [valeBeneficioTipoId, setValeBeneficioTipoId] = useState('');
+  const [valeValorDiario, setValeValorDiario] = useState('');
+  const [valeDataInicio, setValeDataInicio] = useState('');
+  const addVale = useMutation({
+    mutationFn: async () =>
+      api.post(`/dp/benefits/employees/${employeeId}/vale-diario`, {
+        beneficioTipoId: valeBeneficioTipoId,
+        valorDiario: Number(valeValorDiario),
+        dataInicio: valeDataInicio,
+      }),
+    onSuccess: () => {
+      invalidate();
+      setShowValeForm(false);
+      setValeBeneficioTipoId('');
+      setValeValorDiario('');
+      setValeDataInicio('');
+    },
+  });
+  const cancelVale = useMutation({
+    mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/vale-diario/${adesaoId}`),
+    onSuccess: invalidate,
+  });
+
+  const [showAcademiaForm, setShowAcademiaForm] = useState(false);
+  const [convenioId, setConvenioId] = useState('');
+  const [dataAdesaoAcademia, setDataAdesaoAcademia] = useState('');
+  const addAcademia = useMutation({
+    mutationFn: async () => api.post(`/dp/benefits/employees/${employeeId}/academia`, { convenioId, dataAdesao: dataAdesaoAcademia }),
+    onSuccess: () => {
+      invalidate();
+      setShowAcademiaForm(false);
+      setConvenioId('');
+      setDataAdesaoAcademia('');
+    },
+  });
+  const cancelAcademia = useMutation({
+    mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/academia/${adesaoId}`),
+    onSuccess: invalidate,
+  });
+
+  const [showSaudeForm, setShowSaudeForm] = useState(false);
+  const [planoId, setPlanoId] = useState('');
+  const [dataAdesaoSaude, setDataAdesaoSaude] = useState('');
+  const addSaude = useMutation({
+    mutationFn: async () => api.post(`/dp/benefits/employees/${employeeId}/plano-saude`, { planoId, dataAdesao: dataAdesaoSaude }),
+    onSuccess: () => {
+      invalidate();
+      setShowSaudeForm(false);
+      setPlanoId('');
+      setDataAdesaoSaude('');
+    },
+  });
+  const cancelSaude = useMutation({
+    mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/plano-saude/${adesaoId}`),
+    onSuccess: invalidate,
+  });
+
+  const [depFormAdesaoId, setDepFormAdesaoId] = useState<string | null>(null);
+  const [depNome, setDepNome] = useState('');
+  const [depDataNascimento, setDepDataNascimento] = useState('');
+  const [depParentesco, setDepParentesco] = useState('');
+  const addDependente = useMutation({
+    mutationFn: async (adesaoId: string) =>
+      api.post(`/dp/benefits/employees/${employeeId}/plano-saude/${adesaoId}/dependentes`, {
+        nome: depNome,
+        dataNascimento: depDataNascimento,
+        parentesco: depParentesco || undefined,
+      }),
+    onSuccess: () => {
+      invalidate();
+      setDepFormAdesaoId(null);
+      setDepNome('');
+      setDepDataNascimento('');
+      setDepParentesco('');
+    },
+  });
+  const removeDependente = useMutation({
+    mutationFn: async (vars: { adesaoId: string; dependenteId: string }) =>
+      api.delete(`/dp/benefits/employees/${employeeId}/plano-saude/${vars.adesaoId}/dependentes/${vars.dependenteId}`),
+    onSuccess: invalidate,
+  });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Section title="Vale-alimentação / Vale-refeição">
+        <ul className="flex flex-col gap-1.5 text-sm">
+          {resumo?.valeDiario.map((v) => (
+            <li key={v.id} className="flex items-center justify-between">
+              <span>
+                {v.beneficioTipo.nome} · {formatBRL(Number(v.valorDiario))}/dia · desde {formatDate(v.dataInicio)}
+                {v.dataFim && ` até ${formatDate(v.dataFim)}`}
+              </span>
+              {!v.dataFim ? (
+                <button onClick={() => cancelVale.mutate(v.id)} className="text-xs text-danger hover:underline">
+                  cancelar
+                </button>
+              ) : (
+                <span className="text-xs text-text-tertiary">encerrado</span>
+              )}
+            </li>
+          ))}
+          {resumo?.valeDiario.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
+        </ul>
+        {!showValeForm ? (
+          <Button variant="secondary" className="self-start" onClick={() => setShowValeForm(true)}>
+            Adicionar adesão
+          </Button>
+        ) : (
+          <form
+            className="flex flex-wrap items-end gap-2"
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              addVale.mutate();
+            }}
+          >
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Tipo</span>
+              <select
+                value={valeBeneficioTipoId}
+                onChange={(ev) => setValeBeneficioTipoId(ev.target.value)}
+                required
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              >
+                <option value="">Selecione…</option>
+                {tiposAlimentacao.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <input type="number" placeholder="Valor diário" value={valeValorDiario} onChange={(ev) => setValeValorDiario(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input type="date" value={valeDataInicio} onChange={(ev) => setValeDataInicio(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <Button type="submit" disabled={addVale.isPending}>
+              Adicionar
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowValeForm(false)}>
+              Cancelar
+            </Button>
+          </form>
+        )}
+      </Section>
+
+      <Section title="Academia">
+        <ul className="flex flex-col gap-1.5 text-sm">
+          {resumo?.academia.map((a) => (
+            <li key={a.id} className="flex items-center justify-between">
+              <span>
+                {a.convenio.nome} · desde {formatDate(a.dataAdesao)}
+                {a.dataCancelamento && ` até ${formatDate(a.dataCancelamento)}`}
+              </span>
+              {!a.dataCancelamento ? (
+                <button onClick={() => cancelAcademia.mutate(a.id)} className="text-xs text-danger hover:underline">
+                  cancelar
+                </button>
+              ) : (
+                <span className="text-xs text-text-tertiary">encerrado</span>
+              )}
+            </li>
+          ))}
+          {resumo?.academia.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
+        </ul>
+        {!showAcademiaForm ? (
+          <Button variant="secondary" className="self-start" onClick={() => setShowAcademiaForm(true)}>
+            Adicionar adesão
+          </Button>
+        ) : (
+          <form
+            className="flex flex-wrap items-end gap-2"
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              addAcademia.mutate();
+            }}
+          >
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Convênio</span>
+              <select
+                value={convenioId}
+                onChange={(ev) => setConvenioId(ev.target.value)}
+                required
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              >
+                <option value="">Selecione…</option>
+                {convenios?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <input type="date" value={dataAdesaoAcademia} onChange={(ev) => setDataAdesaoAcademia(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <Button type="submit" disabled={addAcademia.isPending}>
+              Adicionar
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowAcademiaForm(false)}>
+              Cancelar
+            </Button>
+          </form>
+        )}
+      </Section>
+
+      <Section title="Plano de saúde">
+        <div className="flex flex-col gap-3">
+          {resumo?.planoSaude.map((s) => (
+            <div key={s.id} className="rounded-[10px] border border-border p-3">
+              <div className="flex items-center justify-between text-sm">
+                <span>
+                  {s.plano.nome} · desde {formatDate(s.dataAdesao)}
+                  {s.dataCancelamento && ` até ${formatDate(s.dataCancelamento)}`}
+                </span>
+                {!s.dataCancelamento ? (
+                  <button onClick={() => cancelSaude.mutate(s.id)} className="text-xs text-danger hover:underline">
+                    cancelar adesão
+                  </button>
+                ) : (
+                  <span className="text-xs text-text-tertiary">encerrado</span>
+                )}
+              </div>
+              <div className="mt-2 flex flex-col gap-1 pl-3 text-xs text-text-secondary">
+                {s.dependentes.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between">
+                    <span>
+                      {d.nome} · {d.parentesco ?? '—'} · {formatDate(d.dataNascimento)}
+                    </span>
+                    <button onClick={() => removeDependente.mutate({ adesaoId: s.id, dependenteId: d.id })} className="text-danger hover:underline">
+                      remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {depFormAdesaoId === s.id ? (
+                <form
+                  className="mt-2 flex flex-wrap items-end gap-2"
+                  onSubmit={(ev) => {
+                    ev.preventDefault();
+                    addDependente.mutate(s.id);
+                  }}
+                >
+                  <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs" />
+                  <input type="date" value={depDataNascimento} onChange={(ev) => setDepDataNascimento(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs" />
+                  <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs" />
+                  <Button type="submit" variant="secondary" disabled={addDependente.isPending}>
+                    Adicionar
+                  </Button>
+                </form>
+              ) : (
+                <button onClick={() => setDepFormAdesaoId(s.id)} className="mt-2 text-xs text-accent hover:underline">
+                  + dependente no plano
+                </button>
+              )}
+            </div>
+          ))}
+          {resumo?.planoSaude.length === 0 && <p className="text-sm text-text-tertiary">Nenhuma adesão.</p>}
+        </div>
+        {!showSaudeForm ? (
+          <Button variant="secondary" className="self-start" onClick={() => setShowSaudeForm(true)}>
+            Adicionar adesão
+          </Button>
+        ) : (
+          <form
+            className="flex flex-wrap items-end gap-2"
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              addSaude.mutate();
+            }}
+          >
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Plano</span>
+              <select
+                value={planoId}
+                onChange={(ev) => setPlanoId(ev.target.value)}
+                required
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              >
+                <option value="">Selecione…</option>
+                {planos?.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <input type="date" value={dataAdesaoSaude} onChange={(ev) => setDataAdesaoSaude(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <Button type="submit" disabled={addSaude.isPending}>
+              Adicionar
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowSaudeForm(false)}>
+              Cancelar
+            </Button>
+          </form>
+        )}
+      </Section>
     </div>
   );
 }

@@ -58,8 +58,16 @@ model Tenant {
   collectiveAgreements CollectiveAgreement[]
   jobGrades            JobGrade[]
   departments          Department[]
-  benefits             Benefit[]
-  benefitEnrollments   BenefitEnrollment[]
+  beneficioTipos          BeneficioTipo[]
+  coparticipacaoRegras    CoparticipacaoRegra[]
+  conveniosAcademia       ConvenioAcademia[]
+  planosSaude             PlanoSaude[]
+  planoSaudeFaixasEtarias PlanoSaudeFaixaEtaria[]
+  feriados                Feriado[]
+  adesoesValeDiario       AdesaoValeDiario[]
+  adesoesAcademia         AdesaoAcademia[]
+  adesoesPlanoSaude       AdesaoPlanoSaude[]
+  dependentesPlanoSaude   DependentePlanoSaude[]
   equipmentItems       EquipmentItem[]
   timeJustifications   TimeJustification[]
   payrollRuns          PayrollRun[]
@@ -472,7 +480,9 @@ model Employee {
   leaveRecords      LeaveRecord[]
   terminations      Termination[]
 
-  benefitEnrollments BenefitEnrollment[]
+  adesoesValeDiario  AdesaoValeDiario[]
+  adesoesAcademia    AdesaoAcademia[]
+  adesoesPlanoSaude  AdesaoPlanoSaude[]
   equipmentItems     EquipmentItem[]
   timeJustifications TimeJustification[]
   payslipItems       PayslipItem[]
@@ -795,34 +805,180 @@ model Department {
   @@map("departments")
 }
 
-model Benefit {
-  id            String  @id @default(uuid()) @db.Uuid
-  tenantId      String  @db.Uuid
-  nome          String
-  elegibilidade String
-  custoMensal   Decimal @db.Decimal(12, 2)
+// ─────────────────────────────────────────────────────────────
+// Benefícios: catálogo (regras) + adesão (por colaborador)
+// ─────────────────────────────────────────────────────────────
 
-  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  enrollments BenefitEnrollment[]
+enum BeneficioCategoria {
+  ALIMENTACAO
+  ACADEMIA
+  SAUDE
 
-  @@index([tenantId])
-  @@map("benefits")
+  @@map("beneficio_categoria")
 }
 
-model BenefitEnrollment {
-  id         String   @id @default(uuid()) @db.Uuid
-  tenantId   String   @db.Uuid
-  benefitId  String   @db.Uuid
-  employeeId String   @db.Uuid
-  createdAt  DateTime @default(now())
+enum FeriadoAbrangencia {
+  NACIONAL
+  ESTADUAL
+  MUNICIPAL
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  benefit  Benefit  @relation(fields: [benefitId], references: [id], onDelete: Cascade)
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  @@map("feriado_abrangencia")
+}
 
-  @@unique([benefitId, employeeId])
+model BeneficioTipo {
+  id        String             @id @default(uuid()) @db.Uuid
+  tenantId  String             @db.Uuid
+  nome      String
+  categoria BeneficioCategoria
+
+  tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  coparticipacao CoparticipacaoRegra?
+  adesoesValeDiario AdesaoValeDiario[]
+
+  @@unique([tenantId, nome])
   @@index([tenantId])
-  @@map("benefit_enrollments")
+  @@map("beneficio_tipos")
+}
+
+model CoparticipacaoRegra {
+  id                String  @id @default(uuid()) @db.Uuid
+  tenantId          String  @db.Uuid
+  beneficioTipoId   String  @unique @db.Uuid
+  percentualEmpresa Decimal @db.Decimal(5, 2)
+  percentualColab   Decimal @db.Decimal(5, 2)
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  beneficioTipo BeneficioTipo @relation(fields: [beneficioTipoId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("coparticipacao_regras")
+}
+
+model ConvenioAcademia {
+  id               String  @id @default(uuid()) @db.Uuid
+  tenantId         String  @db.Uuid
+  nome             String
+  valorMensalidade Decimal @db.Decimal(10, 2)
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  adesoes AdesaoAcademia[]
+
+  @@index([tenantId])
+  @@map("convenios_academia")
+}
+
+model PlanoSaude {
+  id        String  @id @default(uuid()) @db.Uuid
+  tenantId  String  @db.Uuid
+  nome      String
+  operadora String?
+
+  tenant        Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  faixasEtarias PlanoSaudeFaixaEtaria[]
+  adesoes       AdesaoPlanoSaude[]
+
+  @@index([tenantId])
+  @@map("planos_saude")
+}
+
+model PlanoSaudeFaixaEtaria {
+  id       String  @id @default(uuid()) @db.Uuid
+  tenantId String  @db.Uuid
+  planoId  String  @db.Uuid
+  idadeMin Int
+  idadeMax Int
+  valor    Decimal @db.Decimal(10, 2)
+
+  tenant Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plano  PlanoSaude @relation(fields: [planoId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([planoId])
+  @@map("plano_saude_faixas_etarias")
+}
+
+model Feriado {
+  id            String             @id @default(uuid()) @db.Uuid
+  tenantId      String             @db.Uuid
+  data          DateTime           @db.Date
+  abrangencia   FeriadoAbrangencia
+  nome          String
+  uf            String?
+  municipioIbge String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("feriados")
+}
+
+model AdesaoValeDiario {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @db.Uuid
+  employeeId      String    @db.Uuid
+  beneficioTipoId String    @db.Uuid
+  valorDiario     Decimal   @db.Decimal(10, 2)
+  dataInicio      DateTime  @db.Date
+  dataFim         DateTime? @db.Date
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  beneficioTipo BeneficioTipo @relation(fields: [beneficioTipoId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([employeeId])
+  @@map("adesoes_vale_diario")
+}
+
+model AdesaoAcademia {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @db.Uuid
+  employeeId       String    @db.Uuid
+  convenioId       String    @db.Uuid
+  dataAdesao       DateTime  @db.Date
+  dataCancelamento DateTime? @db.Date
+
+  tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  convenio ConvenioAcademia @relation(fields: [convenioId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([employeeId])
+  @@map("adesoes_academia")
+}
+
+model AdesaoPlanoSaude {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @db.Uuid
+  employeeId       String    @db.Uuid
+  planoId          String    @db.Uuid
+  dataAdesao       DateTime  @db.Date
+  dataCancelamento DateTime? @db.Date
+
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee    Employee               @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  plano       PlanoSaude             @relation(fields: [planoId], references: [id], onDelete: Cascade)
+  dependentes DependentePlanoSaude[]
+
+  @@index([tenantId])
+  @@index([employeeId])
+  @@map("adesoes_plano_saude")
+}
+
+model DependentePlanoSaude {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  adesaoId       String   @db.Uuid
+  nome           String
+  dataNascimento DateTime @db.Date
+  parentesco     String?
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  adesao AdesaoPlanoSaude @relation(fields: [adesaoId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([adesaoId])
+  @@map("dependentes_plano_saude")
 }
 
 model EquipmentItem {
