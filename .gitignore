@@ -9,3 +9,6 @@ build/
 elos op.zip
 /apps/api/generated/
 .turbo/
+
+.vercel
+.env*
