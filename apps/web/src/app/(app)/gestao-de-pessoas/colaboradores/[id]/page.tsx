@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { complianceTone, maskCPF, maskPhoneBR } from '@/lib/format';
 import { Badge, Button, Card, EmptyState, KpiCard } from '@/components/ui';
+import { type TenantInfo } from '@/components/empresa-form';
 
 const ESCOLARIDADE_OPTIONS = [
   'Fundamental incompleto', 'Fundamental completo', 'Médio incompleto', 'Médio completo',
@@ -16,6 +17,28 @@ const ESTADO_CIVIL_OPTIONS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viú
 const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 const CNH_CATEGORIA_OPTIONS = ['ACC', 'A', 'A1', 'B', 'B1', 'C', 'C1', 'D', 'D1', 'BE', 'CE', 'C1E', 'DE', 'D1E'];
 const RACA_COR_OPTIONS = ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Não informado'];
+
+const ACCIDENT_TIPO_LABEL: Record<'TIPICO' | 'TRAJETO' | 'DOENCA_OCUPACIONAL', string> = {
+  TIPICO: 'Acidente típico',
+  TRAJETO: 'Acidente de trajeto',
+  DOENCA_OCUPACIONAL: 'Doença ocupacional',
+};
+const TERMINATION_TIPO_LABEL: Record<'SEM_JUSTA_CAUSA' | 'PEDIDO_DEMISSAO' | 'ACORDO', string> = {
+  SEM_JUSTA_CAUSA: 'Dispensa sem justa causa',
+  PEDIDO_DEMISSAO: 'Pedido de demissão',
+  ACORDO: 'Acordo (art. 484-A)',
+};
+
+function enderecoTenant(t: TenantInfo): string {
+  const partes = [
+    t.logradouro && t.numero ? `${t.logradouro}, ${t.numero}` : t.logradouro,
+    t.complemento,
+    t.bairro,
+    t.cidade && t.uf ? `${t.cidade}/${t.uf}` : t.cidade,
+    t.cep,
+  ].filter(Boolean);
+  return partes.length > 0 ? partes.join(' - ') : '—';
+}
 
 const TIPO_CONTA_LABEL: Record<'CORRENTE' | 'POUPANCA', string> = {
   CORRENTE: 'Conta corrente',
@@ -128,7 +151,17 @@ interface EmployeeDetail {
   }[];
   documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
+  vacationRequests: { id: string; inicio: string; fim: string }[];
   leaveRecords: { id: string; tipo: string; inicio: string; retorno: string | null }[];
+  accidents: {
+    id: string;
+    tipoAcidente: 'TIPICO' | 'TRAJETO' | 'DOENCA_OCUPACIONAL';
+    dataAcidente: string;
+    comAfastamento: boolean;
+    diasAfastamento: number;
+    descricao: string | null;
+  }[];
+  terminations: { id: string; data: string; tipo: 'SEM_JUSTA_CAUSA' | 'PEDIDO_DEMISSAO' | 'ACORDO'; motivo: string | null }[];
   evaluationRecords: { id: string; autoNota: string | null; gestorNota: string | null; cycle: { nome: string } }[];
 }
 
@@ -344,6 +377,12 @@ export default function EmployeeProfilePage() {
     queryFn: async () =>
       (await api.get<{ compliance: number; missingFields: string[]; documentos: DocumentRequirementStatus[] }>(`/rh/documents/employees/${id}`)).data,
     enabled: tab === 'documentos',
+  });
+
+  const { data: tenant } = useQuery({
+    queryKey: ['tenant'],
+    queryFn: async () => (await api.get<TenantInfo>('/tenant')).data,
+    enabled: tab === 'registro',
   });
 
   const setDocStatus = useMutation({
@@ -1051,144 +1090,243 @@ export default function EmployeeProfilePage() {
 
       {tab === 'registro' && (
         <div className="flex flex-col gap-6">
+          <style>{`
+            @media print {
+              body * { visibility: hidden; }
+              #registro-empregado-print, #registro-empregado-print * { visibility: visible; }
+              #registro-empregado-print { position: absolute; left: 0; top: 0; width: 100%; }
+            }
+          `}</style>
+
           <div className="flex justify-end print:hidden">
             <Button variant="secondary" onClick={() => window.print()}>
-              Imprimir
+              Imprimir / Gerar PDF
             </Button>
           </div>
 
-          <Card>
-            <h3 className="mb-1 text-base font-semibold">Registro de Empregado</h3>
-            <p className="mb-4 text-xs text-text-tertiary">
-              {e.nome} · matrícula {e.matricula} · {e.cargo} · {e.departamento}
-            </p>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              <Row label="CPF" value={e.cpf ?? '—'} />
-              <Row label="RG" value={e.rg ?? '—'} />
-              <Row label="Data de nascimento" value={e.dataNascimento ? formatDate(e.dataNascimento) : '—'} />
-              <Row label="CTPS" value={e.ctps ?? '—'} />
-              <Row label="PIS" value={e.pis ?? '—'} />
-              <Row label="Data de admissão" value={formatDate(e.dataAdmissao)} />
-              <Row label="Tipo de contrato" value={TIPO_CONTRATO_LABEL[e.tipoContrato]} />
-              <Row label="Salário atual" value={formatBRL(Number(e.salario))} />
-              <Row label="Status" value={e.status === 'ATIVO' ? 'Ativo' : 'Inativo'} />
+          <div id="registro-empregado-print" className="flex flex-col gap-4">
+            <div className="text-center">
+              <h3 className="text-lg font-bold tracking-wide">REGISTRO DE EMPREGADO</h3>
+              <p className="text-xs text-text-tertiary">Matrícula {e.matricula}</p>
             </div>
-          </Card>
 
-          <div>
-            <h3 className="mb-2 text-sm font-semibold">Linha do tempo de cargo e salário</h3>
             <Card>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-text-tertiary">
-                    <th className="pb-2">Vigente desde</th>
-                    <th className="pb-2">Cargo</th>
-                    <th className="pb-2">Salário</th>
-                    <th className="pb-2">Motivo</th>
-                    <th className="pb-2">Registrado por</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {e.cargoSalarioHistorico.map((h) => (
-                    <tr key={h.id} className="border-t border-divider align-top">
-                      <td className="py-2">{formatDate(h.vigenciaDesde)}</td>
-                      <td className="py-2">{h.cargo}</td>
-                      <td className="py-2">{formatBRL(Number(h.salario))}</td>
-                      <td className="py-2">
-                        {h.motivo}
-                        {h.observacao && <div className="text-xs text-text-tertiary">{h.observacao}</div>}
-                      </td>
-                      <td className="py-2 text-xs text-text-tertiary">
-                        {h.registradoPor} · {formatDate(h.registradoEm)}
-                      </td>
-                    </tr>
-                  ))}
-                  {e.cargoSalarioHistorico.length === 0 && (
-                    <tr>
-                      <td colSpan={5}>
-                        <EmptyState>Sem registros.</EmptyState>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Empregador</h4>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <FormBox label="Razão social" value={tenant?.razaoSocial ?? tenant?.name} className="sm:col-span-2" />
+                <FormBox label="CNPJ" value={tenant?.cnpj} />
+                <FormBox label="Endereço" value={tenant ? enderecoTenant(tenant) : '—'} className="sm:col-span-3" />
+              </div>
             </Card>
-          </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-semibold">Férias gozadas</h3>
             <Card>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-text-tertiary">
-                    <th className="pb-2">Período</th>
-                    <th className="pb-2">Dias</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {e.feriasHistorico.map((f) => (
-                    <tr key={f.id} className="border-t border-divider">
-                      <td className="py-2">{f.periodo}</td>
-                      <td className="py-2">{f.dias}</td>
-                    </tr>
-                  ))}
-                  {e.feriasHistorico.length === 0 && (
-                    <tr>
-                      <td colSpan={2}>
-                        <EmptyState>Sem férias registradas.</EmptyState>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Empregado</h4>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <FormBox label="Nome" value={e.nome} className="sm:col-span-2" />
+                <FormBox label="Data de nascimento" value={e.dataNascimento ? formatDate(e.dataNascimento) : null} />
+                <FormBox label="Residência" value={e.endereco} className="sm:col-span-3" />
+                <FormBox label="Nacionalidade" value={e.nacionalidade} />
+                <FormBox label="Estado civil" value={e.estadoCivil} />
+                <FormBox label="Sexo" value={e.genero} />
+                <FormBox label="Nome do pai" value={e.nomePai} className="sm:col-span-2" />
+                <FormBox label="Nome da mãe" value={e.nomeMae} />
+              </div>
             </Card>
-          </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-semibold">Afastamentos</h3>
             <Card>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-text-tertiary">
-                    <th className="pb-2">Tipo</th>
-                    <th className="pb-2">Início</th>
-                    <th className="pb-2">Retorno</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {e.leaveRecords.map((l) => (
-                    <tr key={l.id} className="border-t border-divider">
-                      <td className="py-2">{l.tipo}</td>
-                      <td className="py-2">{formatDate(l.inicio)}</td>
-                      <td className="py-2">{l.retorno ? formatDate(l.retorno) : '—'}</td>
-                    </tr>
-                  ))}
-                  {e.leaveRecords.length === 0 && (
-                    <tr>
-                      <td colSpan={3}>
-                        <EmptyState>Sem afastamentos registrados.</EmptyState>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Documentos</h4>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <FormBox label="CPF" value={e.cpf} />
+                <FormBox label="RG" value={e.rg} />
+                <FormBox label="Órgão/data expedição" value={e.rgOrgaoExpedidor ? `${e.rgOrgaoExpedidor}${e.rgDataExpedicao ? ' · ' + formatDate(e.rgDataExpedicao) : ''}` : null} />
+                <FormBox label="CTPS" value={e.ctps} />
+                <FormBox label="PIS" value={e.pis} />
+                <FormBox label="Título eleitoral" value={e.tituloEleitor ? `${e.tituloEleitor}${e.tituloEleitorZona ? ' · zona ' + e.tituloEleitorZona : ''}${e.tituloEleitorSecao ? ' · seção ' + e.tituloEleitorSecao : ''}` : null} />
+                <FormBox label="CNH" value={e.cnh ? `${e.cnh}${e.cnhCategoria ? ' · cat. ' + e.cnhCategoria : ''}` : null} />
+                <FormBox label="Grau de instrução" value={e.escolaridade} />
+                <FormBox label="Raça/cor" value={e.racaCor} />
+                <FormBox label="Deficiência (PcD)" value={e.pcd ? 'Sim' : 'Não'} />
+                <FormBox label="Telefone" value={e.telefone} />
+                <FormBox label="E-mail" value={e.email} />
+              </div>
             </Card>
-          </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-semibold">Anotações e eventos</h3>
             <Card>
-              {e.historico.length === 0 && <p className="text-sm text-text-tertiary">Sem eventos.</p>}
-              <ul className="flex flex-col gap-2 text-sm">
-                {e.historico.map((h) => (
-                  <li key={h.id} className="flex flex-col">
-                    <span>{h.evento}</span>
-                    <span className="text-xs text-text-tertiary">
-                      {h.categoria} · {formatDate(h.data)} · {h.autor}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Cargo, admissão e remuneração</h4>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <FormBox label="Cargo" value={e.cargo} />
+                <FormBox label="Departamento" value={e.departamento} />
+                <FormBox label="Data de admissão" value={formatDate(e.dataAdmissao)} />
+                <FormBox label="Tipo de contrato" value={TIPO_CONTRATO_LABEL[e.tipoContrato]} />
+                <FormBox label="Salário" value={`${formatBRL(Number(e.salario))} (${TIPO_SALARIO_LABEL[e.tipoSalario]})`} />
+                <FormBox label="Status" value={e.status === 'ATIVO' ? 'Ativo' : 'Inativo'} />
+                <FormBox label="Banco" value={e.banco ? `${e.banco}${e.agencia ? ' · ag. ' + e.agencia : ''}${e.conta ? ' · cc ' + e.conta : ''}` : null} className="sm:col-span-2" />
+                <FormBox label="Chave PIX" value={e.chavePix} />
+              </div>
+            </Card>
+
+            <Card>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Contatos de emergência</h4>
+              {e.contatosEmergencia.length === 0 ? (
+                <p className="text-sm text-text-tertiary">Nenhum contato cadastrado.</p>
+              ) : (
+                <div className="flex flex-col gap-1 text-sm">
+                  {e.contatosEmergencia.map((c) => (
+                    <div key={c.id}>
+                      {c.nome} · {c.parentesco}
+                      {c.telefone ? ` · ${c.telefone}` : ''}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — período aquisitivo</h4>
+              <Card>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-text-tertiary">
+                      <th className="pb-2">Período</th>
+                      <th className="pb-2">Dias</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {e.feriasHistorico.map((f) => (
+                      <tr key={f.id} className="border-t border-divider">
+                        <td className="py-2">{f.periodo}</td>
+                        <td className="py-2">{f.dias}</td>
+                      </tr>
+                    ))}
+                    {e.feriasHistorico.length === 0 && (
+                      <tr>
+                        <td colSpan={2}>
+                          <EmptyState>Sem períodos registrados.</EmptyState>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — período de gozo</h4>
+              <Card>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-text-tertiary">
+                      <th className="pb-2">Início</th>
+                      <th className="pb-2">Fim</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {e.vacationRequests.map((v) => (
+                      <tr key={v.id} className="border-t border-divider">
+                        <td className="py-2">{formatDate(v.inicio)}</td>
+                        <td className="py-2">{formatDate(v.fim)}</td>
+                      </tr>
+                    ))}
+                    {e.vacationRequests.length === 0 && (
+                      <tr>
+                        <td colSpan={2}>
+                          <EmptyState>Sem férias gozadas registradas.</EmptyState>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Alterações de salário, cargo e/ou função</h4>
+              <Card>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-text-tertiary">
+                      <th className="pb-2">Vigente desde</th>
+                      <th className="pb-2">Cargo</th>
+                      <th className="pb-2">Salário</th>
+                      <th className="pb-2">Motivo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {e.cargoSalarioHistorico.map((h) => (
+                      <tr key={h.id} className="border-t border-divider align-top">
+                        <td className="py-2">{formatDate(h.vigenciaDesde)}</td>
+                        <td className="py-2">{h.cargo}</td>
+                        <td className="py-2">{formatBRL(Number(h.salario))}</td>
+                        <td className="py-2">
+                          {h.motivo}
+                          {h.observacao && <div className="text-xs text-text-tertiary">{h.observacao}</div>}
+                        </td>
+                      </tr>
+                    ))}
+                    {e.cargoSalarioHistorico.length === 0 && (
+                      <tr>
+                        <td colSpan={4}>
+                          <EmptyState>Sem registros.</EmptyState>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Acidentes de trabalho e doenças ocupacionais</h4>
+              <Card>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-text-tertiary">
+                      <th className="pb-2">Data</th>
+                      <th className="pb-2">Tipo</th>
+                      <th className="pb-2">Afastamento</th>
+                      <th className="pb-2">Descrição</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {e.accidents.map((a) => (
+                      <tr key={a.id} className="border-t border-divider align-top">
+                        <td className="py-2">{formatDate(a.dataAcidente)}</td>
+                        <td className="py-2">{ACCIDENT_TIPO_LABEL[a.tipoAcidente]}</td>
+                        <td className="py-2">{a.comAfastamento ? `${a.diasAfastamento} dia(s)` : 'Não'}</td>
+                        <td className="py-2">{a.descricao ?? '—'}</td>
+                      </tr>
+                    ))}
+                    {e.accidents.length === 0 && (
+                      <tr>
+                        <td colSpan={4}>
+                          <EmptyState>Sem ocorrências registradas.</EmptyState>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+
+            <Card>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Rescisão de contrato de trabalho</h4>
+              {e.terminations.length === 0 ? (
+                <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
+              ) : (
+                <div className="flex flex-col gap-1 text-sm">
+                  {e.terminations.map((t) => (
+                    <div key={t.id}>
+                      Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
+                      {t.motivo ? ` · ${t.motivo}` : ''}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Observações</h4>
+              <div className="h-16 border-b border-dashed border-border-strong" />
             </Card>
           </div>
         </div>
@@ -1782,6 +1920,15 @@ function Row({ label, value, className = '' }: { label: string; value: React.Rea
     <div className={`flex flex-col gap-0.5 text-sm ${className}`}>
       <span className="text-xs text-text-tertiary">{label}</span>
       <span className="font-medium text-text">{value}</span>
+    </div>
+  );
+}
+
+function FormBox({ label, value, className = '' }: { label: string; value: React.ReactNode; className?: string }) {
+  return (
+    <div className={`border border-border-strong px-2 py-1.5 text-xs ${className}`}>
+      <div className="text-[9px] uppercase tracking-wide text-text-tertiary">{label}</div>
+      <div className="font-medium text-text">{value || '—'}</div>
     </div>
   );
 }

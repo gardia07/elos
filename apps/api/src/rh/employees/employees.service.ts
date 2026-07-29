@@ -184,6 +184,8 @@ export class EmployeesService {
         documentos: { orderBy: { uploadEm: 'desc' } },
         feriasHistorico: true,
         cargoSalarioHistorico: { orderBy: { vigenciaDesde: 'desc' } },
+        accidents: { orderBy: { dataAcidente: 'desc' } },
+        terminations: { orderBy: { data: 'desc' } },
         evaluationRecords: { include: { cycle: true } },
         leaveRecords: { orderBy: { inicio: 'desc' } },
         vacationRequests: {
