@@ -308,7 +308,7 @@ export class DocumentsService {
         requirementId,
         status: 'COMPLIANT',
         expiraEm,
-        arquivoNome: file.originalname,
+        arquivoNome: uploaded.nomeOriginal,
         blobPathname: uploaded.pathname,
         contentType: uploaded.contentType,
         anexadoEm: new Date(),
@@ -316,7 +316,7 @@ export class DocumentsService {
       update: {
         status: 'COMPLIANT',
         expiraEm,
-        arquivoNome: file.originalname,
+        arquivoNome: uploaded.nomeOriginal,
         blobPathname: uploaded.pathname,
         contentType: uploaded.contentType,
         anexadoEm: new Date(),
@@ -334,7 +334,7 @@ export class DocumentsService {
     );
     await this.audit.log('employee', employeeId, 'documento_anexado', {
       requirementId,
-      arquivo: file.originalname,
+      arquivo: uploaded.nomeOriginal,
     });
     return { compliance, missingFields };
   }

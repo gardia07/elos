@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { getRequestContext } from '../../common/request-context';
+import { fixFilenameEncoding } from '../../common/blob-storage';
 import { CreateRunDto, SaveImportTemplateDto } from './dto/payroll.dto';
 import {
   ColumnMapping,
@@ -347,11 +348,12 @@ export class PayrollService {
       importadas++;
     }
 
+    const nomeOriginal = fixFilenameEncoding(file.originalname);
     const batch = await db.payrollImportBatch.create({
       data: {
         tenantId,
         payrollRunId: runId,
-        arquivoNome: file.originalname,
+        arquivoNome: nomeOriginal,
         linhasTotal: linhas.length,
         linhasImportadas: importadas,
         linhasComErro: erros.length,
@@ -361,7 +363,7 @@ export class PayrollService {
     });
 
     await this.audit.log('payroll_run', runId, 'importacao_planilha', {
-      arquivo: file.originalname,
+      arquivo: nomeOriginal,
       importadas,
       erros: erros.length,
     });

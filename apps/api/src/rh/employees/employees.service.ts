@@ -346,7 +346,7 @@ export class EmployeesService {
     const doc = await this.db().employeeDocumento.create({
       data: {
         employeeId: id,
-        nome: nomeOverride || file.originalname,
+        nome: nomeOverride || uploaded.nomeOriginal,
         tipo,
         tamanho: uploaded.tamanho,
         blobPathname: uploaded.pathname,
