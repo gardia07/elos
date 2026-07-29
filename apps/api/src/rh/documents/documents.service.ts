@@ -64,7 +64,7 @@ interface RequirementLike {
 // Empty list = applies to everyone; otherwise the employee's value must be
 // in the list. Mirrors the conditional-applicability engine from the legacy
 // document_requirements table (applies_statuses/employment_types/etc).
-function matches(list: string[], value: string): boolean {
+export function matches(list: string[], value: string): boolean {
   return list.length === 0 || list.includes(value);
 }
 

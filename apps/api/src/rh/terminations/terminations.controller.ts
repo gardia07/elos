@@ -1,9 +1,19 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TerminationsService } from './terminations.service';
 import {
   CreateTerminationDto,
   ExitInterviewDto,
+  SendEsocialDto,
   SetTerminationChecklistDto,
   ToggleTerminationDocDto,
   UpdateTerminationStatusDto,
@@ -17,6 +27,11 @@ export class TerminationsController {
   @Get()
   list() {
     return this.service.list();
+  }
+
+  @Get('lembretes')
+  lembretes() {
+    return this.service.lembretes();
   }
 
   @Get('checklist-config')
@@ -44,9 +59,14 @@ export class TerminationsController {
     return this.service.toggleDoc(id, dto);
   }
 
+  @Post(':id/calcular')
+  calcular(@Param('id') id: string) {
+    return this.service.calcular(id);
+  }
+
   @Post(':id/esocial')
-  sendEsocial(@Param('id') id: string) {
-    return this.service.sendEsocial(id);
+  sendEsocial(@Param('id') id: string, @Body() dto: SendEsocialDto) {
+    return this.service.sendEsocial(id, dto);
   }
 
   @Post(':id/generate-termo')
@@ -60,7 +80,10 @@ export class TerminationsController {
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateTerminationStatusDto) {
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateTerminationStatusDto,
+  ) {
     return this.service.updateStatus(id, dto);
   }
 

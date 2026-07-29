@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { TERMINATION_TIPO_LABEL } from '@/lib/format';
 import { Button, Card } from '@/components/ui';
 import { Header } from '@/components/header';
 
@@ -11,6 +12,8 @@ interface ChecklistItem {
   nome: string;
   ativo: boolean;
   bloqueante: boolean;
+  categoria: 'PROCESSO' | 'COMPLIANCE';
+  aplicaTipos: string[];
 }
 
 function slugifyKey(nome: string): string {
@@ -46,14 +49,45 @@ export default function ChecklistDesligamentoPage() {
     <>
       <Header eyebrow="Cadastros" title="Checklist de desligamento" />
       <main className="flex-1 overflow-y-auto px-8 py-6">
-        <Card className="flex max-w-2xl flex-col gap-3">
+        <Card className="flex max-w-3xl flex-col gap-3">
           <p className="text-xs text-text-tertiary">
-            Itens marcados como bloqueantes impedem a conclusão do desligamento enquanto pendentes; os demais são apenas informativos.
+            Itens bloqueantes impedem a conclusão do desligamento enquanto pendentes. &quot;Aplica a&quot; vazio significa que o
+            item vale para todos os tipos de desligamento — selecione tipos específicos pra restringir (ex: itens exigidos só em
+            justa causa).
           </p>
           <div className="flex flex-col gap-2">
             {current.map((item, i) => (
-              <div key={item.key} className="flex items-center gap-3 rounded-[10px] border border-border p-2.5 text-sm">
-                <span className="flex-1">{item.nome}</span>
+              <div key={item.key} className="flex flex-wrap items-center gap-3 rounded-[10px] border border-border p-2.5 text-sm">
+                <span className="min-w-[160px] flex-1">{item.nome}</span>
+                <select
+                  value={item.categoria}
+                  onChange={(e) =>
+                    update(current.map((c, j) => (j === i ? { ...c, categoria: e.target.value as ChecklistItem['categoria'] } : c)))
+                  }
+                  className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                >
+                  <option value="PROCESSO">Processo</option>
+                  <option value="COMPLIANCE">Compliance</option>
+                </select>
+                <select
+                  multiple
+                  value={item.aplicaTipos}
+                  onChange={(e) =>
+                    update(
+                      current.map((c, j) =>
+                        j === i ? { ...c, aplicaTipos: Array.from(e.target.selectedOptions, (o) => o.value) } : c,
+                      ),
+                    )
+                  }
+                  className="h-16 w-40 rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                  title="Vazio = aplica a todos os tipos"
+                >
+                  {Object.entries(TERMINATION_TIPO_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
                 <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                   <input
                     type="checkbox"
@@ -79,7 +113,10 @@ export default function ChecklistDesligamentoPage() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!novoNome.trim()) return;
-              update([...current, { key: slugifyKey(novoNome), nome: novoNome, ativo: true, bloqueante: true }]);
+              update([
+                ...current,
+                { key: slugifyKey(novoNome), nome: novoNome, ativo: true, bloqueante: true, categoria: 'PROCESSO', aplicaTipos: [] },
+              ]);
               setNovoNome('');
             }}
           >

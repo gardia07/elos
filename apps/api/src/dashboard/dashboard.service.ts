@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { ComplianceOverviewService } from '../compliance/overview.service';
 import { DocumentsService } from '../rh/documents/documents.service';
+import { buildTerminationAlerts } from '../rh/terminations/terminations-lembretes.util';
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -314,6 +315,8 @@ export class DashboardService {
         href: `/gestao-de-pessoas/colaboradores/${c.id}`,
       });
     }
+
+    alerts.push(...(await buildTerminationAlerts(this.prisma, hoje)));
 
     // Documentação obrigatória incompleta (CLT + requisitos configurados),
     // um alerta por colaborador que ainda não está 100% conforme. Computado

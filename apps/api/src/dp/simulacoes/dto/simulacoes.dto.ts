@@ -8,6 +8,19 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import type { TipoRescisao } from '../constantes-trabalhistas';
+
+const TIPOS_RESCISAO: TipoRescisao[] = [
+  'SEM_JUSTA_CAUSA',
+  'PEDIDO_DEMISSAO',
+  'ACORDO',
+  'JUSTA_CAUSA',
+  'ACORDO_MUTUO',
+  'FIM_CONTRATO_EXPERIENCIA',
+  'APOSENTADORIA',
+  'RESCISAO_INDIRETA',
+  'OBITO',
+];
 
 export class SimularFeriasDto {
   @IsUUID()
@@ -29,8 +42,8 @@ export class SimularRescisaoDto {
   @IsUUID()
   employeeId!: string;
 
-  @IsIn(['SEM_JUSTA_CAUSA', 'PEDIDO_DEMISSAO', 'ACORDO'])
-  tipo!: 'SEM_JUSTA_CAUSA' | 'PEDIDO_DEMISSAO' | 'ACORDO';
+  @IsIn(TIPOS_RESCISAO)
+  tipo!: TipoRescisao;
 
   @IsISO8601()
   dataPrevista!: string;

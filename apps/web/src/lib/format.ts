@@ -52,3 +52,58 @@ export function maskCEP(value: string): string {
   if (digits.length <= 5) return digits;
   return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
+
+export type TerminationTipo =
+  | 'SEM_JUSTA_CAUSA'
+  | 'PEDIDO_DEMISSAO'
+  | 'ACORDO'
+  | 'JUSTA_CAUSA'
+  | 'ACORDO_MUTUO'
+  | 'FIM_CONTRATO_EXPERIENCIA'
+  | 'APOSENTADORIA'
+  | 'RESCISAO_INDIRETA'
+  | 'OBITO';
+
+export const TERMINATION_TIPO_LABEL: Record<TerminationTipo, string> = {
+  SEM_JUSTA_CAUSA: 'Sem justa causa',
+  PEDIDO_DEMISSAO: 'Pedido de demissão',
+  ACORDO: 'Acordo (art. 484-A)',
+  JUSTA_CAUSA: 'Justa causa',
+  ACORDO_MUTUO: 'Acordo mútuo (art. 484-A)',
+  FIM_CONTRATO_EXPERIENCIA: 'Fim de contrato de experiência',
+  APOSENTADORIA: 'Aposentadoria',
+  RESCISAO_INDIRETA: 'Rescisão indireta',
+  OBITO: 'Óbito',
+};
+
+export type TerminationStatusValue =
+  | 'RASCUNHO'
+  | 'EM_ANDAMENTO'
+  | 'AGUARDANDO_EXAME'
+  | 'PRONTO_PARA_EFETIVAR'
+  | 'EFETIVADO'
+  | 'EM_HOMOLOGACAO'
+  | 'CONCLUIDO'
+  | 'CANCELADO';
+
+export const TERMINATION_STATUS_LABEL: Record<TerminationStatusValue, string> = {
+  RASCUNHO: 'Rascunho',
+  EM_ANDAMENTO: 'Em checklist',
+  AGUARDANDO_EXAME: 'Aguardando exame',
+  PRONTO_PARA_EFETIVAR: 'Pronto para efetivar',
+  EFETIVADO: 'Efetivado',
+  EM_HOMOLOGACAO: 'Em homologação',
+  CONCLUIDO: 'Concluído',
+  CANCELADO: 'Cancelado',
+};
+
+export const TERMINATION_STATUS_TONE: Record<TerminationStatusValue, 'green' | 'blue' | 'amber' | 'red' | 'grey'> = {
+  RASCUNHO: 'grey',
+  EM_ANDAMENTO: 'amber',
+  AGUARDANDO_EXAME: 'amber',
+  PRONTO_PARA_EFETIVAR: 'blue',
+  EFETIVADO: 'blue',
+  EM_HOMOLOGACAO: 'amber',
+  CONCLUIDO: 'green',
+  CANCELADO: 'red',
+};
