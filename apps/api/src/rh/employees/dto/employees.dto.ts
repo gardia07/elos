@@ -129,6 +129,8 @@ export class UpdateEmployeeDto {
   @IsOptional() @IsString() tituloEleitor?: string;
   @IsOptional() @IsString() tituloEleitorZona?: string;
   @IsOptional() @IsString() tituloEleitorSecao?: string;
+  @IsOptional() @IsString() racaCor?: string;
+  @IsOptional() @IsBoolean() pcd?: boolean;
 
   // Cônjuge
   @IsOptional() @IsString() conjugeNome?: string;

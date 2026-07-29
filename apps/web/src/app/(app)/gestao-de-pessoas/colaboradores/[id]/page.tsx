@@ -15,6 +15,7 @@ const ESCOLARIDADE_OPTIONS = [
 const ESTADO_CIVIL_OPTIONS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União estável'];
 const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 const CNH_CATEGORIA_OPTIONS = ['ACC', 'A', 'A1', 'B', 'B1', 'C', 'C1', 'D', 'D1', 'BE', 'CE', 'C1E', 'DE', 'D1E'];
+const RACA_COR_OPTIONS = ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Não informado'];
 
 const TIPO_CONTA_LABEL: Record<'CORRENTE' | 'POUPANCA', string> = {
   CORRENTE: 'Conta corrente',
@@ -95,6 +96,8 @@ interface EmployeeDetail {
   tituloEleitor: string | null;
   tituloEleitorZona: string | null;
   tituloEleitorSecao: string | null;
+  racaCor: string | null;
+  pcd: boolean;
   conjugeNome: string | null;
   conjugeCpf: string | null;
   semDependentes: boolean;
@@ -135,6 +138,7 @@ type EditFields = {
   nomeMae: string; nomePai: string; genero: string; cnh: string; cnhCategoria: string; cnhValidade: string; rg: string;
   rgOrgaoExpedidor: string; rgDataExpedicao: string;
   tituloEleitor: string; tituloEleitorZona: string; tituloEleitorSecao: string; pis: string; ctps: string; cpf: string;
+  racaCor: string; pcd: boolean;
   conjugeNome: string; conjugeCpf: string;
   matricula: string; dataAdmissao: string;
   cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
@@ -153,6 +157,7 @@ function toEditFields(e: EmployeeDetail): EditFields {
     rgOrgaoExpedidor: e.rgOrgaoExpedidor ?? '', rgDataExpedicao: e.rgDataExpedicao ? e.rgDataExpedicao.slice(0, 10) : '',
     tituloEleitor: e.tituloEleitor ?? '', tituloEleitorZona: e.tituloEleitorZona ?? '', tituloEleitorSecao: e.tituloEleitorSecao ?? '',
     pis: e.pis ?? '', ctps: e.ctps ?? '', cpf: e.cpf ?? '',
+    racaCor: e.racaCor ?? '', pcd: e.pcd,
     conjugeNome: e.conjugeNome ?? '', conjugeCpf: e.conjugeCpf ?? '',
     matricula: e.matricula, dataAdmissao: e.dataAdmissao.slice(0, 10),
     cargo: e.cargo, departamento: e.departamento, filial: e.filial ?? '', gestorDireto: e.gestorDireto ?? '',
@@ -628,6 +633,8 @@ export default function EmployeeProfilePage() {
                 <Row label="PIS" value={e.pis ?? '—'} />
                 <Row label="CTPS" value={e.ctps ?? '—'} />
                 <Row label="CPF" value={e.cpf ?? '—'} />
+                <Row label="Raça/cor" value={e.racaCor ?? '—'} />
+                <Row label="PcD" value={e.pcd ? 'Sim' : 'Não'} />
               </Section>
 
               <Section title="Dados contratuais" className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -697,6 +704,11 @@ export default function EmployeeProfilePage() {
                   <EditField label="PIS" value={edit.pis} onChange={(v) => setEdit({ ...edit, pis: v })} />
                   <EditField label="CTPS" value={edit.ctps} onChange={(v) => setEdit({ ...edit, ctps: v })} />
                   <EditField label="CPF" value={edit.cpf} onChange={(v) => setEdit({ ...edit, cpf: maskCPF(v) })} />
+                  <SelectField label="Raça/cor" value={edit.racaCor} onChange={(v) => setEdit({ ...edit, racaCor: v })} options={RACA_COR_OPTIONS} />
+                  <label className="flex items-center gap-2 self-end pb-2 text-sm">
+                    <input type="checkbox" checked={edit.pcd} onChange={(ev) => setEdit({ ...edit, pcd: ev.target.checked })} />
+                    Pessoa com deficiência (PcD)
+                  </label>
                 </div>
               </Section>
 

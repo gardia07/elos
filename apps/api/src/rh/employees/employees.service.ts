@@ -82,6 +82,12 @@ export class EmployeesService {
         },
       },
     });
+    await this.addCargoSalarioHistorico(employee.id, {
+      vigenciaDesde: dataAdmissao,
+      cargo: dto.cargo,
+      salario: dto.salario,
+      motivo: 'Admissão',
+    });
     return employee;
   }
 
