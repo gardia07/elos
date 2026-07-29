@@ -23,6 +23,7 @@ import { BenefitsModule } from './dp/benefits/benefits.module';
 import { EquipmentModule } from './dp/equipment/equipment.module';
 import { TimeclockModule } from './dp/timeclock/timeclock.module';
 import { PayrollModule } from './dp/payroll/payroll.module';
+import { SimulacoesModule } from './dp/simulacoes/simulacoes.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AccidentsModule } from './sst/accidents/accidents.module';
@@ -61,6 +62,7 @@ import { SearchModule } from './search/search.module';
     EquipmentModule,
     TimeclockModule,
     PayrollModule,
+    SimulacoesModule,
     AgendaModule,
     DashboardModule,
     AccidentsModule,

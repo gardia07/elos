@@ -13,6 +13,8 @@ const SUBPAGES = [
   { label: 'Uniforme e EPI', href: '/dp/uniforme' },
   { label: 'Ponto Eletrônico', href: '/dp/ponto' },
   { label: 'Folha de Pagamento', href: '/dp/folha' },
+  { label: 'Custo por Colaborador', href: '/dp/custos' },
+  { label: 'Simulações', href: '/dp/simulacoes' },
 ];
 
 export default function DpLayout({ children }: { children: React.ReactNode }) {

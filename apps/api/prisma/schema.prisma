@@ -12,28 +12,28 @@ datasource db {
 // ─────────────────────────────────────────────────────────────
 
 model Tenant {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String
-  slug       String   @unique
-  nomeFantasia String?
-  logoUrl      String?
-  razaoSocial String?
-  cnpj       String?
-  inscricaoEstadual  String?
-  inscricaoMunicipal String?
-  cnae               String?
-  regimeTributario   RegimeTributario?
-  cep          String?
-  logradouro   String?
-  numero       String?
-  complemento  String?
-  bairro       String?
-  cidade       String?
-  uf           String?
+  id                      String            @id @default(uuid()) @db.Uuid
+  name                    String
+  slug                    String            @unique
+  nomeFantasia            String?
+  logoUrl                 String?
+  razaoSocial             String?
+  cnpj                    String?
+  inscricaoEstadual       String?
+  inscricaoMunicipal      String?
+  cnae                    String?
+  regimeTributario        RegimeTributario?
+  cep                     String?
+  logradouro              String?
+  numero                  String?
+  complemento             String?
+  bairro                  String?
+  cidade                  String?
+  uf                      String?
   representanteLegalNome  String?
   representanteLegalCpf   String?
   representanteLegalCargo String?
-  createdAt  DateTime @default(now())
+  createdAt               DateTime          @default(now())
 
   users                    User[]
   auditEvents              AuditEvent[]
@@ -54,10 +54,10 @@ model Tenant {
   terminations             Termination[]
   terminationChecklistDefs TerminationChecklistDef[]
 
-  laborDeadlines       LaborDeadline[]
-  collectiveAgreements CollectiveAgreement[]
-  jobGrades            JobGrade[]
-  departments          Department[]
+  laborDeadlines          LaborDeadline[]
+  collectiveAgreements    CollectiveAgreement[]
+  jobGrades               JobGrade[]
+  departments             Department[]
   beneficioTipos          BeneficioTipo[]
   coparticipacaoRegras    CoparticipacaoRegra[]
   conveniosAcademia       ConvenioAcademia[]
@@ -70,11 +70,14 @@ model Tenant {
   dependentesPlanoSaude   DependentePlanoSaude[]
   adesoesBeneficioFixo    AdesaoBeneficioFixo[]
   apuracoesBeneficios     ApuracaoBeneficio[]
-  equipmentItems       EquipmentItem[]
-  timeJustifications   TimeJustification[]
-  payrollRuns          PayrollRun[]
-  payslipItems         PayslipItem[]
-  payrollGuides        PayrollGuide[]
+  equipmentItems          EquipmentItem[]
+  timeJustifications      TimeJustification[]
+  payrollRuns             PayrollRun[]
+  payslipItems            PayslipItem[]
+  payrollGuides           PayrollGuide[]
+  payrollLineItems        PayrollLineItem[]
+  payrollImportBatches    PayrollImportBatch[]
+  payrollImportTemplates  PayrollImportTemplate[]
 
   agendaItems      AgendaItem[]
   agendaDismissals AgendaDismissal[]
@@ -91,12 +94,12 @@ model Tenant {
   tasks                Task[]
   license              TenantLicense?
 
-  ethicsCases          EthicsCase[]
-  compliancePolicies   CompliancePolicy[]
-  eloConversations     EloConversation[]
+  ethicsCases            EthicsCase[]
+  compliancePolicies     CompliancePolicy[]
+  eloConversations       EloConversation[]
   integrationConnections IntegrationConnection[]
-  announcements        Announcement[]
-  metricSnapshots      MetricSnapshot[]
+  announcements          Announcement[]
+  metricSnapshots        MetricSnapshot[]
 
   @@map("tenants")
 }
@@ -316,17 +319,17 @@ enum RequisitionStatus {
 }
 
 model JobRequisition {
-  id            String             @id @default(uuid()) @db.Uuid
-  tenantId      String             @db.Uuid
+  id            String            @id @default(uuid()) @db.Uuid
+  tenantId      String            @db.Uuid
   cargo         String
   solicitante   String
   depto         String
-  contrato      JobContrato        @default(CLT)
-  faixaSalarial Decimal?           @db.Decimal(12, 2)
-  prioridade    String             @default("Normal")
-  status        RequisitionStatus  @default(PENDENTE)
+  contrato      JobContrato       @default(CLT)
+  faixaSalarial Decimal?          @db.Decimal(12, 2)
+  prioridade    String            @default("Normal")
+  status        RequisitionStatus @default(PENDENTE)
   respondidoEm  DateTime?
-  createdAt     DateTime           @default(now())
+  createdAt     DateTime          @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -467,29 +470,29 @@ model Employee {
   conformidadeDocumental    Int            @default(0)
   createdAt                 DateTime       @default(now())
 
-  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  users             User[]
-  dependentes       Dependente[]
-  historico         HistoricoEvento[]
-  documentos        EmployeeDocumento[]
+  tenant               Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users                User[]
+  dependentes          Dependente[]
+  historico            HistoricoEvento[]
+  documentos           EmployeeDocumento[]
   documentRequirements EmployeeDocumentRequirement[]
-  feriasHistorico   FeriasHistorico[]
-  admissions        Admission[]
-  evaluationRecords EvaluationRecord[]
-  goals             Goal[]
-  pdiActions        PdiAction[]
-  vacationRequests  VacationRequest[]
-  leaveRecords      LeaveRecord[]
-  terminations      Termination[]
+  feriasHistorico      FeriasHistorico[]
+  admissions           Admission[]
+  evaluationRecords    EvaluationRecord[]
+  goals                Goal[]
+  pdiActions           PdiAction[]
+  vacationRequests     VacationRequest[]
+  leaveRecords         LeaveRecord[]
+  terminations         Termination[]
 
-  adesoesValeDiario  AdesaoValeDiario[]
-  adesoesAcademia    AdesaoAcademia[]
-  adesoesPlanoSaude  AdesaoPlanoSaude[]
+  adesoesValeDiario    AdesaoValeDiario[]
+  adesoesAcademia      AdesaoAcademia[]
+  adesoesPlanoSaude    AdesaoPlanoSaude[]
   adesoesBeneficioFixo AdesaoBeneficioFixo[]
-  apuracoesBeneficios ApuracaoBeneficio[]
-  equipmentItems     EquipmentItem[]
-  timeJustifications TimeJustification[]
-  payslipItems       PayslipItem[]
+  apuracoesBeneficios  ApuracaoBeneficio[]
+  equipmentItems       EquipmentItem[]
+  timeJustifications   TimeJustification[]
+  payslipItems         PayslipItem[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -836,11 +839,11 @@ model BeneficioTipo {
   nome      String
   categoria BeneficioCategoria
 
-  tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  coparticipacao CoparticipacaoRegra?
-  adesoesValeDiario AdesaoValeDiario[]
+  tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  coparticipacao       CoparticipacaoRegra?
+  adesoesValeDiario    AdesaoValeDiario[]
   adesoesBeneficioFixo AdesaoBeneficioFixo[]
-  apuracoes         ApuracaoBeneficio[]
+  apuracoes            ApuracaoBeneficio[]
 
   @@unique([tenantId, nome])
   @@index([tenantId])
@@ -1085,31 +1088,99 @@ model PayrollRun {
   processedAt DateTime?
   createdAt   DateTime         @default(now())
 
-  tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  items  PayslipItem[]
-  guides PayrollGuide[]
+  tenant        Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items         PayslipItem[]
+  guides        PayrollGuide[]
+  importBatches PayrollImportBatch[]
 
   @@unique([tenantId, competencia])
   @@index([tenantId])
   @@map("payroll_runs")
 }
 
-model PayslipItem {
-  id           String  @id @default(uuid()) @db.Uuid
-  tenantId     String  @db.Uuid
-  payrollRunId String  @db.Uuid
-  employeeId   String  @db.Uuid
-  proventos    Decimal @db.Decimal(12, 2)
-  descontos    Decimal @db.Decimal(12, 2)
-  liquido      Decimal @db.Decimal(12, 2)
+enum PayslipOrigem {
+  CALCULADO
+  IMPORTADO
 
-  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
-  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  @@map("payslip_origem")
+}
+
+model PayslipItem {
+  id           String        @id @default(uuid()) @db.Uuid
+  tenantId     String        @db.Uuid
+  payrollRunId String        @db.Uuid
+  employeeId   String        @db.Uuid
+  proventos    Decimal       @db.Decimal(12, 2)
+  descontos    Decimal       @db.Decimal(12, 2)
+  liquido      Decimal       @db.Decimal(12, 2)
+  origem       PayslipOrigem @default(CALCULADO)
+
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payrollRun PayrollRun        @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employee   Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  linhas     PayrollLineItem[]
 
   @@unique([payrollRunId, employeeId])
   @@index([tenantId])
   @@map("payslip_items")
+}
+
+enum PayrollLineItemTipo {
+  PROVENTO
+  DESCONTO
+  INFORMATIVO
+
+  @@map("payroll_line_item_tipo")
+}
+
+model PayrollLineItem {
+  id            String              @id @default(uuid()) @db.Uuid
+  tenantId      String              @db.Uuid
+  payslipItemId String              @db.Uuid
+  codigo        String?
+  descricao     String
+  tipo          PayrollLineItemTipo
+  valor         Decimal             @db.Decimal(12, 2)
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payslipItem PayslipItem @relation(fields: [payslipItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([payslipItemId])
+  @@map("payroll_line_items")
+}
+
+model PayrollImportBatch {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  payrollRunId     String   @db.Uuid
+  arquivoNome      String
+  linhasTotal      Int
+  linhasImportadas Int
+  linhasComErro    Int
+  erros            Json?
+  importadoPor     String
+  createdAt        DateTime @default(now())
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("payroll_import_batches")
+}
+
+model PayrollImportTemplate {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  nome       String
+  mapeamento Json
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+  @@map("payroll_import_templates")
 }
 
 enum PayrollGuideStatus {
@@ -1351,23 +1422,23 @@ model SstSettings {
 // ─────────────────────────────────────────────────────────────
 
 model DocumentRequirement {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
-  nome      String
-  categoria String
-  obrigatorio Boolean @default(true)
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @db.Uuid
+  nome               String
+  categoria          String
+  obrigatorio        Boolean  @default(true)
   // Semeado automaticamente (documentos exigidos pela CLT) — não pode ser excluído.
-  sistema   Boolean  @default(false)
+  sistema            Boolean  @default(false)
   // Dias de validade a partir da data de conformidade; null = não expira.
-  validadeDias Int?
+  validadeDias       Int?
   // Listas vazias = aplica a todos; caso contrário, o valor do colaborador
   // precisa constar na lista para o requisito se aplicar a ele.
   aplicaStatus       String[] @default([])
   aplicaTipoContrato String[] @default([])
   aplicaDepartamento String[] @default([])
   aplicaCargo        String[] @default([])
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
+  ativo              Boolean  @default(true)
+  createdAt          DateTime @default(now())
 
   tenant    Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   employees EmployeeDocumentRequirement[]
@@ -1482,16 +1553,16 @@ enum TenantLicenseStatus {
 }
 
 model TenantLicense {
-  tenantId         String               @id @db.Uuid
-  planId           String               @db.Uuid
-  status           TenantLicenseStatus  @default(TRIAL)
-  iniciaEm         DateTime             @default(now())
+  tenantId         String              @id @db.Uuid
+  planId           String              @db.Uuid
+  status           TenantLicenseStatus @default(TRIAL)
+  iniciaEm         DateTime            @default(now())
   expiraEm         DateTime?
   maxUsuarios      Int
   maxColaboradores Int
-  modulos          String[]             @default([])
+  modulos          String[]            @default([])
   observacoes      String?
-  updatedAt        DateTime             @updatedAt
+  updatedAt        DateTime            @updatedAt
 
   tenant Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   plan   LicensePlan @relation(fields: [planId], references: [id])
