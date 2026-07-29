@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { complianceTone, maskCPF, maskPhoneBR } from '@/lib/format';
-import { Badge, Button, Card, KpiCard } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, KpiCard } from '@/components/ui';
 
 const ESCOLARIDADE_OPTIONS = [
   'Fundamental incompleto', 'Fundamental completo', 'Médio incompleto', 'Médio completo',
@@ -14,6 +14,12 @@ const ESCOLARIDADE_OPTIONS = [
 ];
 const ESTADO_CIVIL_OPTIONS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União estável'];
 const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
+const CNH_CATEGORIA_OPTIONS = ['ACC', 'A', 'A1', 'B', 'B1', 'C', 'C1', 'D', 'D1', 'BE', 'CE', 'C1E', 'DE', 'D1E'];
+
+const TIPO_CONTA_LABEL: Record<'CORRENTE' | 'POUPANCA', string> = {
+  CORRENTE: 'Conta corrente',
+  POUPANCA: 'Conta poupança',
+};
 
 const TIPO_CONTRATO_LABEL: Record<'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE', string> = {
   CLT: 'CLT',
@@ -69,8 +75,7 @@ interface EmployeeDetail {
   email: string | null;
   telefone: string | null;
   endereco: string | null;
-  contatoEmergenciaNome: string | null;
-  contatoEmergenciaTelefone: string | null;
+  contatosEmergencia: { id: string; nome: string; parentesco: string; telefone: string | null }[];
   cpf: string | null;
   rg: string | null;
   rgOrgaoExpedidor: string | null;
@@ -81,6 +86,8 @@ interface EmployeeDetail {
   genero: string | null;
   escolaridade: string | null;
   cnh: string | null;
+  cnhCategoria: string | null;
+  cnhValidade: string | null;
   nomeMae: string | null;
   nomePai: string | null;
   pis: string | null;
@@ -90,7 +97,13 @@ interface EmployeeDetail {
   tituloEleitorSecao: string | null;
   conjugeNome: string | null;
   conjugeCpf: string | null;
+  semDependentes: boolean;
   salario: string;
+  banco: string | null;
+  agencia: string | null;
+  conta: string | null;
+  tipoConta: 'CORRENTE' | 'POUPANCA' | null;
+  chavePix: string | null;
   tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
   tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   feriasSaldo: number;
@@ -100,6 +113,16 @@ interface EmployeeDetail {
   tempoDeCasa: { anos: number; meses: number };
   dependentes: { id: string; nome: string; parentesco: string; cpf: string | null }[];
   historico: { id: string; evento: string; categoria: string; autor: string; data: string }[];
+  cargoSalarioHistorico: {
+    id: string;
+    vigenciaDesde: string;
+    cargo: string;
+    salario: string;
+    motivo: string;
+    observacao: string | null;
+    registradoEm: string;
+    registradoPor: string;
+  }[];
   documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
   leaveRecords: { id: string; tipo: string; inicio: string; retorno: string | null }[];
@@ -108,9 +131,8 @@ interface EmployeeDetail {
 
 type EditFields = {
   email: string; telefone: string; endereco: string;
-  contatoEmergenciaNome: string; contatoEmergenciaTelefone: string;
   dataNascimento: string; escolaridade: string; estadoCivil: string; nacionalidade: string;
-  nomeMae: string; nomePai: string; genero: string; cnh: string; rg: string;
+  nomeMae: string; nomePai: string; genero: string; cnh: string; cnhCategoria: string; cnhValidade: string; rg: string;
   rgOrgaoExpedidor: string; rgDataExpedicao: string;
   tituloEleitor: string; tituloEleitorZona: string; tituloEleitorSecao: string; pis: string; ctps: string; cpf: string;
   conjugeNome: string; conjugeCpf: string;
@@ -118,15 +140,16 @@ type EditFields = {
   cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
   tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   salario: string;
+  banco: string; agencia: string; conta: string; tipoConta: 'CORRENTE' | 'POUPANCA'; chavePix: string;
 };
 
 function toEditFields(e: EmployeeDetail): EditFields {
   return {
     email: e.email ?? '', telefone: e.telefone ?? '', endereco: e.endereco ?? '',
-    contatoEmergenciaNome: e.contatoEmergenciaNome ?? '', contatoEmergenciaTelefone: e.contatoEmergenciaTelefone ?? '',
     dataNascimento: e.dataNascimento ? e.dataNascimento.slice(0, 10) : '',
     escolaridade: e.escolaridade ?? '', estadoCivil: e.estadoCivil ?? '', nacionalidade: e.nacionalidade ?? '',
-    nomeMae: e.nomeMae ?? '', nomePai: e.nomePai ?? '', genero: e.genero ?? '', cnh: e.cnh ?? '', rg: e.rg ?? '',
+    nomeMae: e.nomeMae ?? '', nomePai: e.nomePai ?? '', genero: e.genero ?? '', cnh: e.cnh ?? '',
+    cnhCategoria: e.cnhCategoria ?? '', cnhValidade: e.cnhValidade ? e.cnhValidade.slice(0, 10) : '', rg: e.rg ?? '',
     rgOrgaoExpedidor: e.rgOrgaoExpedidor ?? '', rgDataExpedicao: e.rgDataExpedicao ? e.rgDataExpedicao.slice(0, 10) : '',
     tituloEleitor: e.tituloEleitor ?? '', tituloEleitorZona: e.tituloEleitorZona ?? '', tituloEleitorSecao: e.tituloEleitorSecao ?? '',
     pis: e.pis ?? '', ctps: e.ctps ?? '', cpf: e.cpf ?? '',
@@ -136,10 +159,11 @@ function toEditFields(e: EmployeeDetail): EditFields {
     tipoContrato: e.tipoContrato,
     tipoSalario: e.tipoSalario,
     salario: String(Number(e.salario)),
+    banco: e.banco ?? '', agencia: e.agencia ?? '', conta: e.conta ?? '', tipoConta: e.tipoConta ?? 'CORRENTE', chavePix: e.chavePix ?? '',
   };
 }
 
-const TABS = ['geral', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico'] as const;
+const TABS = ['geral', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico', 'registro'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
@@ -148,6 +172,7 @@ const TAB_LABEL: Record<Tab, string> = {
   avaliacoes: 'Avaliações',
   documentos: 'Documentos',
   historico: 'Histórico',
+  registro: 'Registro de Empregado',
 };
 
 function formatBRL(v: number) {
@@ -168,18 +193,25 @@ export default function EmployeeProfilePage() {
   const [novoCargo, setNovoCargo] = useState('');
   const [novoSalario, setNovoSalario] = useState('');
   const [motivoPromocao, setMotivoPromocao] = useState<'Promoção' | 'Reajuste anual' | 'Dissídio coletivo' | 'Outro'>('Promoção');
+  const [vigenciaPromocao, setVigenciaPromocao] = useState('');
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState<EditFields | null>(null);
   const [motivoSalario, setMotivoSalario] = useState('');
+  const [salarioVigenciaDesde, setSalarioVigenciaDesde] = useState('');
   const [saveEditError, setSaveEditError] = useState('');
   const [showDependenteForm, setShowDependenteForm] = useState(false);
   const [depNome, setDepNome] = useState('');
   const [depParentesco, setDepParentesco] = useState('');
   const [depCpf, setDepCpf] = useState('');
+  const [showContatoForm, setShowContatoForm] = useState(false);
+  const [contatoNome, setContatoNome] = useState('');
+  const [contatoParentesco, setContatoParentesco] = useState('');
+  const [contatoTelefone, setContatoTelefone] = useState('');
   const [vacInicio, setVacInicio] = useState('');
   const [vacFim, setVacFim] = useState('');
   const [docNome, setDocNome] = useState('');
   const [docTipo, setDocTipo] = useState('');
+  const [docFile, setDocFile] = useState<File | null>(null);
 
   const { data: e } = useQuery({
     queryKey: ['employee', id],
@@ -198,13 +230,19 @@ export default function EmployeeProfilePage() {
 
   const promote = useMutation({
     mutationFn: async () =>
-      api.post(`/rh/employees/${id}/promote`, { cargo: novoCargo || undefined, salario: Number(novoSalario), motivo: motivoPromocao }),
+      api.post(`/rh/employees/${id}/promote`, {
+        cargo: novoCargo || undefined,
+        salario: Number(novoSalario),
+        motivo: motivoPromocao,
+        vigenciaDesde: vigenciaPromocao || undefined,
+      }),
     onSuccess: () => {
       invalidate();
       setShowPromote(false);
       setNovoCargo('');
       setNovoSalario('');
       setMotivoPromocao('Promoção');
+      setVigenciaPromocao('');
     },
   });
 
@@ -217,12 +255,14 @@ export default function EmployeeProfilePage() {
         ...edit,
         salario: edit ? Number(edit.salario) : undefined,
         motivoAlteracaoSalario: salarioAlterado ? motivoSalario : undefined,
+        salarioVigenciaDesde: salarioAlterado ? salarioVigenciaDesde || undefined : undefined,
       });
     },
     onSuccess: () => {
       invalidate();
       setEditing(false);
       setMotivoSalario('');
+      setSalarioVigenciaDesde('');
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
@@ -241,6 +281,28 @@ export default function EmployeeProfilePage() {
     },
   });
 
+  const toggleSemDependentes = useMutation({
+    mutationFn: async (semDependentes: boolean) => api.patch(`/rh/employees/${id}`, { semDependentes }),
+    onSuccess: invalidate,
+  });
+
+  const addContatoEmergencia = useMutation({
+    mutationFn: async () =>
+      api.post(`/rh/employees/${id}/contatos-emergencia`, { nome: contatoNome, parentesco: contatoParentesco, telefone: contatoTelefone || undefined }),
+    onSuccess: () => {
+      invalidate();
+      setShowContatoForm(false);
+      setContatoNome('');
+      setContatoParentesco('');
+      setContatoTelefone('');
+    },
+  });
+
+  const removeContatoEmergencia = useMutation({
+    mutationFn: async (contatoId: string) => api.delete(`/rh/employees/${id}/contatos-emergencia/${contatoId}`),
+    onSuccess: invalidate,
+  });
+
   const requestVacation = useMutation({
     mutationFn: async () => api.post('/rh/vacations/requests', { employeeId: id, inicio: vacInicio, fim: vacFim }),
     onSuccess: () => {
@@ -251,11 +313,19 @@ export default function EmployeeProfilePage() {
   });
 
   const addDocumento = useMutation({
-    mutationFn: async () => api.post(`/rh/employees/${id}/documentos`, { nome: docNome, tipo: docTipo, tamanho: '—' }),
+    mutationFn: async () => {
+      if (!docFile) throw new Error('Selecione um arquivo.');
+      const form = new FormData();
+      form.append('arquivo', docFile);
+      form.append('tipo', docTipo);
+      if (docNome) form.append('nome', docNome);
+      return api.post(`/rh/employees/${id}/documentos`, form);
+    },
     onSuccess: () => {
       invalidate();
       setDocNome('');
       setDocTipo('');
+      setDocFile(null);
     },
   });
 
@@ -272,16 +342,27 @@ export default function EmployeeProfilePage() {
   });
 
   const setDocStatus = useMutation({
-    mutationFn: async (vars: { requirementId: string; status: DocumentRequirementStatus['status']; arquivoNome?: string }) =>
-      api.patch(`/rh/documents/employees/${id}/requirements/${vars.requirementId}`, {
-        status: vars.status,
-        arquivoNome: vars.arquivoNome,
-      }),
+    mutationFn: async (vars: { requirementId: string; status: DocumentRequirementStatus['status'] }) =>
+      api.patch(`/rh/documents/employees/${id}/requirements/${vars.requirementId}`, { status: vars.status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rh', 'documents', id] });
       invalidate();
     },
   });
+
+  const uploadRequirementFile = useMutation({
+    mutationFn: async (vars: { requirementId: string; file: File }) => {
+      const form = new FormData();
+      form.append('arquivo', vars.file);
+      return api.post(`/rh/documents/employees/${id}/requirements/${vars.requirementId}/upload`, form);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rh', 'documents', id] });
+      invalidate();
+    },
+  });
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
   if (!e) return <p className="text-sm text-text-tertiary">Carregando…</p>;
 
@@ -320,6 +401,7 @@ export default function EmployeeProfilePage() {
               setShowPromote(false);
               setEdit(toEditFields(e));
               setMotivoSalario('');
+              setSalarioVigenciaDesde('');
               setEditing(true);
               setTab('geral');
             }}
@@ -369,6 +451,16 @@ export default function EmployeeProfilePage() {
               <span className="text-text-secondary">Novo salário</span>
               <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
             </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Vigente desde</span>
+              <input
+                type="date"
+                value={vigenciaPromocao}
+                onChange={(ev) => setVigenciaPromocao(ev.target.value)}
+                required
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              />
+            </label>
             <Button type="submit" disabled={promote.isPending}>
               Confirmar
             </Button>
@@ -402,8 +494,8 @@ export default function EmployeeProfilePage() {
 
           {editing && (
             <div className="flex flex-col items-end gap-2">
-              {salarioAlterado && !motivoSalario && (
-                <p className="text-xs text-danger">Preencha o motivo da correção do salário (em Dados contratuais) para salvar.</p>
+              {salarioAlterado && (!motivoSalario || !salarioVigenciaDesde) && (
+                <p className="text-xs text-danger">Preencha o motivo e a vigência da correção do salário (em Dados contratuais) para salvar.</p>
               )}
               {saveEditError && <p className="text-xs text-danger">{saveEditError}</p>}
               <div className="flex gap-2">
@@ -412,12 +504,13 @@ export default function EmployeeProfilePage() {
                   onClick={() => {
                     setEditing(false);
                     setMotivoSalario('');
+                    setSalarioVigenciaDesde('');
                     setSaveEditError('');
                   }}
                 >
                   Cancelar
                 </Button>
-                <Button disabled={saveEdit.isPending || (salarioAlterado && !motivoSalario)} onClick={() => saveEdit.mutate()}>
+                <Button disabled={saveEdit.isPending || (salarioAlterado && (!motivoSalario || !salarioVigenciaDesde))} onClick={() => saveEdit.mutate()}>
                   {saveEdit.isPending ? 'Salvando…' : 'Salvar alterações'}
                 </Button>
               </div>
@@ -426,16 +519,48 @@ export default function EmployeeProfilePage() {
 
           {!editing || !edit ? (
             <>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                 <Section title="Informações de contato" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Row label="E-mail" value={e.email ?? '—'} />
                   <Row label="Telefone" value={e.telefone ?? '—'} />
                   <Row label="Endereço" value={e.endereco ?? '—'} className="sm:col-span-2" />
-                  <Row
-                    label="Contato de emergência"
-                    value={e.contatoEmergenciaNome ? `${e.contatoEmergenciaNome} · ${e.contatoEmergenciaTelefone ?? '—'}` : '—'}
-                    className="sm:col-span-2"
-                  />
+                </Section>
+
+                <Section title="Contatos de emergência">
+                  <div className="flex flex-col gap-2">
+                    {e.contatosEmergencia.map((c) => (
+                      <div key={c.id} className="flex items-center justify-between text-sm text-text-secondary">
+                        <span>
+                          {c.nome} · {c.parentesco}
+                          {c.telefone ? ` · ${c.telefone}` : ''}
+                        </span>
+                        <button onClick={() => removeContatoEmergencia.mutate(c.id)} className="text-xs text-danger hover:underline">
+                          Remover
+                        </button>
+                      </div>
+                    ))}
+                    {e.contatosEmergencia.length === 0 && <p className="text-sm text-text-tertiary">Nenhum contato cadastrado.</p>}
+                    {!showContatoForm ? (
+                      <Button variant="secondary" className="self-start" onClick={() => setShowContatoForm(true)}>
+                        Adicionar contato
+                      </Button>
+                    ) : (
+                      <form
+                        className="flex flex-wrap items-end gap-2"
+                        onSubmit={(ev) => {
+                          ev.preventDefault();
+                          addContatoEmergencia.mutate();
+                        }}
+                      >
+                        <input placeholder="Nome" value={contatoNome} onChange={(ev) => setContatoNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                        <input placeholder="Parentesco" value={contatoParentesco} onChange={(ev) => setContatoParentesco(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                        <input placeholder="Telefone" value={contatoTelefone} onChange={(ev) => setContatoTelefone(maskPhoneBR(ev.target.value))} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                        <Button type="submit" disabled={addContatoEmergencia.isPending}>
+                          Adicionar
+                        </Button>
+                      </form>
+                    )}
+                  </div>
                 </Section>
 
                 <Section title="Cônjuge e dependentes">
@@ -450,26 +575,35 @@ export default function EmployeeProfilePage() {
                       </div>
                     ))}
                     {e.dependentes.length === 0 && <p className="text-sm text-text-tertiary">Nenhum dependente cadastrado.</p>}
-                    {!showDependenteForm ? (
-                      <Button variant="secondary" className="self-start" onClick={() => setShowDependenteForm(true)}>
-                        Adicionar dependente
-                      </Button>
-                    ) : (
-                      <form
-                        className="flex flex-wrap items-end gap-2"
-                        onSubmit={(ev) => {
-                          ev.preventDefault();
-                          addDependente.mutate();
-                        }}
-                      >
-                        <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-                        <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-                        <input placeholder="CPF" value={depCpf} onChange={(ev) => setDepCpf(maskCPF(ev.target.value))} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-                        <Button type="submit" disabled={addDependente.isPending}>
-                          Adicionar
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={e.semDependentes}
+                        onChange={(ev) => toggleSemDependentes.mutate(ev.target.checked)}
+                      />
+                      Colaborador declara não possuir dependentes/filhos
+                    </label>
+                    {!e.semDependentes &&
+                      (!showDependenteForm ? (
+                        <Button variant="secondary" className="self-start" onClick={() => setShowDependenteForm(true)}>
+                          Adicionar dependente
                         </Button>
-                      </form>
-                    )}
+                      ) : (
+                        <form
+                          className="flex flex-wrap items-end gap-2"
+                          onSubmit={(ev) => {
+                            ev.preventDefault();
+                            addDependente.mutate();
+                          }}
+                        >
+                          <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                          <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                          <input placeholder="CPF" value={depCpf} onChange={(ev) => setDepCpf(maskCPF(ev.target.value))} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                          <Button type="submit" disabled={addDependente.isPending}>
+                            Adicionar
+                          </Button>
+                        </form>
+                      ))}
                   </div>
                 </Section>
               </div>
@@ -483,6 +617,8 @@ export default function EmployeeProfilePage() {
                 <Row label="Nome do pai" value={e.nomePai ?? '—'} />
                 <Row label="Gênero" value={e.genero ?? '—'} />
                 <Row label="CNH" value={e.cnh ?? '—'} />
+                <Row label="Categoria da CNH" value={e.cnhCategoria ?? '—'} />
+                <Row label="Validade da CNH" value={e.cnhValidade ? formatDate(e.cnhValidade) : '—'} />
                 <Row label="RG" value={e.rg ?? '—'} />
                 <Row label="Órgão expedidor do RG" value={e.rgOrgaoExpedidor ?? '—'} />
                 <Row label="Data de expedição do RG" value={e.rgDataExpedicao ? formatDate(e.rgDataExpedicao) : '—'} />
@@ -503,6 +639,14 @@ export default function EmployeeProfilePage() {
                 <Row label="Tipo de salário" value={TIPO_SALARIO_LABEL[e.tipoSalario]} />
                 <Row label="Matrícula" value={e.matricula} />
               </Section>
+
+              <Section title="Dados bancários" className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                <Row label="Banco" value={e.banco ?? '—'} />
+                <Row label="Agência" value={e.agencia ?? '—'} />
+                <Row label="Conta" value={e.conta ?? '—'} />
+                <Row label="Tipo de conta" value={e.tipoConta ? TIPO_CONTA_LABEL[e.tipoConta] : '—'} />
+                <Row label="Chave PIX" value={e.chavePix ?? '—'} />
+              </Section>
             </>
           ) : (
             <form
@@ -518,9 +662,10 @@ export default function EmployeeProfilePage() {
                     <EditField label="E-mail" value={edit.email} onChange={(v) => setEdit({ ...edit, email: v })} />
                     <EditField label="Telefone" value={edit.telefone} onChange={(v) => setEdit({ ...edit, telefone: maskPhoneBR(v) })} />
                     <EditField label="Endereço" value={edit.endereco} onChange={(v) => setEdit({ ...edit, endereco: v })} className="col-span-2" />
-                    <EditField label="Contato de emergência (nome)" value={edit.contatoEmergenciaNome} onChange={(v) => setEdit({ ...edit, contatoEmergenciaNome: v })} />
-                    <EditField label="Contato de emergência (telefone)" value={edit.contatoEmergenciaTelefone} onChange={(v) => setEdit({ ...edit, contatoEmergenciaTelefone: maskPhoneBR(v) })} />
                   </div>
+                  <p className="mt-2 text-xs text-text-tertiary">
+                    Contatos de emergência agora são gerenciados na Visão geral, fora do modo de edição.
+                  </p>
                 </Section>
 
                 <Section title="Cônjuge">
@@ -541,6 +686,8 @@ export default function EmployeeProfilePage() {
                   <EditField label="Nome do pai" value={edit.nomePai} onChange={(v) => setEdit({ ...edit, nomePai: v })} />
                   <SelectField label="Gênero" value={edit.genero} onChange={(v) => setEdit({ ...edit, genero: v })} options={GENERO_OPTIONS} />
                   <EditField label="CNH" value={edit.cnh} onChange={(v) => setEdit({ ...edit, cnh: v })} />
+                  <SelectField label="Categoria da CNH" value={edit.cnhCategoria} onChange={(v) => setEdit({ ...edit, cnhCategoria: v })} options={CNH_CATEGORIA_OPTIONS} />
+                  <EditField label="Validade da CNH" type="date" value={edit.cnhValidade} onChange={(v) => setEdit({ ...edit, cnhValidade: v })} />
                   <EditField label="RG" value={edit.rg} onChange={(v) => setEdit({ ...edit, rg: v })} />
                   <EditField label="Órgão expedidor do RG" value={edit.rgOrgaoExpedidor} onChange={(v) => setEdit({ ...edit, rgOrgaoExpedidor: v })} placeholder="SSP/SP" />
                   <EditField label="Data de expedição do RG" type="date" value={edit.rgDataExpedicao} onChange={(v) => setEdit({ ...edit, rgDataExpedicao: v })} />
@@ -606,20 +753,52 @@ export default function EmployeeProfilePage() {
                   </label>
                 </div>
                 {salarioAlterado && (
-                  <label className="mt-3 flex flex-col gap-1.5 text-sm">
-                    <span className="text-text-secondary">Motivo da correção do salário (obrigatório)</span>
-                    <input
-                      value={motivoSalario}
-                      onChange={(ev) => setMotivoSalario(ev.target.value)}
-                      placeholder="Ex.: erro de digitação no cadastro inicial"
-                      required
-                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                    />
-                    <span className="text-xs text-text-tertiary">
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <label className="flex flex-1 flex-col gap-1.5 text-sm">
+                      <span className="text-text-secondary">Motivo da correção do salário (obrigatório)</span>
+                      <input
+                        value={motivoSalario}
+                        onChange={(ev) => setMotivoSalario(ev.target.value)}
+                        placeholder="Ex.: erro de digitação no cadastro inicial"
+                        required
+                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1.5 text-sm">
+                      <span className="text-text-secondary">Vigente desde (obrigatório)</span>
+                      <input
+                        type="date"
+                        value={salarioVigenciaDesde}
+                        onChange={(ev) => setSalarioVigenciaDesde(ev.target.value)}
+                        required
+                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                      />
+                    </label>
+                    <span className="w-full text-xs text-text-tertiary">
                       Para reajustes anuais, promoções ou dissídios, use o botão &quot;Alterar salário&quot; em vez de editar aqui.
                     </span>
-                  </label>
+                  </div>
                 )}
+              </Section>
+
+              <Section title="Dados bancários">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <EditField label="Banco" value={edit.banco} onChange={(v) => setEdit({ ...edit, banco: v })} />
+                  <EditField label="Agência" value={edit.agencia} onChange={(v) => setEdit({ ...edit, agencia: v })} />
+                  <EditField label="Conta" value={edit.conta} onChange={(v) => setEdit({ ...edit, conta: v })} />
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-text-secondary">Tipo de conta</span>
+                    <select
+                      value={edit.tipoConta}
+                      onChange={(ev) => setEdit({ ...edit, tipoConta: ev.target.value as EditFields['tipoConta'] })}
+                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                    >
+                      <option value="CORRENTE">Conta corrente</option>
+                      <option value="POUPANCA">Conta poupança</option>
+                    </select>
+                  </label>
+                  <EditField label="Chave PIX" value={edit.chavePix} onChange={(v) => setEdit({ ...edit, chavePix: v })} />
+                </div>
               </Section>
             </form>
           )}
@@ -747,14 +926,26 @@ export default function EmployeeProfilePage() {
                       <option value="REJECTED">Não conforme</option>
                       <option value="NAO_SE_APLICA">Não se aplica</option>
                     </select>
+                    {d.arquivoNome && (
+                      <a
+                        href={`${apiBaseUrl}/rh/documents/employees/${id}/requirements/${d.requirementId}/arquivo`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent"
+                      >
+                        Visualizar
+                      </a>
+                    )}
                     <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
-                      Anexar
+                      {uploadRequirementFile.isPending ? 'Enviando…' : 'Anexar'}
                       <input
                         type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                         className="hidden"
+                        disabled={uploadRequirementFile.isPending}
                         onChange={(ev) => {
                           const file = ev.target.files?.[0];
-                          if (file) setDocStatus.mutate({ requirementId: d.requirementId, status: 'COMPLIANT', arquivoNome: file.name });
+                          if (file) uploadRequirementFile.mutate({ requirementId: d.requirementId, file });
                           ev.target.value = '';
                         }}
                       />
@@ -777,9 +968,19 @@ export default function EmployeeProfilePage() {
                       {d.tipo} · {d.tamanho} · {formatDate(d.uploadEm)}
                     </div>
                   </div>
-                  <button onClick={() => removeDocumento.mutate(d.id)} className="text-xs text-danger hover:underline">
-                    Remover
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-accent hover:underline"
+                    >
+                      Visualizar
+                    </a>
+                    <button onClick={() => removeDocumento.mutate(d.id)} className="text-xs text-danger hover:underline">
+                      Remover
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -794,15 +995,25 @@ export default function EmployeeProfilePage() {
               }}
             >
               <label className="flex w-full flex-col gap-1.5 text-sm">
-                <span className="text-text-secondary">Nome do arquivo</span>
-                <input value={docNome} onChange={(ev) => setDocNome(ev.target.value)} required className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <span className="text-text-secondary">Arquivo</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={(ev) => setDocFile(ev.target.files?.[0] ?? null)}
+                  required
+                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                />
+              </label>
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Nome (opcional, padrão é o nome do arquivo)</span>
+                <input value={docNome} onChange={(ev) => setDocNome(ev.target.value)} className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
               </label>
               <label className="flex w-full flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Tipo</span>
                 <input value={docTipo} onChange={(ev) => setDocTipo(ev.target.value)} placeholder="Contrato, Documento pessoal…" required className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
               </label>
-              <Button type="submit" disabled={addDocumento.isPending}>
-                Anexar arquivo
+              <Button type="submit" disabled={addDocumento.isPending || !docFile}>
+                {addDocumento.isPending ? 'Enviando…' : 'Anexar arquivo'}
               </Button>
             </form>
           </Card>
@@ -824,6 +1035,151 @@ export default function EmployeeProfilePage() {
             ))}
           </ul>
         </Card>
+      )}
+
+      {tab === 'registro' && (
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-end print:hidden">
+            <Button variant="secondary" onClick={() => window.print()}>
+              Imprimir
+            </Button>
+          </div>
+
+          <Card>
+            <h3 className="mb-1 text-base font-semibold">Registro de Empregado</h3>
+            <p className="mb-4 text-xs text-text-tertiary">
+              {e.nome} · matrícula {e.matricula} · {e.cargo} · {e.departamento}
+            </p>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              <Row label="CPF" value={e.cpf ?? '—'} />
+              <Row label="RG" value={e.rg ?? '—'} />
+              <Row label="Data de nascimento" value={e.dataNascimento ? formatDate(e.dataNascimento) : '—'} />
+              <Row label="CTPS" value={e.ctps ?? '—'} />
+              <Row label="PIS" value={e.pis ?? '—'} />
+              <Row label="Data de admissão" value={formatDate(e.dataAdmissao)} />
+              <Row label="Tipo de contrato" value={TIPO_CONTRATO_LABEL[e.tipoContrato]} />
+              <Row label="Salário atual" value={formatBRL(Number(e.salario))} />
+              <Row label="Status" value={e.status === 'ATIVO' ? 'Ativo' : 'Inativo'} />
+            </div>
+          </Card>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Linha do tempo de cargo e salário</h3>
+            <Card>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-text-tertiary">
+                    <th className="pb-2">Vigente desde</th>
+                    <th className="pb-2">Cargo</th>
+                    <th className="pb-2">Salário</th>
+                    <th className="pb-2">Motivo</th>
+                    <th className="pb-2">Registrado por</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {e.cargoSalarioHistorico.map((h) => (
+                    <tr key={h.id} className="border-t border-divider align-top">
+                      <td className="py-2">{formatDate(h.vigenciaDesde)}</td>
+                      <td className="py-2">{h.cargo}</td>
+                      <td className="py-2">{formatBRL(Number(h.salario))}</td>
+                      <td className="py-2">
+                        {h.motivo}
+                        {h.observacao && <div className="text-xs text-text-tertiary">{h.observacao}</div>}
+                      </td>
+                      <td className="py-2 text-xs text-text-tertiary">
+                        {h.registradoPor} · {formatDate(h.registradoEm)}
+                      </td>
+                    </tr>
+                  ))}
+                  {e.cargoSalarioHistorico.length === 0 && (
+                    <tr>
+                      <td colSpan={5}>
+                        <EmptyState>Sem registros.</EmptyState>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Férias gozadas</h3>
+            <Card>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-text-tertiary">
+                    <th className="pb-2">Período</th>
+                    <th className="pb-2">Dias</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {e.feriasHistorico.map((f) => (
+                    <tr key={f.id} className="border-t border-divider">
+                      <td className="py-2">{f.periodo}</td>
+                      <td className="py-2">{f.dias}</td>
+                    </tr>
+                  ))}
+                  {e.feriasHistorico.length === 0 && (
+                    <tr>
+                      <td colSpan={2}>
+                        <EmptyState>Sem férias registradas.</EmptyState>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Afastamentos</h3>
+            <Card>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-text-tertiary">
+                    <th className="pb-2">Tipo</th>
+                    <th className="pb-2">Início</th>
+                    <th className="pb-2">Retorno</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {e.leaveRecords.map((l) => (
+                    <tr key={l.id} className="border-t border-divider">
+                      <td className="py-2">{l.tipo}</td>
+                      <td className="py-2">{formatDate(l.inicio)}</td>
+                      <td className="py-2">{l.retorno ? formatDate(l.retorno) : '—'}</td>
+                    </tr>
+                  ))}
+                  {e.leaveRecords.length === 0 && (
+                    <tr>
+                      <td colSpan={3}>
+                        <EmptyState>Sem afastamentos registrados.</EmptyState>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Anotações e eventos</h3>
+            <Card>
+              {e.historico.length === 0 && <p className="text-sm text-text-tertiary">Sem eventos.</p>}
+              <ul className="flex flex-col gap-2 text-sm">
+                {e.historico.map((h) => (
+                  <li key={h.id} className="flex flex-col">
+                    <span>{h.evento}</span>
+                    <span className="text-xs text-text-tertiary">
+                      {h.categoria} · {formatDate(h.data)} · {h.autor}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
   );

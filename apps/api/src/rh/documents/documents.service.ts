@@ -1,8 +1,21 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { getRequestContext } from '../../common/request-context';
-import { CreateDocumentRequirementDto, SetDocumentStatusDto, UpdateDocumentRequirementDto } from './dto/documents.dto';
+import {
+  deleteDocumento,
+  downloadDocumento,
+  uploadDocumento,
+} from '../../common/blob-storage';
+import {
+  CreateDocumentRequirementDto,
+  SetDocumentStatusDto,
+  UpdateDocumentRequirementDto,
+} from './dto/documents.dto';
 
 interface EmployeeLike {
   status: string;
@@ -24,7 +37,10 @@ interface EmployeeMandatoryFields {
 // even for a tenant with no DocumentRequirement configured yet, so a
 // freshly-created employee with nothing filled in doesn't read as "100%
 // conforme" just because there's nothing to compare against.
-const MANDATORY_FIELDS: { key: keyof EmployeeMandatoryFields; label: string }[] = [
+const MANDATORY_FIELDS: {
+  key: keyof EmployeeMandatoryFields;
+  label: string;
+}[] = [
   { key: 'cpf', label: 'CPF' },
   { key: 'rg', label: 'RG' },
   { key: 'pis', label: 'PIS' },
@@ -52,7 +68,10 @@ function matches(list: string[], value: string): boolean {
   return list.length === 0 || list.includes(value);
 }
 
-function appliesToEmployee(requirement: RequirementLike, employee: EmployeeLike): boolean {
+function appliesToEmployee(
+  requirement: RequirementLike,
+  employee: EmployeeLike,
+): boolean {
   if (!requirement.ativo) return false;
   return (
     matches(requirement.aplicaStatus, employee.status) &&
@@ -74,7 +93,9 @@ export class DocumentsService {
   }
 
   listRequirements() {
-    return this.db().documentRequirement.findMany({ orderBy: [{ categoria: 'asc' }, { nome: 'asc' }] });
+    return this.db().documentRequirement.findMany({
+      orderBy: [{ categoria: 'asc' }, { nome: 'asc' }],
+    });
   }
 
   async createRequirement(dto: CreateDocumentRequirementDto) {
@@ -92,33 +113,53 @@ export class DocumentsService {
         aplicaCargo: dto.aplicaCargo ?? [],
       },
     });
-    await this.audit.log('document_requirement', requirement.id, 'criado', { nome: dto.nome });
+    await this.audit.log('document_requirement', requirement.id, 'criado', {
+      nome: dto.nome,
+    });
     return requirement;
   }
 
   async updateRequirement(id: string, dto: UpdateDocumentRequirementDto) {
     await this.mustFindRequirement(id);
-    const requirement = await this.db().documentRequirement.update({ where: { id }, data: dto });
-    await this.audit.log('document_requirement', id, 'atualizado', dto as Record<string, unknown>);
+    const requirement = await this.db().documentRequirement.update({
+      where: { id },
+      data: dto,
+    });
+    await this.audit.log(
+      'document_requirement',
+      id,
+      'atualizado',
+      dto as Record<string, unknown>,
+    );
     return requirement;
   }
 
   async deleteRequirement(id: string) {
     const requirement = await this.mustFindRequirement(id);
     if (requirement.sistema) {
-      throw new ForbiddenException('Documentos obrigatórios por lei não podem ser excluídos. Marque "não se aplica" no colaborador quando não for o caso.');
+      throw new ForbiddenException(
+        'Documentos obrigatórios por lei não podem ser excluídos. Marque "não se aplica" no colaborador quando não for o caso.',
+      );
     }
     await this.db().documentRequirement.delete({ where: { id } });
-    await this.audit.log('document_requirement', id, 'excluido', { nome: requirement.nome });
+    await this.audit.log('document_requirement', id, 'excluido', {
+      nome: requirement.nome,
+    });
   }
 
   private async syncForEmployee(employeeId: string) {
     const db = this.db();
-    const employee = await db.employee.findUnique({ where: { id: employeeId } });
+    const employee = await db.employee.findUnique({
+      where: { id: employeeId },
+    });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
 
-    const requirements = await db.documentRequirement.findMany({ where: { ativo: true } });
-    const applicable = requirements.filter((r) => appliesToEmployee(r, employee));
+    const requirements = await db.documentRequirement.findMany({
+      where: { ativo: true },
+    });
+    const applicable = requirements.filter((r) =>
+      appliesToEmployee(r, employee),
+    );
 
     // One batched insert instead of an upsert per requirement — the update
     // branch was always a no-op ({}), so this only ever needed "create the
@@ -148,21 +189,36 @@ export class DocumentsService {
     const today = new Date();
     for (const row of rows) {
       if (row.status === 'COMPLIANT' && row.expiraEm && row.expiraEm < today) {
-        await db.employeeDocumentRequirement.update({ where: { id: row.id }, data: { status: 'EXPIRED' } });
+        await db.employeeDocumentRequirement.update({
+          where: { id: row.id },
+          data: { status: 'EXPIRED' },
+        });
         row.status = 'EXPIRED';
       }
     }
 
-    const { compliance, missingFields } = await this.recalcCompliance(employeeId, rows, employee);
+    const { compliance, missingFields } = await this.recalcCompliance(
+      employeeId,
+      rows,
+      employee,
+    );
     return { compliance, missingFields, documentos: rows };
   }
 
-  async setStatus(employeeId: string, requirementId: string, dto: SetDocumentStatusDto) {
+  async setStatus(
+    employeeId: string,
+    requirementId: string,
+    dto: SetDocumentStatusDto,
+  ) {
     const db = this.db();
-    const employee = await db.employee.findUnique({ where: { id: employeeId } });
+    const employee = await db.employee.findUnique({
+      where: { id: employeeId },
+    });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
 
-    const requirement = await db.documentRequirement.findUnique({ where: { id: requirementId } });
+    const requirement = await db.documentRequirement.findUnique({
+      where: { id: requirementId },
+    });
     if (!requirement) throw new NotFoundException('Requisito não encontrado.');
 
     // Attaching a file always marks the item compliant — the file itself is
@@ -170,21 +226,130 @@ export class DocumentsService {
     // plain status change (no arquivoNome) leaves any previously attached
     // file untouched.
     const status = dto.arquivoNome ? 'COMPLIANT' : dto.status;
-    const expiraEm = status === 'COMPLIANT' && requirement.validadeDias
-      ? new Date(Date.now() + requirement.validadeDias * 24 * 60 * 60 * 1000)
-      : null;
-    const arquivoFields = dto.arquivoNome ? { arquivoNome: dto.arquivoNome, anexadoEm: new Date() } : {};
+    const expiraEm =
+      status === 'COMPLIANT' && requirement.validadeDias
+        ? new Date(Date.now() + requirement.validadeDias * 24 * 60 * 60 * 1000)
+        : null;
+    const arquivoFields = dto.arquivoNome
+      ? { arquivoNome: dto.arquivoNome, anexadoEm: new Date() }
+      : {};
 
     await db.employeeDocumentRequirement.upsert({
       where: { employeeId_requirementId: { employeeId, requirementId } },
-      create: { employeeId, requirementId, status, expiraEm, observacao: dto.observacao, ...arquivoFields },
-      update: { status, expiraEm, observacao: dto.observacao, ...arquivoFields },
+      create: {
+        employeeId,
+        requirementId,
+        status,
+        expiraEm,
+        observacao: dto.observacao,
+        ...arquivoFields,
+      },
+      update: {
+        status,
+        expiraEm,
+        observacao: dto.observacao,
+        ...arquivoFields,
+      },
     });
 
-    const rows = await db.employeeDocumentRequirement.findMany({ where: { employeeId }, include: { requirement: true } });
-    const { compliance, missingFields } = await this.recalcCompliance(employeeId, rows, employee);
-    await this.audit.log('employee', employeeId, 'documento_status_atualizado', { requirementId, status: dto.status });
+    const rows = await db.employeeDocumentRequirement.findMany({
+      where: { employeeId },
+      include: { requirement: true },
+    });
+    const { compliance, missingFields } = await this.recalcCompliance(
+      employeeId,
+      rows,
+      employee,
+    );
+    await this.audit.log(
+      'employee',
+      employeeId,
+      'documento_status_atualizado',
+      { requirementId, status: dto.status },
+    );
     return { compliance, missingFields };
+  }
+
+  /** Anexa o arquivo de verdade pro requisito — marca COMPLIANT, igual ao setStatus com arquivoNome, mas com o binário armazenado. */
+  async uploadRequirementFile(
+    employeeId: string,
+    requirementId: string,
+    file: Express.Multer.File,
+  ) {
+    const db = this.db();
+    const { tenantId } = getRequestContext();
+    const employee = await db.employee.findUnique({
+      where: { id: employeeId },
+    });
+    if (!employee) throw new NotFoundException('Colaborador não encontrado.');
+
+    const requirement = await db.documentRequirement.findUnique({
+      where: { id: requirementId },
+    });
+    if (!requirement) throw new NotFoundException('Requisito não encontrado.');
+
+    const existing = await db.employeeDocumentRequirement.findUnique({
+      where: { employeeId_requirementId: { employeeId, requirementId } },
+    });
+    await deleteDocumento(existing?.blobPathname);
+
+    const uploaded = await uploadDocumento(
+      `colaboradores/${tenantId}/${employeeId}/requisitos`,
+      file,
+    );
+    const expiraEm = requirement.validadeDias
+      ? new Date(Date.now() + requirement.validadeDias * 24 * 60 * 60 * 1000)
+      : null;
+
+    await db.employeeDocumentRequirement.upsert({
+      where: { employeeId_requirementId: { employeeId, requirementId } },
+      create: {
+        employeeId,
+        requirementId,
+        status: 'COMPLIANT',
+        expiraEm,
+        arquivoNome: file.originalname,
+        blobPathname: uploaded.pathname,
+        contentType: uploaded.contentType,
+        anexadoEm: new Date(),
+      },
+      update: {
+        status: 'COMPLIANT',
+        expiraEm,
+        arquivoNome: file.originalname,
+        blobPathname: uploaded.pathname,
+        contentType: uploaded.contentType,
+        anexadoEm: new Date(),
+      },
+    });
+
+    const rows = await db.employeeDocumentRequirement.findMany({
+      where: { employeeId },
+      include: { requirement: true },
+    });
+    const { compliance, missingFields } = await this.recalcCompliance(
+      employeeId,
+      rows,
+      employee,
+    );
+    await this.audit.log('employee', employeeId, 'documento_anexado', {
+      requirementId,
+      arquivo: file.originalname,
+    });
+    return { compliance, missingFields };
+  }
+
+  async getRequirementArquivo(employeeId: string, requirementId: string) {
+    const row = await this.db().employeeDocumentRequirement.findUnique({
+      where: { employeeId_requirementId: { employeeId, requirementId } },
+    });
+    if (!row) throw new NotFoundException('Documento não encontrado.');
+    const arquivo = row.blobPathname
+      ? await downloadDocumento(row.blobPathname)
+      : null;
+    if (!arquivo)
+      throw new NotFoundException('Arquivo não encontrado no armazenamento.');
+    return { ...arquivo, nome: row.arquivoNome ?? 'documento' };
   }
 
   private async recalcCompliance(
@@ -193,14 +358,23 @@ export class DocumentsService {
     employee: EmployeeMandatoryFields,
   ) {
     // NAO_SE_APLICA is excluded entirely (neither counted as missing nor compliant).
-    const required = rows.filter((r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA');
+    const required = rows.filter(
+      (r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA',
+    );
     const missingFields = missingMandatoryFields(employee);
 
     const totalItems = required.length + MANDATORY_FIELDS.length;
-    const compliantItems = required.filter((r) => r.status === 'COMPLIANT').length + (MANDATORY_FIELDS.length - missingFields.length);
-    const compliance = totalItems ? Math.round((100 * compliantItems) / totalItems) : 100;
+    const compliantItems =
+      required.filter((r) => r.status === 'COMPLIANT').length +
+      (MANDATORY_FIELDS.length - missingFields.length);
+    const compliance = totalItems
+      ? Math.round((100 * compliantItems) / totalItems)
+      : 100;
 
-    await this.db().employee.update({ where: { id: employeeId }, data: { conformidadeDocumental: compliance } });
+    await this.db().employee.update({
+      where: { id: employeeId },
+      data: { conformidadeDocumental: compliance },
+    });
     return { compliance, missingFields };
   }
 
@@ -224,17 +398,28 @@ export class DocumentsService {
       employees.map(async (employee) => {
         const { applicable } = await this.syncForEmployee(employee.id);
         const rows = await db.employeeDocumentRequirement.findMany({
-          where: { employeeId: employee.id, requirementId: { in: applicable.map((r) => r.id) } },
+          where: {
+            employeeId: employee.id,
+            requirementId: { in: applicable.map((r) => r.id) },
+          },
           include: { requirement: true },
         });
-        const required = rows.filter((r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA');
+        const required = rows.filter(
+          (r) => r.requirement.obrigatorio && r.status !== 'NAO_SE_APLICA',
+        );
         const missingFields = missingMandatoryFields(employee);
-        const { compliance } = await this.recalcCompliance(employee.id, rows, employee);
+        const { compliance } = await this.recalcCompliance(
+          employee.id,
+          rows,
+          employee,
+        );
         return {
           employeeId: employee.id,
           compliance,
           requiredCount: required.length + MANDATORY_FIELDS.length,
-          compliantCount: required.filter((r) => r.status === 'COMPLIANT').length + (MANDATORY_FIELDS.length - missingFields.length),
+          compliantCount:
+            required.filter((r) => r.status === 'COMPLIANT').length +
+            (MANDATORY_FIELDS.length - missingFields.length),
         };
       }),
     );
@@ -248,16 +433,22 @@ export class DocumentsService {
       totalCompliant += r.compliantCount;
     }
 
-    const overall = totalItems ? Math.round((100 * totalCompliant) / totalItems) : 100;
+    const overall = totalItems
+      ? Math.round((100 * totalCompliant) / totalItems)
+      : 100;
     return { overall, byEmployee };
   }
 
   /** Tenant-wide aggregation across every active employee — for Ferramentas > Documentos. */
   async listAllEmployees() {
     const db = this.db();
-    const employees = await db.employee.findMany({ where: { status: 'ATIVO' } });
+    const employees = await db.employee.findMany({
+      where: { status: 'ATIVO' },
+    });
 
-    await Promise.all(employees.map((employee) => this.syncForEmployee(employee.id)));
+    await Promise.all(
+      employees.map((employee) => this.syncForEmployee(employee.id)),
+    );
 
     const rows = await db.employeeDocumentRequirement.findMany({
       include: { requirement: true, employee: { select: { nome: true } } },
@@ -266,17 +457,28 @@ export class DocumentsService {
 
     const today = new Date();
     const withEffectiveStatus = rows.map((r) =>
-      r.status === 'COMPLIANT' && r.expiraEm && r.expiraEm < today ? { ...r, status: 'EXPIRED' as const } : r,
+      r.status === 'COMPLIANT' && r.expiraEm && r.expiraEm < today
+        ? { ...r, status: 'EXPIRED' as const }
+        : r,
     );
 
-    const counts = { MISSING: 0, PENDING: 0, COMPLIANT: 0, EXPIRED: 0, REJECTED: 0, NAO_SE_APLICA: 0 };
+    const counts = {
+      MISSING: 0,
+      PENDING: 0,
+      COMPLIANT: 0,
+      EXPIRED: 0,
+      REJECTED: 0,
+      NAO_SE_APLICA: 0,
+    };
     for (const r of withEffectiveStatus) counts[r.status] += 1;
 
     return { counts, documentos: withEffectiveStatus };
   }
 
   private async mustFindRequirement(id: string) {
-    const requirement = await this.db().documentRequirement.findUnique({ where: { id } });
+    const requirement = await this.db().documentRequirement.findUnique({
+      where: { id },
+    });
     if (!requirement) throw new NotFoundException('Requisito não encontrado.');
     return requirement;
   }

@@ -11,7 +11,9 @@ function addMonths(date: Date, months: number): Date {
 }
 
 function startOfUtcDay(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
 }
 
 function formatDiasRestantes(alvo: Date, hoje: Date): string {
@@ -44,20 +46,29 @@ export class DashboardService {
   async kpis() {
     const db = this.db();
 
-    const [colaboradoresAtivos, pontoPendente, feriasPendente, admissoesAbertas, desligamentosAbertos] = await Promise.all([
+    const [
+      colaboradoresAtivos,
+      pontoPendente,
+      feriasPendente,
+      admissoesAbertas,
+      desligamentosAbertos,
+    ] = await Promise.all([
       db.employee.count({ where: { status: 'ATIVO' } }),
       db.timeJustification.count({ where: { status: 'PENDENTE' } }),
       db.vacationRequest.count({ where: { status: 'PENDENTE' } }),
       db.admission.count({ where: { status: { not: 'EFETIVADO' } } }),
       db.termination.count({ where: { status: 'EM_ANDAMENTO' } }),
     ]);
-    const pendenciasAbertas = pontoPendente + feriasPendente + admissoesAbertas + desligamentosAbertos;
+    const pendenciasAbertas =
+      pontoPendente + feriasPendente + admissoesAbertas + desligamentosAbertos;
 
     const { conformidadeDocumental } = await this.refreshTasks();
     const complianceOverview = await this.compliance.get();
     // Um único índice para "a empresa inteira": documentação obrigatória dos
     // colaboradores + programa de ética/políticas, não dois números soltos.
-    const conformidadeGeral = Math.round((conformidadeDocumental + complianceOverview.maturidade) / 2);
+    const conformidadeGeral = Math.round(
+      (conformidadeDocumental + complianceOverview.maturidade) / 2,
+    );
     const { riscoGeral, alertasCriticosAtivos } = await this.calcRisco();
 
     await Promise.all([
@@ -66,22 +77,33 @@ export class DashboardService {
       this.captureSnapshot('CONFORMIDADE_GERAL', conformidadeGeral),
     ]);
 
-    const [colaboradoresAnterior, pendenciasAnterior, conformidadeAnterior] = await Promise.all([
-      this.valorMesAnterior('COLABORADORES_ATIVOS'),
-      this.valorMesAnterior('PENDENCIAS_ABERTAS'),
-      this.valorMesAnterior('CONFORMIDADE_GERAL'),
-    ]);
+    const [colaboradoresAnterior, pendenciasAnterior, conformidadeAnterior] =
+      await Promise.all([
+        this.valorMesAnterior('COLABORADORES_ATIVOS'),
+        this.valorMesAnterior('PENDENCIAS_ABERTAS'),
+        this.valorMesAnterior('CONFORMIDADE_GERAL'),
+      ]);
 
     return {
       colaboradoresAtivos,
       colaboradoresAtivosDeltaPct:
         colaboradoresAnterior != null && colaboradoresAnterior > 0
-          ? Math.round(((colaboradoresAtivos - colaboradoresAnterior) / colaboradoresAnterior) * 1000) / 10
+          ? Math.round(
+              ((colaboradoresAtivos - colaboradoresAnterior) /
+                colaboradoresAnterior) *
+                1000,
+            ) / 10
           : null,
       pendenciasAbertas,
-      pendenciasAbertasDelta: pendenciasAnterior != null ? pendenciasAbertas - pendenciasAnterior : null,
+      pendenciasAbertasDelta:
+        pendenciasAnterior != null
+          ? pendenciasAbertas - pendenciasAnterior
+          : null,
       conformidadeGeral,
-      conformidadeGeralDelta: conformidadeAnterior != null ? conformidadeGeral - conformidadeAnterior : null,
+      conformidadeGeralDelta:
+        conformidadeAnterior != null
+          ? conformidadeGeral - conformidadeAnterior
+          : null,
       riscoGeral,
       alertasCriticosAtivos,
     };
@@ -92,13 +114,19 @@ export class DashboardService {
     return alerts;
   }
 
-  private async refreshTasks(): Promise<{ alerts: Alert[]; conformidadeDocumental: number }> {
+  private async refreshTasks(): Promise<{
+    alerts: Alert[];
+    conformidadeDocumental: number;
+  }> {
     const { alerts, conformidadeDocumental } = await this.buildAlerts();
     await this.syncTasksFromAlerts(alerts);
     return { alerts, conformidadeDocumental };
   }
 
-  private async buildAlerts(): Promise<{ alerts: Alert[]; conformidadeDocumental: number }> {
+  private async buildAlerts(): Promise<{
+    alerts: Alert[];
+    conformidadeDocumental: number;
+  }> {
     const db = this.db();
     const hoje = new Date();
     const em30dias = new Date(hoje.getTime() + 30 * 86_400_000);
@@ -116,16 +144,69 @@ export class DashboardService {
       feriasSolicitadas,
       treinamentos,
       empregadosAtivos,
+      colaboradoresCnhVencendo,
     ] = await Promise.all([
-      db.admission.findMany({ where: { esocialSent: false, status: { not: 'EFETIVADO' } }, select: { id: true, nome: true } }),
-      db.laborDeadline.count({ where: { cumprido: false, vencimento: { lte: em30dias } } }),
-      db.employee.findMany({ where: { status: 'ATIVO', feriasVencimento: { lte: em60dias } }, select: { id: true, nome: true, feriasVencimento: true } }),
-      db.collectiveAgreement.count({ where: { reajusteAplicadoEm: null, vigenciaFim: { gte: hoje } } }),
-      db.equipmentItem.findMany({ select: { id: true, item: true, entregaEm: true, validadeMeses: true, employeeId: true, employee: { select: { nome: true } } } }),
-      db.timeJustification.findMany({ where: { status: 'PENDENTE' }, select: { id: true, data: true, ocorrencia: true, employeeId: true, employee: { select: { nome: true } } } }),
-      db.vacationRequest.findMany({ where: { status: 'PENDENTE' }, select: { id: true, inicio: true, employeeId: true, employee: { select: { nome: true } } } }),
-      db.nrTrainingRecord.findMany({ select: { id: true, curso: true, dataRealizacao: true, validadeMeses: true, employeeId: true, employee: { select: { nome: true } } } }),
-      db.employee.findMany({ where: { status: 'ATIVO' }, select: { id: true, nome: true } }),
+      db.admission.findMany({
+        where: { esocialSent: false, status: { not: 'EFETIVADO' } },
+        select: { id: true, nome: true },
+      }),
+      db.laborDeadline.count({
+        where: { cumprido: false, vencimento: { lte: em30dias } },
+      }),
+      db.employee.findMany({
+        where: { status: 'ATIVO', feriasVencimento: { lte: em60dias } },
+        select: { id: true, nome: true, feriasVencimento: true },
+      }),
+      db.collectiveAgreement.count({
+        where: { reajusteAplicadoEm: null, vigenciaFim: { gte: hoje } },
+      }),
+      db.equipmentItem.findMany({
+        select: {
+          id: true,
+          item: true,
+          entregaEm: true,
+          validadeMeses: true,
+          employeeId: true,
+          employee: { select: { nome: true } },
+        },
+      }),
+      db.timeJustification.findMany({
+        where: { status: 'PENDENTE' },
+        select: {
+          id: true,
+          data: true,
+          ocorrencia: true,
+          employeeId: true,
+          employee: { select: { nome: true } },
+        },
+      }),
+      db.vacationRequest.findMany({
+        where: { status: 'PENDENTE' },
+        select: {
+          id: true,
+          inicio: true,
+          employeeId: true,
+          employee: { select: { nome: true } },
+        },
+      }),
+      db.nrTrainingRecord.findMany({
+        select: {
+          id: true,
+          curso: true,
+          dataRealizacao: true,
+          validadeMeses: true,
+          employeeId: true,
+          employee: { select: { nome: true } },
+        },
+      }),
+      db.employee.findMany({
+        where: { status: 'ATIVO' },
+        select: { id: true, nome: true },
+      }),
+      db.employee.findMany({
+        where: { status: 'ATIVO', cnhValidade: { not: null, lte: em30dias } },
+        select: { id: true, nome: true, cnhValidade: true },
+      }),
     ]);
 
     // Alertas por pessoa/registro — nome de quem precisa da ação e link direto
@@ -169,7 +250,9 @@ export class DashboardService {
 
     const epiVencidoOuVencendo = equipamentos.filter((e) => {
       const vencimento = addMonths(e.entregaEm, e.validadeMeses);
-      const diasRestantes = Math.round((vencimento.getTime() - hoje.getTime()) / 86_400_000);
+      const diasRestantes = Math.round(
+        (vencimento.getTime() - hoje.getTime()) / 86_400_000,
+      );
       return diasRestantes <= 30;
     });
     for (const e of epiVencidoOuVencendo) {
@@ -178,7 +261,9 @@ export class DashboardService {
         alertKey: `dp-epi-vencendo-${e.id}`,
         prioridade: 'BAIXA',
         mensagem: `${e.employee.nome} — ${e.item} vencido ou vencendo`,
-        href: e.employeeId ? `/gestao-de-pessoas/colaboradores/${e.employeeId}` : '/dp/uniforme',
+        href: e.employeeId
+          ? `/gestao-de-pessoas/colaboradores/${e.employeeId}`
+          : '/dp/uniforme',
       });
     }
     for (const p of pontosPendentes) {
@@ -203,7 +288,9 @@ export class DashboardService {
 
     for (const t of treinamentos) {
       const vencimento = addMonths(t.dataRealizacao, t.validadeMeses);
-      const diasRestantes = Math.round((vencimento.getTime() - hoje.getTime()) / 86_400_000);
+      const diasRestantes = Math.round(
+        (vencimento.getTime() - hoje.getTime()) / 86_400_000,
+      );
       if (diasRestantes > 30) continue;
       alerts.push({
         hub: 'SST',
@@ -214,13 +301,31 @@ export class DashboardService {
       });
     }
 
+    for (const c of colaboradoresCnhVencendo) {
+      const vencimento = c.cnhValidade!;
+      const diasRestantes = Math.round(
+        (vencimento.getTime() - hoje.getTime()) / 86_400_000,
+      );
+      alerts.push({
+        hub: 'DP',
+        alertKey: `dp-cnh-vencendo-${c.id}`,
+        prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
+        mensagem: `${c.nome} — CNH ${diasRestantes < 0 ? 'vencida' : 'vencendo'} (${formatDiasRestantes(vencimento, hoje)})`,
+        href: `/gestao-de-pessoas/colaboradores/${c.id}`,
+      });
+    }
+
     // Documentação obrigatória incompleta (CLT + requisitos configurados),
     // um alerta por colaborador que ainda não está 100% conforme. Computado
     // uma única vez aqui e reaproveitado pelo KPI de conformidade geral
     // (kpis() lê o retorno desta função em vez de chamar complianceOverview
     // de novo) — essa duplicação era o principal gargalo do painel.
-    const { overall: conformidadeDocumental, byEmployee: conformidadePorEmployee } =
-      await this.documents.complianceOverview(empregadosAtivos.map((e) => e.id));
+    const {
+      overall: conformidadeDocumental,
+      byEmployee: conformidadePorEmployee,
+    } = await this.documents.complianceOverview(
+      empregadosAtivos.map((e) => e.id),
+    );
     for (const empregado of empregadosAtivos) {
       const conformidade = conformidadePorEmployee[empregado.id] ?? 100;
       if (conformidade >= 100) continue;
@@ -249,7 +354,9 @@ export class DashboardService {
     const currentKeys = alerts.map((a) => a.alertKey);
 
     for (const alert of alerts) {
-      const existing = await db.task.findUnique({ where: { tenantId_alertKey: { tenantId, alertKey: alert.alertKey } } });
+      const existing = await db.task.findUnique({
+        where: { tenantId_alertKey: { tenantId, alertKey: alert.alertKey } },
+      });
       const detalhes = { href: alert.href };
       if (!existing) {
         await db.task.create({
@@ -263,16 +370,30 @@ export class DashboardService {
             detalhes,
           },
         });
-      } else if (existing.titulo !== alert.mensagem || existing.prioridade !== alert.prioridade || existing.status === 'CONCLUIDA') {
+      } else if (
+        existing.titulo !== alert.mensagem ||
+        existing.prioridade !== alert.prioridade ||
+        existing.status === 'CONCLUIDA'
+      ) {
         await db.task.update({
           where: { id: existing.id },
-          data: { titulo: alert.mensagem, prioridade: alert.prioridade, status: 'ABERTA', detalhes },
+          data: {
+            titulo: alert.mensagem,
+            prioridade: alert.prioridade,
+            status: 'ABERTA',
+            detalhes,
+          },
         });
       }
     }
 
     await db.task.updateMany({
-      where: { tenantId, origem: 'SISTEMA', status: 'ABERTA', alertKey: { notIn: currentKeys.length ? currentKeys : ['__none__'] } },
+      where: {
+        tenantId,
+        origem: 'SISTEMA',
+        status: 'ABERTA',
+        alertKey: { notIn: currentKeys.length ? currentKeys : ['__none__'] },
+      },
       data: { status: 'CONCLUIDA' },
     });
   }
@@ -285,7 +406,12 @@ export class DashboardService {
     });
   }
 
-  async createTask(input: { titulo: string; modulo: string; prioridade?: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA'; prazo?: string }) {
+  async createTask(input: {
+    titulo: string;
+    modulo: string;
+    prioridade?: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
+    prazo?: string;
+  }) {
     const { tenantId } = getRequestContext();
     return this.db().task.create({
       data: {
@@ -312,15 +438,34 @@ export class DashboardService {
     const db = this.db();
     const hoje = new Date();
 
-    const [alertasCriticosAtivos, riscosAltoMapa, acidentesAbertos, casosEticaGravesAbertos, prazosVencidos] = await Promise.all([
-      db.task.count({ where: { status: 'ABERTA', prioridade: { in: ['ALTA', 'CRITICA'] } } }),
+    const [
+      alertasCriticosAtivos,
+      riscosAltoMapa,
+      acidentesAbertos,
+      casosEticaGravesAbertos,
+      prazosVencidos,
+    ] = await Promise.all([
+      db.task.count({
+        where: { status: 'ABERTA', prioridade: { in: ['ALTA', 'CRITICA'] } },
+      }),
       db.riskMapEntry.count({ where: { nivel: 'ALTO' } }),
       db.accident.count({ where: { status: 'EM_ANALISE' } }),
-      db.ethicsCase.count({ where: { status: { in: ['ABERTO', 'EM_INVESTIGACAO'] }, categoria: { in: ['ASSEDIO', 'FRAUDE', 'DISCRIMINACAO'] } } }),
-      db.laborDeadline.count({ where: { cumprido: false, vencimento: { lt: hoje } } }),
+      db.ethicsCase.count({
+        where: {
+          status: { in: ['ABERTO', 'EM_INVESTIGACAO'] },
+          categoria: { in: ['ASSEDIO', 'FRAUDE', 'DISCRIMINACAO'] },
+        },
+      }),
+      db.laborDeadline.count({
+        where: { cumprido: false, vencimento: { lt: hoje } },
+      }),
     ]);
 
-    const score = riscosAltoMapa + acidentesAbertos * 2 + casosEticaGravesAbertos * 2 + prazosVencidos * 2;
+    const score =
+      riscosAltoMapa +
+      acidentesAbertos * 2 +
+      casosEticaGravesAbertos * 2 +
+      prazosVencidos * 2;
     const riscoGeral = score === 0 ? 'Baixo' : score <= 3 ? 'Médio' : 'Alto';
     return { riscoGeral, alertasCriticosAtivos };
   }

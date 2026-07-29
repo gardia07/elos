@@ -425,65 +425,99 @@ enum EmployeeStatus {
   @@map("employee_status")
 }
 
-model Employee {
-  id                        String         @id @default(uuid()) @db.Uuid
-  tenantId                  String         @db.Uuid
-  matricula                 String
-  nome                      String
-  cargo                     String
-  departamento              String
-  filial                    String?
-  gestorDireto              String?
-  status                    EmployeeStatus @default(ATIVO)
-  dataAdmissao              DateTime       @db.Date
-  email                     String?
-  telefone                  String?
-  endereco                  String?
-  cpf                       String?
-  rg                        String?
-  rgOrgaoExpedidor          String?
-  rgDataExpedicao           DateTime?      @db.Date
-  dataNascimento            DateTime?      @db.Date
-  nacionalidade             String?
-  estadoCivil               String?
-  nomeMae                   String?
-  nomePai                   String?
-  pis                       String?
-  ctps                      String?
-  tituloEleitor             String?
-  tituloEleitorZona         String?
-  tituloEleitorSecao        String?
-  genero                    String?
-  escolaridade              String?
-  cnh                       String?
-  contatoEmergenciaNome     String?
-  contatoEmergenciaTelefone String?
-  conjugeNome               String?
-  conjugeCpf                String?
-  pcd                       Boolean        @default(false)
-  racaCor                   String?
-  salario                   Decimal        @db.Decimal(12, 2)
-  tipoContrato              JobContrato    @default(CLT)
-  tipoSalario               TipoSalario    @default(MENSALISTA)
-  feriasSaldo               Int            @default(30)
-  feriasVencimento          DateTime       @db.Date
-  conformidadeDocumental    Int            @default(0)
-  createdAt                 DateTime       @default(now())
+enum CnhCategoria {
+  ACC
+  A
+  A1
+  B
+  B1
+  C
+  C1
+  D
+  D1
+  BE
+  CE
+  C1E
+  DE
+  D1E
 
-  tenant               Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  users                User[]
-  dependentes          Dependente[]
-  historico            HistoricoEvento[]
-  documentos           EmployeeDocumento[]
-  documentRequirements EmployeeDocumentRequirement[]
-  feriasHistorico      FeriasHistorico[]
-  admissions           Admission[]
-  evaluationRecords    EvaluationRecord[]
-  goals                Goal[]
-  pdiActions           PdiAction[]
-  vacationRequests     VacationRequest[]
-  leaveRecords         LeaveRecord[]
-  terminations         Termination[]
+  @@map("cnh_categoria")
+}
+
+enum TipoContaBancaria {
+  CORRENTE
+  POUPANCA
+
+  @@map("tipo_conta_bancaria")
+}
+
+model Employee {
+  id                     String             @id @default(uuid()) @db.Uuid
+  tenantId               String             @db.Uuid
+  matricula              String
+  nome                   String
+  cargo                  String
+  departamento           String
+  filial                 String?
+  gestorDireto           String?
+  status                 EmployeeStatus     @default(ATIVO)
+  dataAdmissao           DateTime           @db.Date
+  email                  String?
+  telefone               String?
+  endereco               String?
+  cpf                    String?
+  rg                     String?
+  rgOrgaoExpedidor       String?
+  rgDataExpedicao        DateTime?          @db.Date
+  dataNascimento         DateTime?          @db.Date
+  nacionalidade          String?
+  estadoCivil            String?
+  nomeMae                String?
+  nomePai                String?
+  pis                    String?
+  ctps                   String?
+  tituloEleitor          String?
+  tituloEleitorZona      String?
+  tituloEleitorSecao     String?
+  genero                 String?
+  escolaridade           String?
+  cnh                    String?
+  cnhCategoria           CnhCategoria?
+  cnhValidade            DateTime?          @db.Date
+  conjugeNome            String?
+  conjugeCpf             String?
+  pcd                    Boolean            @default(false)
+  semDependentes         Boolean            @default(false)
+  racaCor                String?
+  salario                Decimal            @db.Decimal(12, 2)
+  banco                  String?
+  agencia                String?
+  conta                  String?
+  tipoConta              TipoContaBancaria?
+  chavePix               String?
+  tipoContrato           JobContrato        @default(CLT)
+  tipoSalario            TipoSalario        @default(MENSALISTA)
+  feriasSaldo            Int                @default(30)
+  feriasVencimento       DateTime           @db.Date
+  conformidadeDocumental Int                @default(0)
+  createdAt              DateTime           @default(now())
+
+  tenant                Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users                 User[]
+  dependentes           Dependente[]
+  contatosEmergencia    ContatoEmergencia[]
+  historico             HistoricoEvento[]
+  cargoSalarioHistorico CargoSalarioHistorico[]
+  documentos            EmployeeDocumento[]
+  documentRequirements  EmployeeDocumentRequirement[]
+  feriasHistorico       FeriasHistorico[]
+  admissions            Admission[]
+  evaluationRecords     EvaluationRecord[]
+  goals                 Goal[]
+  pdiActions            PdiAction[]
+  vacationRequests      VacationRequest[]
+  leaveRecords          LeaveRecord[]
+  terminations          Termination[]
 
   adesoesValeDiario    AdesaoValeDiario[]
   adesoesAcademia      AdesaoAcademia[]
@@ -518,6 +552,18 @@ model Dependente {
   @@map("dependentes")
 }
 
+model ContatoEmergencia {
+  id         String  @id @default(uuid()) @db.Uuid
+  employeeId String  @db.Uuid
+  nome       String
+  parentesco String
+  telefone   String?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("contatos_emergencia")
+}
+
 model HistoricoEvento {
   id         String   @id @default(uuid()) @db.Uuid
   employeeId String   @db.Uuid
@@ -533,17 +579,36 @@ model HistoricoEvento {
 }
 
 model EmployeeDocumento {
-  id         String   @id @default(uuid()) @db.Uuid
-  employeeId String   @db.Uuid
-  nome       String
-  tipo       String
-  tamanho    String
-  uploadEm   DateTime @default(now())
+  id           String   @id @default(uuid()) @db.Uuid
+  employeeId   String   @db.Uuid
+  nome         String
+  tipo         String
+  tamanho      String
+  blobPathname String?
+  contentType  String?
+  uploadEm     DateTime @default(now())
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
   @@map("employee_documentos")
+}
+
+model CargoSalarioHistorico {
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @db.Uuid
+  vigenciaDesde DateTime @db.Date
+  cargo         String
+  salario       Decimal  @db.Decimal(12, 2)
+  motivo        String
+  observacao    String?
+  registradoEm  DateTime @default(now())
+  registradoPor String
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("cargo_salario_historico")
 }
 
 model FeriasHistorico {
@@ -1466,6 +1531,8 @@ model EmployeeDocumentRequirement {
   expiraEm      DateTime?
   observacao    String?
   arquivoNome   String?
+  blobPathname  String?
+  contentType   String?
   anexadoEm     DateTime?
   updatedAt     DateTime          @updatedAt
 
