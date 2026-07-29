@@ -394,12 +394,14 @@ export default function EmployeeProfilePage() {
     },
   });
 
+  const [uploadingRequirementId, setUploadingRequirementId] = useState<string | null>(null);
   const uploadRequirementFile = useMutation({
     mutationFn: async (vars: { requirementId: string; file: File }) => {
       const form = new FormData();
       form.append('arquivo', vars.file);
       return api.post(`/rh/documents/employees/${id}/requirements/${vars.requirementId}/upload`, form);
     },
+    onSettled: () => setUploadingRequirementId(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rh', 'documents', id] });
       invalidate();
@@ -988,15 +990,18 @@ export default function EmployeeProfilePage() {
                       </a>
                     )}
                     <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
-                      {uploadRequirementFile.isPending ? 'Enviando…' : 'Anexar'}
+                      {uploadingRequirementId === d.requirementId ? 'Enviando…' : 'Anexar'}
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                         className="hidden"
-                        disabled={uploadRequirementFile.isPending}
+                        disabled={uploadingRequirementId === d.requirementId}
                         onChange={(ev) => {
                           const file = ev.target.files?.[0];
-                          if (file) uploadRequirementFile.mutate({ requirementId: d.requirementId, file });
+                          if (file) {
+                            setUploadingRequirementId(d.requirementId);
+                            uploadRequirementFile.mutate({ requirementId: d.requirementId, file });
+                          }
                           ev.target.value = '';
                         }}
                       />
