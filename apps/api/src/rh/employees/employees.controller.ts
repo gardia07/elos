@@ -23,6 +23,8 @@ import {
   CreateEmployeeDto,
   ListEmployeesQueryDto,
   PromoteEmployeeDto,
+  RemoveCargoSalarioHistoricoDto,
+  UpdateCargoSalarioHistoricoDto,
   UpdateEmployeeDto,
 } from './dto/employees.dto';
 
@@ -89,6 +91,24 @@ export class EmployeesController {
   @Post(':id/promote')
   promote(@Param('id') id: string, @Body() dto: PromoteEmployeeDto) {
     return this.service.promote(id, dto);
+  }
+
+  @Patch(':id/cargo-salario-historico/:historicoId')
+  updateCargoSalarioHistorico(
+    @Param('id') id: string,
+    @Param('historicoId') historicoId: string,
+    @Body() dto: UpdateCargoSalarioHistoricoDto,
+  ) {
+    return this.service.updateCargoSalarioHistorico(id, historicoId, dto);
+  }
+
+  @Delete(':id/cargo-salario-historico/:historicoId')
+  removeCargoSalarioHistorico(
+    @Param('id') id: string,
+    @Param('historicoId') historicoId: string,
+    @Body() dto: RemoveCargoSalarioHistoricoDto,
+  ) {
+    return this.service.removeCargoSalarioHistorico(id, historicoId, dto);
   }
 
   @Post(':id/dependentes')

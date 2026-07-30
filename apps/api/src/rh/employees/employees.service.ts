@@ -15,6 +15,8 @@ import {
   CreateEmployeeDto,
   ListEmployeesQueryDto,
   PromoteEmployeeDto,
+  RemoveCargoSalarioHistoricoDto,
+  UpdateCargoSalarioHistoricoDto,
   UpdateEmployeeDto,
 } from './dto/employees.dto';
 
@@ -423,6 +425,55 @@ export class EmployeesService {
     return this.db().cargoSalarioHistorico.create({
       data: { employeeId, registradoPor: userName, ...entry },
     });
+  }
+
+  async updateCargoSalarioHistorico(
+    id: string,
+    historicoId: string,
+    dto: UpdateCargoSalarioHistoricoDto,
+  ) {
+    await this.mustFind(id);
+    const entry = await this.db().cargoSalarioHistorico.findUnique({
+      where: { id: historicoId },
+    });
+    if (!entry || entry.employeeId !== id) {
+      throw new NotFoundException('Registro de histórico não encontrado.');
+    }
+    const updated = await this.db().cargoSalarioHistorico.update({
+      where: { id: historicoId },
+      data: {
+        ...(dto.vigenciaDesde ? { vigenciaDesde: new Date(dto.vigenciaDesde) } : {}),
+        ...(dto.cargo ? { cargo: dto.cargo } : {}),
+        ...(dto.salario != null ? { salario: dto.salario } : {}),
+      },
+    });
+    await this.addHistorico(
+      id,
+      `Registro de cargo/salário corrigido (vigência desde ${updated.vigenciaDesde.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}, ${updated.cargo}, ${formatBRL(Number(updated.salario))}) — ${dto.motivoCorrecao}`,
+      'Correção cadastral',
+    );
+    return updated;
+  }
+
+  async removeCargoSalarioHistorico(
+    id: string,
+    historicoId: string,
+    dto: RemoveCargoSalarioHistoricoDto,
+  ) {
+    await this.mustFind(id);
+    const entry = await this.db().cargoSalarioHistorico.findUnique({
+      where: { id: historicoId },
+    });
+    if (!entry || entry.employeeId !== id) {
+      throw new NotFoundException('Registro de histórico não encontrado.');
+    }
+    await this.db().cargoSalarioHistorico.delete({ where: { id: historicoId } });
+    await this.addHistorico(
+      id,
+      `Registro de cargo/salário removido (era: vigência desde ${entry.vigenciaDesde.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}, ${entry.cargo}, ${formatBRL(Number(entry.salario))}) — ${dto.motivoCorrecao}`,
+      'Correção cadastral',
+    );
+    return { ok: true };
   }
 
   private async mustFind(id: string) {

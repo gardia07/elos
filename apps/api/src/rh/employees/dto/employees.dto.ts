@@ -140,6 +140,17 @@ export class PromoteEmployeeDto {
   vigenciaDesde?: string;
 }
 
+export class UpdateCargoSalarioHistoricoDto {
+  @IsOptional() @EmptyStringToUndefined() @IsDateString() vigenciaDesde?: string;
+  @IsOptional() @IsString() cargo?: string;
+  @IsOptional() @IsNumber() @Min(0) salario?: number;
+  @IsString() motivoCorrecao!: string;
+}
+
+export class RemoveCargoSalarioHistoricoDto {
+  @IsString() motivoCorrecao!: string;
+}
+
 export class AddDependenteDto {
   @IsString() nome!: string;
   @IsString() parentesco!: string;
