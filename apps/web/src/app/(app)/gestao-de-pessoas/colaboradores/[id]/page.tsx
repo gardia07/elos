@@ -205,10 +205,11 @@ function toEditFields(e: EmployeeDetail): EditFields {
   };
 }
 
-const TABS = ['geral', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico', 'desligamento', 'registro'] as const;
+const TABS = ['geral', 'cargoSalario', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico', 'desligamento', 'registro'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
+  cargoSalario: 'Cargo e Salário',
   ferias: 'Férias',
   beneficios: 'Benefícios',
   avaliacoes: 'Avaliações',
@@ -495,17 +496,6 @@ export default function EmployeeProfilePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {e.status === 'ATIVO' && (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setEditing(false);
-                setShowPromote((s) => !s);
-              }}
-            >
-              Alterar salário
-            </Button>
-          )}
           <Button
             variant="secondary"
             onClick={() => {
@@ -526,194 +516,6 @@ export default function EmployeeProfilePage() {
           )}
         </div>
       </div>
-
-      {showPromote && (
-        <Card>
-          <h3 className="mb-3 text-sm font-semibold">Alterar salário</h3>
-          <p className="mb-3 text-xs text-text-tertiary">
-            Use para reajustes anuais, promoções ou dissídios coletivos — fica registrado no histórico do colaborador. Para corrigir um dado
-            cadastrado errado, use &quot;Editar dados&quot;.
-          </p>
-          <form
-            className="flex flex-wrap items-end gap-3"
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              promote.mutate();
-            }}
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Motivo</span>
-              <select
-                value={motivoPromocao}
-                onChange={(ev) => setMotivoPromocao(ev.target.value as typeof motivoPromocao)}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-              >
-                <option value="Promoção">Promoção</option>
-                <option value="Reajuste anual">Reajuste anual</option>
-                <option value="Dissídio coletivo">Dissídio coletivo</option>
-                <option value="Outro">Outro</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Novo cargo (se houver)</span>
-              <input value={novoCargo} onChange={(ev) => setNovoCargo(ev.target.value)} placeholder={e.cargo} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Novo salário</span>
-              <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Vigente desde</span>
-              <input
-                type="date"
-                value={vigenciaPromocao}
-                onChange={(ev) => setVigenciaPromocao(ev.target.value)}
-                required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-              />
-            </label>
-            <Button type="submit" disabled={promote.isPending}>
-              Confirmar
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowPromote(false)}>
-              Cancelar
-            </Button>
-          </form>
-        </Card>
-      )}
-
-      {e.cargoSalarioHistorico.length > 0 && (
-        <Card>
-          <h3 className="mb-3 text-sm font-semibold">Histórico de cargo e salário</h3>
-          <ul className="flex flex-col gap-2">
-            {e.cargoSalarioHistorico.map((h) => (
-              <li key={h.id} className="rounded-[10px] border border-border p-2.5">
-                {editingHistoricoId === h.id ? (
-                  <form
-                    className="flex flex-wrap items-end gap-3"
-                    onSubmit={(ev) => {
-                      ev.preventDefault();
-                      updateHistorico.mutate(h.id);
-                    }}
-                  >
-                    <label className="flex flex-col gap-1.5 text-sm">
-                      <span className="text-text-secondary">Vigente desde</span>
-                      <input
-                        type="date"
-                        value={historicoVigencia}
-                        onChange={(ev) => setHistoricoVigencia(ev.target.value)}
-                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-sm">
-                      <span className="text-text-secondary">Cargo</span>
-                      <input
-                        value={historicoCargo}
-                        onChange={(ev) => setHistoricoCargo(ev.target.value)}
-                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-sm">
-                      <span className="text-text-secondary">Salário</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={historicoSalario}
-                        onChange={(ev) => setHistoricoSalario(ev.target.value)}
-                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                      />
-                    </label>
-                    <label className="flex min-w-[220px] flex-1 flex-col gap-1.5 text-sm">
-                      <span className="text-text-secondary">Justificativa da correção</span>
-                      <input
-                        value={historicoMotivoCorrecao}
-                        onChange={(ev) => setHistoricoMotivoCorrecao(ev.target.value)}
-                        placeholder="Por que este registro está sendo corrigido?"
-                        required
-                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                      />
-                    </label>
-                    <Button type="submit" disabled={updateHistorico.isPending}>
-                      Salvar correção
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={() => setEditingHistoricoId(null)}>
-                      Cancelar
-                    </Button>
-                  </form>
-                ) : deletingHistoricoId === h.id ? (
-                  <form
-                    className="flex flex-wrap items-end gap-3"
-                    onSubmit={(ev) => {
-                      ev.preventDefault();
-                      removeHistorico.mutate(h.id);
-                    }}
-                  >
-                    <p className="text-sm text-danger">
-                      Remover o registro de {formatDate(h.vigenciaDesde)} ({h.cargo} · {formatBRL(Number(h.salario))})?
-                    </p>
-                    <label className="flex min-w-[220px] flex-1 flex-col gap-1.5 text-sm">
-                      <span className="text-text-secondary">Justificativa da exclusão</span>
-                      <input
-                        value={historicoMotivoExclusao}
-                        onChange={(ev) => setHistoricoMotivoExclusao(ev.target.value)}
-                        placeholder="Por que este registro está sendo removido?"
-                        required
-                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                      />
-                    </label>
-                    <Button type="submit" variant="danger" disabled={removeHistorico.isPending}>
-                      Confirmar exclusão
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={() => setDeletingHistoricoId(null)}>
-                      Cancelar
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <div>
-                      <div>
-                        {formatDate(h.vigenciaDesde)} · {h.cargo} · {formatBRL(Number(h.salario))}
-                      </div>
-                      <div className="text-xs text-text-tertiary">
-                        {h.motivo}
-                        {h.observacao ? ` — ${h.observacao}` : ''}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        className="text-xs text-accent hover:underline"
-                        onClick={() => {
-                          setDeletingHistoricoId(null);
-                          setEditingHistoricoId(h.id);
-                          setHistoricoVigencia(h.vigenciaDesde.slice(0, 10));
-                          setHistoricoCargo(h.cargo);
-                          setHistoricoSalario(String(h.salario));
-                          setHistoricoMotivoCorrecao('');
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="text-xs text-danger hover:underline"
-                        onClick={() => {
-                          setEditingHistoricoId(null);
-                          setDeletingHistoricoId(h.id);
-                          setHistoricoMotivoExclusao('');
-                        }}
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
 
       <div className="flex gap-2 border-b border-divider">
         {TABS.filter((t) => t !== 'desligamento' || e.terminations.length > 0).map((t) => (
@@ -1062,6 +864,206 @@ export default function EmployeeProfilePage() {
               </Section>
             </form>
           )}
+        </div>
+      )}
+
+      {tab === 'cargoSalario' && (
+        <div className="flex flex-col gap-6">
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold">Cargo e salário atuais</h3>
+                <p className="text-sm text-text-secondary">
+                  {e.cargo} · {formatBRL(Number(e.salario))}
+                </p>
+              </div>
+              {e.status === 'ATIVO' && (
+                <Button variant="secondary" onClick={() => setShowPromote((s) => !s)}>
+                  Alterar salário
+                </Button>
+              )}
+            </div>
+
+            {showPromote && (
+              <form
+                className="flex flex-wrap items-end gap-3 border-t border-divider pt-4"
+                onSubmit={(ev) => {
+                  ev.preventDefault();
+                  promote.mutate();
+                }}
+              >
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Motivo</span>
+                  <select
+                    value={motivoPromocao}
+                    onChange={(ev) => setMotivoPromocao(ev.target.value as typeof motivoPromocao)}
+                    className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  >
+                    <option value="Promoção">Promoção</option>
+                    <option value="Reajuste anual">Reajuste anual</option>
+                    <option value="Dissídio coletivo">Dissídio coletivo</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Novo cargo (se houver)</span>
+                  <input value={novoCargo} onChange={(ev) => setNovoCargo(ev.target.value)} placeholder={e.cargo} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Novo salário</span>
+                  <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Vigente desde</span>
+                  <input
+                    type="date"
+                    value={vigenciaPromocao}
+                    onChange={(ev) => setVigenciaPromocao(ev.target.value)}
+                    required
+                    className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  />
+                </label>
+                <Button type="submit" disabled={promote.isPending}>
+                  Confirmar
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => setShowPromote(false)}>
+                  Cancelar
+                </Button>
+              </form>
+            )}
+          </Card>
+
+          <Card>
+            <h3 className="mb-3 text-sm font-semibold">Histórico de cargo e salário</h3>
+            {e.cargoSalarioHistorico.length === 0 && <p className="text-sm text-text-tertiary">Nenhum registro ainda.</p>}
+            <ul className="flex flex-col gap-2">
+              {e.cargoSalarioHistorico.map((h) => (
+                <li key={h.id} className="rounded-[10px] border border-border p-2.5">
+                  {editingHistoricoId === h.id ? (
+                    <form
+                      className="flex flex-wrap items-end gap-3"
+                      onSubmit={(ev) => {
+                        ev.preventDefault();
+                        updateHistorico.mutate(h.id);
+                      }}
+                    >
+                      <label className="flex flex-col gap-1.5 text-sm">
+                        <span className="text-text-secondary">Vigente desde</span>
+                        <input
+                          type="date"
+                          value={historicoVigencia}
+                          onChange={(ev) => setHistoricoVigencia(ev.target.value)}
+                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1.5 text-sm">
+                        <span className="text-text-secondary">Cargo</span>
+                        <input
+                          value={historicoCargo}
+                          onChange={(ev) => setHistoricoCargo(ev.target.value)}
+                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1.5 text-sm">
+                        <span className="text-text-secondary">Salário</span>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={historicoSalario}
+                          onChange={(ev) => setHistoricoSalario(ev.target.value)}
+                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                        />
+                      </label>
+                      <label className="flex min-w-[220px] flex-1 flex-col gap-1.5 text-sm">
+                        <span className="text-text-secondary">Justificativa da correção</span>
+                        <input
+                          value={historicoMotivoCorrecao}
+                          onChange={(ev) => setHistoricoMotivoCorrecao(ev.target.value)}
+                          placeholder="Por que este registro está sendo corrigido?"
+                          required
+                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                        />
+                      </label>
+                      <Button type="submit" disabled={updateHistorico.isPending}>
+                        Salvar correção
+                      </Button>
+                      <Button type="button" variant="secondary" onClick={() => setEditingHistoricoId(null)}>
+                        Cancelar
+                      </Button>
+                    </form>
+                  ) : deletingHistoricoId === h.id ? (
+                    <form
+                      className="flex flex-wrap items-end gap-3"
+                      onSubmit={(ev) => {
+                        ev.preventDefault();
+                        removeHistorico.mutate(h.id);
+                      }}
+                    >
+                      <p className="text-sm text-danger">
+                        Remover o registro de {formatDate(h.vigenciaDesde)} ({h.cargo} · {formatBRL(Number(h.salario))})?
+                      </p>
+                      <label className="flex min-w-[220px] flex-1 flex-col gap-1.5 text-sm">
+                        <span className="text-text-secondary">Justificativa da exclusão</span>
+                        <input
+                          value={historicoMotivoExclusao}
+                          onChange={(ev) => setHistoricoMotivoExclusao(ev.target.value)}
+                          placeholder="Por que este registro está sendo removido?"
+                          required
+                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                        />
+                      </label>
+                      <Button type="submit" variant="danger" disabled={removeHistorico.isPending}>
+                        Confirmar exclusão
+                      </Button>
+                      <Button type="button" variant="secondary" onClick={() => setDeletingHistoricoId(null)}>
+                        Cancelar
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <div>
+                        <div>
+                          {formatDate(h.vigenciaDesde)} · {h.cargo} · {formatBRL(Number(h.salario))}
+                        </div>
+                        <div className="text-xs text-text-tertiary">
+                          {h.motivo}
+                          {h.observacao ? ` — ${h.observacao}` : ''}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          className="text-xs text-accent hover:underline"
+                          onClick={() => {
+                            setDeletingHistoricoId(null);
+                            setEditingHistoricoId(h.id);
+                            setHistoricoVigencia(h.vigenciaDesde.slice(0, 10));
+                            setHistoricoCargo(h.cargo);
+                            setHistoricoSalario(String(h.salario));
+                            setHistoricoMotivoCorrecao('');
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="text-xs text-danger hover:underline"
+                          onClick={() => {
+                            setEditingHistoricoId(null);
+                            setDeletingHistoricoId(h.id);
+                            setHistoricoMotivoExclusao('');
+                          }}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
       )}
 
