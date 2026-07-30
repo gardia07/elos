@@ -427,20 +427,15 @@ enum EmployeeStatus {
 }
 
 enum CnhCategoria {
-  ACC
   A
-  A1
   B
-  B1
+  AB
   C
-  C1
+  AC
   D
-  D1
-  BE
-  CE
-  C1E
-  DE
-  D1E
+  AD
+  E
+  AE
 
   @@map("cnh_categoria")
 }
@@ -580,18 +575,21 @@ model HistoricoEvento {
 }
 
 model EmployeeDocumento {
-  id           String   @id @default(uuid()) @db.Uuid
-  employeeId   String   @db.Uuid
-  nome         String
-  tipo         String
-  tamanho      String
-  blobPathname String?
-  contentType  String?
-  uploadEm     DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @db.Uuid
+  terminationId String?  @db.Uuid
+  nome          String
+  tipo          String
+  tamanho       String
+  blobPathname  String?
+  contentType   String?
+  uploadEm      DateTime @default(now())
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  termination Termination? @relation(fields: [terminationId], references: [id], onDelete: SetNull)
 
   @@index([employeeId])
+  @@index([terminationId])
   @@map("employee_documentos")
 }
 
@@ -862,8 +860,9 @@ model Termination {
   calculoRescisao        Json?
   createdAt              DateTime          @default(now())
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee   Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  documentos EmployeeDocumento[]
 
   @@index([tenantId])
   @@map("terminations")

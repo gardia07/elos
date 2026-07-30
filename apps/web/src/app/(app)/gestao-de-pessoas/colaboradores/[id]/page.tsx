@@ -5,7 +5,16 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { complianceTone, maskCPF, maskPhoneBR } from '@/lib/format';
+import {
+  complianceTone,
+  maskCPF,
+  maskPhoneBR,
+  TERMINATION_STATUS_LABEL,
+  TERMINATION_STATUS_TONE,
+  TERMINATION_TIPO_LABEL,
+  TerminationStatusValue,
+  TerminationTipo,
+} from '@/lib/format';
 import { Badge, Button, Card, EmptyState, KpiCard } from '@/components/ui';
 import { type TenantInfo } from '@/components/empresa-form';
 
@@ -15,18 +24,13 @@ const ESCOLARIDADE_OPTIONS = [
 ];
 const ESTADO_CIVIL_OPTIONS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União estável'];
 const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
-const CNH_CATEGORIA_OPTIONS = ['ACC', 'A', 'A1', 'B', 'B1', 'C', 'C1', 'D', 'D1', 'BE', 'CE', 'C1E', 'DE', 'D1E'];
+const CNH_CATEGORIA_OPTIONS = ['A', 'B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
 const RACA_COR_OPTIONS = ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Não informado'];
 
 const ACCIDENT_TIPO_LABEL: Record<'TIPICO' | 'TRAJETO' | 'DOENCA_OCUPACIONAL', string> = {
   TIPICO: 'Acidente típico',
   TRAJETO: 'Acidente de trajeto',
   DOENCA_OCUPACIONAL: 'Doença ocupacional',
-};
-const TERMINATION_TIPO_LABEL: Record<'SEM_JUSTA_CAUSA' | 'PEDIDO_DEMISSAO' | 'ACORDO', string> = {
-  SEM_JUSTA_CAUSA: 'Dispensa sem justa causa',
-  PEDIDO_DEMISSAO: 'Pedido de demissão',
-  ACORDO: 'Acordo (art. 484-A)',
 };
 
 function enderecoTenant(t: TenantInfo): string {
@@ -149,7 +153,7 @@ interface EmployeeDetail {
     registradoEm: string;
     registradoPor: string;
   }[];
-  documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string }[];
+  documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string; terminationId: string | null }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
   vacationRequests: { id: string; inicio: string; fim: string }[];
   leaveRecords: { id: string; tipo: string; inicio: string; retorno: string | null }[];
@@ -161,7 +165,7 @@ interface EmployeeDetail {
     diasAfastamento: number;
     descricao: string | null;
   }[];
-  terminations: { id: string; data: string; tipo: 'SEM_JUSTA_CAUSA' | 'PEDIDO_DEMISSAO' | 'ACORDO'; motivo: string | null }[];
+  terminations: { id: string; data: string; tipo: TerminationTipo; status: TerminationStatusValue; motivo: string | null }[];
   evaluationRecords: { id: string; autoNota: string | null; gestorNota: string | null; cycle: { nome: string } }[];
 }
 
@@ -201,7 +205,7 @@ function toEditFields(e: EmployeeDetail): EditFields {
   };
 }
 
-const TABS = ['geral', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico', 'registro'] as const;
+const TABS = ['geral', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico', 'desligamento', 'registro'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
@@ -210,6 +214,7 @@ const TAB_LABEL: Record<Tab, string> = {
   avaliacoes: 'Avaliações',
   documentos: 'Documentos',
   historico: 'Histórico',
+  desligamento: 'Desligamento',
   registro: 'Registro de Empregado',
 };
 
@@ -372,6 +377,22 @@ export default function EmployeeProfilePage() {
     onSuccess: invalidate,
   });
 
+  const [uploadingTerminationId, setUploadingTerminationId] = useState<string | null>(null);
+  const addDesligamentoDocumento = useMutation({
+    mutationFn: async (vars: { terminationId: string; file: File }) => {
+      const form = new FormData();
+      form.append('arquivo', vars.file);
+      form.append('tipo', 'Desligamento');
+      form.append('terminationId', vars.terminationId);
+      return api.post(`/rh/employees/${id}/documentos`, form);
+    },
+    onSuccess: () => {
+      invalidate();
+      setUploadingTerminationId(null);
+    },
+    onError: () => setUploadingTerminationId(null),
+  });
+
   const { data: compliance } = useQuery({
     queryKey: ['rh', 'documents', id],
     queryFn: async () =>
@@ -518,7 +539,7 @@ export default function EmployeeProfilePage() {
       )}
 
       <div className="flex gap-2 border-b border-divider">
-        {TABS.map((t) => (
+        {TABS.filter((t) => t !== 'desligamento' || e.terminations.length > 0).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -1091,6 +1112,86 @@ export default function EmployeeProfilePage() {
             ))}
           </ul>
         </Card>
+      )}
+
+      {tab === 'desligamento' && (
+        <div className="flex flex-col gap-6">
+          {e.terminations.length === 0 && <EmptyState>Sem processo de desligamento registrado.</EmptyState>}
+          {e.terminations.map((t) => {
+            const docs = e.documentos.filter((d) => d.terminationId === t.id);
+            return (
+              <Card key={t.id} className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold">{TERMINATION_TIPO_LABEL[t.tipo]}</h3>
+                    <p className="text-xs text-text-tertiary">
+                      {formatDate(t.data)}
+                      {t.motivo ? ` · ${t.motivo}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge tone={TERMINATION_STATUS_TONE[t.status]}>{TERMINATION_STATUS_LABEL[t.status]}</Badge>
+                    <Link href={`/gestao-de-pessoas/desligamento/${t.id}`} className="text-xs text-accent hover:underline">
+                      Ver processo completo →
+                    </Link>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Documentos do desligamento</h4>
+                    <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                      {uploadingTerminationId === t.id ? 'Enviando…' : 'Anexar documento'}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        className="hidden"
+                        disabled={uploadingTerminationId === t.id}
+                        onChange={(ev) => {
+                          const file = ev.target.files?.[0];
+                          if (file) {
+                            setUploadingTerminationId(t.id);
+                            addDesligamentoDocumento.mutate({ terminationId: t.id, file });
+                          }
+                          ev.target.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {docs.length === 0 ? (
+                    <p className="text-sm text-text-tertiary">Nenhum documento anexado ainda.</p>
+                  ) : (
+                    <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {docs.map((d) => (
+                        <li key={d.id} className="flex items-center justify-between rounded-[10px] border border-border p-2.5 text-sm">
+                          <div>
+                            <div className="font-medium">{d.nome}</div>
+                            <div className="text-xs text-text-tertiary">
+                              {d.tamanho} · {formatDate(d.uploadEm)}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <a
+                              href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-accent hover:underline"
+                            >
+                              Visualizar
+                            </a>
+                            <button onClick={() => removeDocumento.mutate(d.id)} className="text-xs text-danger hover:underline">
+                              Remover
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       )}
 
       {tab === 'registro' && (

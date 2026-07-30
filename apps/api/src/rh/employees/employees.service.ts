@@ -336,9 +336,18 @@ export class EmployeesService {
     file: Express.Multer.File,
     tipo: string,
     nomeOverride?: string,
+    terminationId?: string,
   ) {
     const { tenantId } = getRequestContext();
     await this.mustFind(id);
+    if (terminationId) {
+      const termination = await this.db().termination.findUnique({
+        where: { id: terminationId },
+      });
+      if (!termination || termination.employeeId !== id) {
+        throw new NotFoundException('Processo de desligamento não encontrado.');
+      }
+    }
     const uploaded = await uploadDocumento(
       `colaboradores/${tenantId}/${id}/documentos`,
       file,
@@ -346,6 +355,7 @@ export class EmployeesService {
     const doc = await this.db().employeeDocumento.create({
       data: {
         employeeId: id,
+        terminationId: terminationId || null,
         nome: nomeOverride || uploaded.nomeOriginal,
         tipo,
         tamanho: uploaded.tamanho,

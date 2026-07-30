@@ -119,11 +119,12 @@ export class EmployeesController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body('tipo') tipo: string,
     @Body('nome') nome?: string,
+    @Body('terminationId') terminationId?: string,
   ) {
     if (!file)
       throw new BadRequestException('Envie o arquivo no campo "arquivo".');
     if (!tipo) throw new BadRequestException('Informe o tipo do documento.');
-    return this.service.addDocumento(id, file, tipo, nome);
+    return this.service.addDocumento(id, file, tipo, nome, terminationId);
   }
 
   @Get(':id/documentos/:documentoId/arquivo')

@@ -14,22 +14,7 @@ import {
 const EmptyStringToUndefined = () =>
   Transform(({ value }) => (value === '' ? undefined : value));
 
-const CNH_CATEGORIAS = [
-  'ACC',
-  'A',
-  'A1',
-  'B',
-  'B1',
-  'C',
-  'C1',
-  'D',
-  'D1',
-  'BE',
-  'CE',
-  'C1E',
-  'DE',
-  'D1E',
-] as const;
+const CNH_CATEGORIAS = ['A', 'B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'] as const;
 type CnhCategoria = (typeof CNH_CATEGORIAS)[number];
 
 export class CreateEmployeeDto {
