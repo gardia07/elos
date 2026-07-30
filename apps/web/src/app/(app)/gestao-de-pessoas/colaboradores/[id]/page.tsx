@@ -141,7 +141,7 @@ interface EmployeeDetail {
   feriasVencimentoAlerta: boolean;
   proximasFerias: { inicio: string; fim: string } | null;
   tempoDeCasa: { anos: number; meses: number };
-  dependentes: { id: string; nome: string; parentesco: string; cpf: string | null }[];
+  dependentes: { id: string; nome: string; parentesco: string; cpf: string | null; dataNascimento: string | null }[];
   historico: { id: string; evento: string; categoria: string; autor: string; data: string }[];
   cargoSalarioHistorico: {
     id: string;
@@ -246,6 +246,7 @@ export default function EmployeeProfilePage() {
   const [depNome, setDepNome] = useState('');
   const [depParentesco, setDepParentesco] = useState('');
   const [depCpf, setDepCpf] = useState('');
+  const [depDataNascimento, setDepDataNascimento] = useState('');
   const [showContatoForm, setShowContatoForm] = useState(false);
   const [contatoNome, setContatoNome] = useState('');
   const [contatoParentesco, setContatoParentesco] = useState('');
@@ -350,13 +351,20 @@ export default function EmployeeProfilePage() {
   });
 
   const addDependente = useMutation({
-    mutationFn: async () => api.post(`/rh/employees/${id}/dependentes`, { nome: depNome, parentesco: depParentesco, cpf: depCpf }),
+    mutationFn: async () =>
+      api.post(`/rh/employees/${id}/dependentes`, {
+        nome: depNome,
+        parentesco: depParentesco,
+        cpf: depCpf,
+        dataNascimento: depDataNascimento || undefined,
+      }),
     onSuccess: () => {
       invalidate();
       setShowDependenteForm(false);
       setDepNome('');
       setDepParentesco('');
       setDepCpf('');
+      setDepDataNascimento('');
     },
   });
 
@@ -806,7 +814,7 @@ export default function EmployeeProfilePage() {
                       <div key={d.id} className="flex justify-between text-sm text-text-secondary">
                         <span>{d.nome}</span>
                         <span>
-                          {d.parentesco} · {d.cpf ?? '—'}
+                          {d.parentesco} · {d.cpf ?? '—'} · {d.dataNascimento ? formatDate(d.dataNascimento) : 'data de nasc. não informada'}
                         </span>
                       </div>
                     ))}
@@ -835,6 +843,15 @@ export default function EmployeeProfilePage() {
                           <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
                           <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
                           <input placeholder="CPF" value={depCpf} onChange={(ev) => setDepCpf(maskCPF(ev.target.value))} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                          <label className="flex flex-col gap-1 text-xs text-text-secondary">
+                            Data de nascimento
+                            <input
+                              type="date"
+                              value={depDataNascimento}
+                              onChange={(ev) => setDepDataNascimento(ev.target.value)}
+                              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                            />
+                          </label>
                           <Button type="submit" disabled={addDependente.isPending}>
                             Adicionar
                           </Button>
