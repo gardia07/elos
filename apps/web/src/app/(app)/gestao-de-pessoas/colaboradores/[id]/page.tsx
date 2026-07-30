@@ -205,7 +205,7 @@ function toEditFields(e: EmployeeDetail): EditFields {
   };
 }
 
-const TABS = ['geral', 'cargoSalario', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'historico', 'desligamento', 'registro'] as const;
+const TABS = ['geral', 'cargoSalario', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'desligamento', 'registro', 'historico'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
@@ -1647,7 +1647,6 @@ export default function EmployeeProfilePage() {
                   {e.terminations.map((t) => (
                     <div key={t.id}>
                       Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
-                      {t.motivo ? ` · ${t.motivo}` : ''}
                     </div>
                   ))}
                 </div>
