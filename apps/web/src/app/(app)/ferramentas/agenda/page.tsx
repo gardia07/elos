@@ -7,7 +7,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Badge, Button, Card } from '@/components/ui';
 
-type Origem = 'AGENDA_ITEM' | 'LABOR_DEADLINE' | 'OCCUPATIONAL_EXAM' | 'NR_TRAINING' | 'VACATION_REQUEST' | 'TERMINATION';
+type Origem =
+  | 'AGENDA_ITEM'
+  | 'LABOR_DEADLINE'
+  | 'OCCUPATIONAL_EXAM'
+  | 'NR_TRAINING'
+  | 'VACATION_REQUEST'
+  | 'TERMINATION'
+  | 'TERMINATION_AVISO_FIM'
+  | 'TERMINATION_PAGAMENTO';
 
 interface Evento {
   id: string;

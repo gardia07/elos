@@ -11,6 +11,7 @@ import { matches } from '../documents/documents.service';
 import { anosCompletos } from '../../dp/simulacoes/constantes-trabalhistas';
 import { calcularRescisao } from '../../dp/simulacoes/calculo-rescisao';
 import { buildTerminationAlerts } from './terminations-lembretes.util';
+import { DocumentTemplatesService } from '../document-templates/document-templates.service';
 import {
   CreateTerminationDto,
   ExitInterviewDto,
@@ -54,19 +55,12 @@ const STATUS_PRE_EFETIVADO = [
 
 const MOTIVO_MIN_LENGTH = 30;
 
-function formatBr(date: Date): string {
-  return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-}
-
-function formatBRL(v: number): string {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
 @Injectable()
 export class TerminationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly documentTemplates: DocumentTemplatesService,
   ) {}
 
   private db() {
@@ -279,8 +273,28 @@ export class TerminationsService {
     return updated;
   }
 
+  async generateAvisoPrevio(id: string) {
+    const t = await this.mustFind(id);
+    const { texto } = await this.documentTemplates.renderTerminationDoc(
+      id,
+      'AVISO_PREVIO',
+    );
+    if (!t.avisoPrevioGerado) {
+      await this.db().termination.update({
+        where: { id },
+        data: { avisoPrevioGerado: true },
+      });
+      await this.audit.log('termination', id, 'aviso_previo_gerado');
+    }
+    return { texto };
+  }
+
   async generateTermo(id: string) {
     const t = await this.mustFind(id);
+    const { texto } = await this.documentTemplates.renderTerminationDoc(
+      id,
+      'TERMO_RESCISAO',
+    );
     if (!t.termoGerado) {
       await this.db().termination.update({
         where: { id },
@@ -288,16 +302,15 @@ export class TerminationsService {
       });
       await this.audit.log('termination', id, 'termo_rescisao_gerado');
     }
-    let texto = `Pelo presente termo, formaliza-se a rescisão do contrato de trabalho de ${t.nome}, ocupante do cargo de ${t.cargo}, com data de desligamento em ${formatBr(t.data)}, na modalidade "${TIPO_LABEL[t.tipo]}".`;
-    if (t.calculoRescisao) {
-      const c = t.calculoRescisao as { totalBruto: number };
-      texto += ` Total estimado de verbas rescisórias: ${formatBRL(c.totalBruto)} (sujeito à conferência da contabilidade).`;
-    }
     return { texto };
   }
 
   async generateCarta(id: string) {
     const t = await this.mustFind(id);
+    const { texto } = await this.documentTemplates.renderTerminationDoc(
+      id,
+      'CARTA_REFERENCIA',
+    );
     if (!t.cartaGerada) {
       await this.db().termination.update({
         where: { id },
@@ -305,7 +318,6 @@ export class TerminationsService {
       });
       await this.audit.log('termination', id, 'carta_referencia_gerada');
     }
-    const texto = `A empresa atesta que ${t.nome} exerceu a função de ${t.cargo} em nossa empresa até ${formatBr(t.data)}.`;
     return { texto };
   }
 

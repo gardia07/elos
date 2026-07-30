@@ -1,11 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { getRequestContext } from '../../common/request-context';
+import { calcularAvisoPrevio, calcularDataPagamento } from '../../rh/terminations/aviso-previo.util';
 
-export type AgendaGeralOrigem = 'AGENDA_ITEM' | 'LABOR_DEADLINE' | 'OCCUPATIONAL_EXAM' | 'NR_TRAINING' | 'VACATION_REQUEST' | 'TERMINATION';
+export type AgendaGeralOrigem =
+  | 'AGENDA_ITEM'
+  | 'LABOR_DEADLINE'
+  | 'OCCUPATIONAL_EXAM'
+  | 'NR_TRAINING'
+  | 'VACATION_REQUEST'
+  | 'TERMINATION'
+  | 'TERMINATION_AVISO_FIM'
+  | 'TERMINATION_PAGAMENTO';
 
 /** Origens sem um campo de conclusão real no registro de origem — o check aqui só "dispensa" o lembrete (AgendaDismissal), não altera o registro. */
-const ORIGENS_DISPENSAVEIS: AgendaGeralOrigem[] = ['OCCUPATIONAL_EXAM', 'NR_TRAINING', 'VACATION_REQUEST', 'TERMINATION'];
+const ORIGENS_DISPENSAVEIS: AgendaGeralOrigem[] = [
+  'OCCUPATIONAL_EXAM',
+  'NR_TRAINING',
+  'VACATION_REQUEST',
+  'TERMINATION',
+  'TERMINATION_AVISO_FIM',
+  'TERMINATION_PAGAMENTO',
+];
 
 export interface AgendaGeralEvento {
   id: string;
@@ -70,7 +86,7 @@ export class AgendaGeralService {
     const rangeVacation = diaUnico ? { inicio: diaUnico } : { inicio: { gte: today, lte: janela } };
     const rangeTermination = diaUnico ? { data: diaUnico } : { data: { lte: janela } };
 
-    const [agendaItems, deadlines, exams, trainings, vacations, terminations] = await Promise.all([
+    const [agendaItems, deadlines, exams, trainings, vacations, terminationsAbertas, terminations] = await Promise.all([
       db.agendaItem.findMany({ where: { userId, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem } }),
       db.laborDeadline.findMany({ where: { ...(diaUnico ? {} : { cumprido: false }), ...rangeDeadline } }),
       db.occupationalExam.findMany({
@@ -81,6 +97,10 @@ export class AgendaGeralService {
       db.vacationRequest.findMany({
         where: { status: 'APROVADA', ...rangeVacation },
         include: { employee: { select: { nome: true } } },
+      }),
+      db.termination.findMany({
+        where: { status: { notIn: ['CONCLUIDO', 'CANCELADO'] } },
+        include: { employee: { select: { nome: true, dataAdmissao: true } } },
       }),
       db.termination.findMany({
         where: { ...(diaUnico ? {} : { status: 'EM_ANDAMENTO' }), ...rangeTermination },
@@ -164,6 +184,36 @@ export class AgendaGeralService {
         bucket: bucketFor(t.data, today),
         concluida: t.status === 'CONCLUIDO',
       });
+    }
+
+    for (const t of terminationsAbertas) {
+      const { fim } = calcularAvisoPrevio(t.employee.dataAdmissao, t.data, t.avisoPrevioInicio);
+      const fimDentroDaJanela = diaUnico ? fim.getTime() === diaUnico.getTime() : fim <= janela;
+      if (fimDentroDaJanela && !isDismissed('TERMINATION_AVISO_FIM', t.id)) {
+        eventos.push({
+          id: t.id,
+          origem: 'TERMINATION_AVISO_FIM',
+          data: fim.toISOString(),
+          titulo: `Fim do aviso prévio — ${t.employee.nome}`,
+          hub: 'Gestão de Pessoas',
+          bucket: bucketFor(fim, today),
+          concluida: false,
+        });
+      }
+
+      const dataPagamento = calcularDataPagamento(t.data);
+      const pagamentoDentroDaJanela = diaUnico ? dataPagamento.getTime() === diaUnico.getTime() : dataPagamento <= janela;
+      if (pagamentoDentroDaJanela && !isDismissed('TERMINATION_PAGAMENTO', t.id)) {
+        eventos.push({
+          id: t.id,
+          origem: 'TERMINATION_PAGAMENTO',
+          data: dataPagamento.toISOString(),
+          titulo: `Prazo de pagamento da rescisão — ${t.employee.nome}`,
+          hub: 'Gestão de Pessoas',
+          bucket: bucketFor(dataPagamento, today),
+          concluida: false,
+        });
+      }
     }
 
     return eventos.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());

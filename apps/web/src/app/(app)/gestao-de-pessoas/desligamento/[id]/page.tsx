@@ -7,6 +7,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { formatDate, TERMINATION_STATUS_LABEL, TERMINATION_STATUS_TONE, TERMINATION_TIPO_LABEL, TerminationStatusValue, TerminationTipo } from '@/lib/format';
 import { Badge, Button, Card } from '@/components/ui';
+import { DocumentoImpressao } from '@/components/document-print';
+import { type TenantInfo } from '@/components/empresa-form';
 
 interface ChecklistItem {
   key: string;
@@ -83,6 +85,7 @@ interface TerminationDetail {
   esocialProtocolo: string | null;
   termoGerado: boolean;
   cartaGerada: boolean;
+  avisoPrevioGerado: boolean;
   entrevistaDesligamento: EntrevistaDesligamento | null;
   exigeHomologacao: boolean;
   calculoRescisao: CalculoRescisao | null;
@@ -152,8 +155,7 @@ function formatBRL(v: number) {
 export default function TerminationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const [termoText, setTermoText] = useState('');
-  const [cartaText, setCartaText] = useState('');
+  const [documentoGerado, setDocumentoGerado] = useState('');
   const [entrevista, setEntrevista] = useState<EntrevistaDesligamento>({});
   const [confirmandoEfetivacao, setConfirmandoEfetivacao] = useState(false);
   const [esocialEvento, setEsocialEvento] = useState('S-2299');
@@ -164,6 +166,11 @@ export default function TerminationDetailPage() {
     queryKey: ['termination', id],
     queryFn: async () => (await api.get<TerminationDetail>(`/rh/terminations/${id}`)).data,
     enabled: !!id,
+  });
+
+  const { data: tenant } = useQuery({
+    queryKey: ['tenant'],
+    queryFn: async () => (await api.get<TenantInfo>('/tenant')).data,
   });
 
   // Sincroniza os campos editáveis com o registro carregado — ajuste feito durante a renderização
@@ -188,17 +195,24 @@ export default function TerminationDetailPage() {
     mutationFn: async () => api.post(`/rh/terminations/${id}/esocial`, { evento: esocialEvento, protocolo: esocialProtocolo || undefined }),
     onSuccess: invalidate,
   });
+  const generateAviso = useMutation({
+    mutationFn: async () => (await api.post(`/rh/terminations/${id}/generate-aviso-previo`)).data,
+    onSuccess: (data: { texto: string }) => {
+      setDocumentoGerado(data.texto);
+      invalidate();
+    },
+  });
   const generateTermo = useMutation({
     mutationFn: async () => (await api.post(`/rh/terminations/${id}/generate-termo`)).data,
     onSuccess: (data: { texto: string }) => {
-      setTermoText(data.texto);
+      setDocumentoGerado(data.texto);
       invalidate();
     },
   });
   const generateCarta = useMutation({
     mutationFn: async () => (await api.post(`/rh/terminations/${id}/generate-carta`)).data,
     onSuccess: (data: { texto: string }) => {
-      setCartaText(data.texto);
+      setDocumentoGerado(data.texto);
       invalidate();
     },
   });
@@ -359,20 +373,29 @@ export default function TerminationDetailPage() {
         )}
 
         <div className="flex items-center justify-between">
+          <span className="text-sm">Aviso prévio</span>
+          <Button variant="secondary" onClick={() => generateAviso.mutate()}>
+            {t.avisoPrevioGerado ? 'Ver aviso prévio' : 'Gerar aviso prévio'}
+          </Button>
+        </div>
+        <div className="flex items-center justify-between">
           <span className="text-sm">Termo de rescisão</span>
           <Button variant="secondary" onClick={() => generateTermo.mutate()}>
             {t.termoGerado ? 'Ver termo' : 'Gerar termo'}
           </Button>
         </div>
-        {termoText && <p className="rounded-[10px] bg-surface-alt p-3 text-xs text-text-secondary">{termoText}</p>}
         <div className="flex items-center justify-between">
           <span className="text-sm">Carta de referência</span>
           <Button variant="secondary" onClick={() => generateCarta.mutate()}>
             {t.cartaGerada ? 'Ver carta' : 'Gerar carta'}
           </Button>
         </div>
-        {cartaText && <p className="rounded-[10px] bg-surface-alt p-3 text-xs text-text-secondary">{cartaText}</p>}
+        <p className="text-xs text-text-tertiary">
+          Os modelos desses documentos podem ser editados em Cadastros → Modelos de documentos de desligamento.
+        </p>
       </Card>
+
+      {documentoGerado && <DocumentoImpressao texto={documentoGerado} tenant={tenant} />}
 
       {t.tipo === 'PEDIDO_DEMISSAO' && (
         <Card className="flex flex-col gap-5">

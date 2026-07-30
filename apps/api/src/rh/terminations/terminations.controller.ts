@@ -69,6 +69,11 @@ export class TerminationsController {
     return this.service.sendEsocial(id, dto);
   }
 
+  @Post(':id/generate-aviso-previo')
+  generateAvisoPrevio(@Param('id') id: string) {
+    return this.service.generateAvisoPrevio(id);
+  }
+
   @Post(':id/generate-termo')
   generateTermo(@Param('id') id: string) {
     return this.service.generateTermo(id);

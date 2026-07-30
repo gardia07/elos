@@ -13,6 +13,7 @@ import { SwitchTenantDto } from './dto/switch-tenant.dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateTenantDto } from '../tenant/dto/tenant.dto';
 import { CLT_DOCUMENT_REQUIREMENTS } from '../rh/documents/clt-requirements';
+import { DEFAULT_DOCUMENT_TEMPLATES } from '../rh/document-templates/default-templates';
 import { JwtPayload } from '../common/jwt-payload';
 
 // Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
@@ -120,6 +121,17 @@ export class AuthService {
         nome: r.nome,
         categoria: r.categoria,
         obrigatorio: true,
+        sistema: true,
+      })),
+    });
+
+    await this.prisma.forTenant(tenantId).documentTemplate.createMany({
+      data: DEFAULT_DOCUMENT_TEMPLATES.map((d) => ({
+        tenantId,
+        tipo: d.tipo,
+        nome: d.nome,
+        corpo: d.corpo,
+        aplicaTipos: d.aplicaTipos,
         sistema: true,
       })),
     });

@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Badge, Button, Card } from '@/components/ui';
+import { DocumentoImpressao } from '@/components/document-print';
+import { type TenantInfo } from '@/components/empresa-form';
 
 interface ChecklistItem {
   key: string;
@@ -32,10 +35,17 @@ export default function AdmissionDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const [contratoText, setContratoText] = useState('');
+
   const { data: adm } = useQuery({
     queryKey: ['admission', id],
     queryFn: async () => (await api.get<AdmissionDetail>(`/rh/admissions/${id}`)).data,
     enabled: !!id,
+  });
+
+  const { data: tenant } = useQuery({
+    queryKey: ['tenant'],
+    queryFn: async () => (await api.get<TenantInfo>('/tenant')).data,
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admission', id] });
@@ -49,8 +59,11 @@ export default function AdmissionDetailPage() {
     onSuccess: invalidate,
   });
   const generateContract = useMutation({
-    mutationFn: async () => api.post(`/rh/admissions/${id}/contract`),
-    onSuccess: invalidate,
+    mutationFn: async () => (await api.post(`/rh/admissions/${id}/contract`)).data,
+    onSuccess: (data: { texto: string }) => {
+      setContratoText(data.texto);
+      invalidate();
+    },
   });
   const signContract = useMutation({
     mutationFn: async () => api.post(`/rh/admissions/${id}/sign`),
@@ -114,11 +127,9 @@ export default function AdmissionDetailPage() {
           )}
         </GateRow>
         <GateRow label="3. Contrato gerado" done={adm.contratoGerado}>
-          {!adm.contratoGerado && (
-            <Button disabled={!adm.esocialSent || generateContract.isPending} onClick={() => generateContract.mutate()}>
-              Gerar contrato
-            </Button>
-          )}
+          <Button disabled={!adm.esocialSent || generateContract.isPending} onClick={() => generateContract.mutate()}>
+            {adm.contratoGerado ? 'Ver contrato' : 'Gerar contrato'}
+          </Button>
         </GateRow>
         <GateRow label="4. Contrato assinado" done={adm.contratoAssinado}>
           {adm.contratoGerado && !adm.contratoAssinado && (
@@ -127,6 +138,9 @@ export default function AdmissionDetailPage() {
             </Button>
           )}
         </GateRow>
+        <p className="text-xs text-text-tertiary">
+          O modelo do contrato pode ser editado em Cadastros → Checklist de admissão.
+        </p>
 
         <div className="mt-2 border-t border-divider pt-3">
           {adm.status === 'EFETIVADO' ? (
@@ -141,6 +155,8 @@ export default function AdmissionDetailPage() {
           )}
         </div>
       </Card>
+
+      {contratoText && <DocumentoImpressao texto={contratoText} tenant={tenant} />}
 
       {adm.auditLog.length > 0 && (
         <div>

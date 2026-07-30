@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Button, Card } from '@/components/ui';
+import { Button, Card, EmptyState } from '@/components/ui';
 import { Header } from '@/components/header';
 
 interface ChecklistItem {
@@ -16,6 +16,90 @@ interface FilterOptions {
   filiais: string[];
 }
 
+interface DocumentTemplate {
+  id: string;
+  tipo: 'CONTRATO_ADMISSAO';
+  nome: string;
+  corpo: string;
+  ativo: boolean;
+}
+
+const VARIAVEIS_DISPONIVEIS = [
+  'empresa.razaoSocial', 'empresa.nomeFantasia', 'empresa.cnpj', 'empresa.cidade', 'empresa.uf', 'data.hoje',
+  'admissao.nome', 'admissao.cargo', 'admissao.dataInicio', 'admissao.salario',
+];
+
+function ModeloDeContrato() {
+  const queryClient = useQueryClient();
+  const [corpo, setCorpo] = useState<string | null>(null);
+
+  const { data: templates } = useQuery({
+    queryKey: ['document-templates', 'CONTRATO_ADMISSAO'],
+    queryFn: async () => (await api.get<DocumentTemplate[]>('/rh/document-templates', { params: { tipo: 'CONTRATO_ADMISSAO' } })).data,
+  });
+  const template = templates?.[0];
+  const corpoAtual = corpo ?? template?.corpo ?? '';
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!template) return;
+      return api.patch(`/rh/document-templates/${template.id}`, { corpo: corpoAtual });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['document-templates', 'CONTRATO_ADMISSAO'] }),
+  });
+
+  const restaurar = useMutation({
+    mutationFn: async () => {
+      if (!template) return;
+      return api.post(`/rh/document-templates/${template.id}/restaurar-padrao`);
+    },
+    onSuccess: () => {
+      setCorpo(null);
+      queryClient.invalidateQueries({ queryKey: ['document-templates', 'CONTRATO_ADMISSAO'] });
+    },
+  });
+
+  return (
+    <Card className="flex max-w-3xl flex-col gap-4">
+      <p className="text-xs text-text-tertiary">
+        Edite o texto usado ao gerar o contrato de admissão. Use as variáveis entre chaves — elas são substituídas
+        automaticamente pelos dados da admissão ao gerar o documento.
+      </p>
+      {!template && <EmptyState>Nenhum modelo configurado ainda.</EmptyState>}
+      {template && (
+        <>
+          <textarea
+            value={corpoAtual}
+            onChange={(e) => setCorpo(e.target.value)}
+            rows={16}
+            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 font-mono text-xs leading-relaxed"
+          />
+          <div className="flex items-center gap-2">
+            <Button disabled={save.isPending} onClick={() => save.mutate()}>
+              {save.isPending ? 'Salvando…' : 'Salvar'}
+            </Button>
+            <Button variant="secondary" disabled={restaurar.isPending} onClick={() => restaurar.mutate()}>
+              Restaurar padrão do sistema
+            </Button>
+          </div>
+          <div>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              Variáveis disponíveis
+            </span>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {VARIAVEIS_DISPONIVEIS.map((v) => (
+                <code key={v} className="rounded-[6px] bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
+                  {`{{${v}}}`}
+                </code>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
 function slugifyKey(nome: string): string {
   return nome
     .toLowerCase()
@@ -26,6 +110,7 @@ function slugifyKey(nome: string): string {
 }
 
 export default function ChecklistAdmissaoPage() {
+  const [secao, setSecao] = useState<'checklist' | 'modelo'>('checklist');
   const queryClient = useQueryClient();
   const { data: filterOptions } = useQuery({
     queryKey: ['employees', 'filter-options'],
@@ -57,6 +142,30 @@ export default function ChecklistAdmissaoPage() {
     <>
       <Header eyebrow="Cadastros" title="Checklist de admissão" />
       <main className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="mb-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setSecao('checklist')}
+            className={`rounded-full border px-4 py-2 text-sm transition ${
+              secao === 'checklist' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
+            }`}
+          >
+            Checklist
+          </button>
+          <button
+            type="button"
+            onClick={() => setSecao('modelo')}
+            className={`rounded-full border px-4 py-2 text-sm transition ${
+              secao === 'modelo' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
+            }`}
+          >
+            Modelo do contrato
+          </button>
+        </div>
+
+        {secao === 'modelo' && <ModeloDeContrato />}
+
+        {secao === 'checklist' && (
         <Card className="flex max-w-2xl flex-col gap-3">
           <p className="text-xs text-text-tertiary">
             Documentos e etapas exigidos para efetivar uma admissão. O checklist é configurado por filial.
@@ -120,6 +229,7 @@ export default function ChecklistAdmissaoPage() {
             </>
           )}
         </Card>
+        )}
       </main>
     </>
   );

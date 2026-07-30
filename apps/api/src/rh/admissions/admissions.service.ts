@@ -8,6 +8,7 @@ import { AuditService } from '../../audit/audit.service';
 import { getRequestContext } from '../../common/request-context';
 import { nextMatricula } from '../employees/matricula.util';
 import { SetChecklistConfigDto, ToggleDocDto } from './dto/admissions.dto';
+import { DocumentTemplatesService } from '../document-templates/document-templates.service';
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -20,6 +21,7 @@ export class AdmissionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly documentTemplates: DocumentTemplatesService,
   ) {}
 
   private db() {
@@ -99,12 +101,16 @@ export class AdmissionsService {
         'Envie o evento eSocial S-2200 antes de gerar o contrato.',
       );
 
-    const updated = await this.db().admission.update({
-      where: { id },
-      data: { contratoGerado: true },
-    });
-    await this.audit.log('admission', id, 'contrato_gerado');
-    return updated;
+    const { texto } = await this.documentTemplates.renderAdmissionContract(id);
+
+    if (!admission.contratoGerado) {
+      await this.db().admission.update({
+        where: { id },
+        data: { contratoGerado: true },
+      });
+      await this.audit.log('admission', id, 'contrato_gerado');
+    }
+    return { texto };
   }
 
   async signContract(id: string) {
