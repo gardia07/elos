@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from '@/components/header';
 
 const SUBPAGES = [
+  { label: 'Painel', href: '/gestao-de-pessoas/painel' },
   { label: 'Recrutamento & Seleção', href: '/gestao-de-pessoas/recrutamento' },
   { label: 'Admissão', href: '/gestao-de-pessoas/admissao' },
   { label: 'Colaboradores', href: '/gestao-de-pessoas/colaboradores' },

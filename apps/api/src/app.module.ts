@@ -15,6 +15,7 @@ import { DocumentsModule } from './rh/documents/documents.module';
 import { EvaluationsModule } from './rh/evaluations/evaluations.module';
 import { VacationsModule } from './rh/vacations/vacations.module';
 import { TerminationsModule } from './rh/terminations/terminations.module';
+import { PainelModule } from './rh/painel/painel.module';
 import { DeadlinesModule } from './dp/deadlines/deadlines.module';
 import { AgreementsModule } from './dp/agreements/agreements.module';
 import { JobGradesModule } from './dp/job-grades/job-grades.module';
@@ -54,6 +55,7 @@ import { SearchModule } from './search/search.module';
     EvaluationsModule,
     VacationsModule,
     TerminationsModule,
+    PainelModule,
     DeadlinesModule,
     AgreementsModule,
     JobGradesModule,
