@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { TERMINATION_TIPO_LABEL, TerminationTipo } from '@/lib/format';
+import Link from 'next/link';
 import { Button, Card, EmptyState } from '@/components/ui';
 import { Header } from '@/components/header';
 
@@ -176,6 +177,9 @@ export default function ChecklistDesligamentoPage() {
     <>
       <Header eyebrow="Cadastros" title="Checklist de desligamento" />
       <main className="flex-1 overflow-y-auto px-8 py-6">
+        <Link href="/gestao-de-pessoas/desligamento" className="mb-4 inline-block text-sm text-text-secondary hover:text-text">
+          ← Voltar para Desligamento
+        </Link>
         <div className="mb-4 flex gap-2">
           <button
             type="button"
