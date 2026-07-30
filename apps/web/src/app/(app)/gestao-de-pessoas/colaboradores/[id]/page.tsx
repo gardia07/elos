@@ -234,6 +234,7 @@ export default function EmployeeProfilePage() {
   const tabParam = searchParams.get('tab');
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabParam ?? '') ? (tabParam as Tab) : 'geral');
   const [showPromote, setShowPromote] = useState(false);
+  const [promoteMode, setPromoteMode] = useState<'salario' | 'cargo'>('salario');
   const [novoCargo, setNovoCargo] = useState('');
   const [novoSalario, setNovoSalario] = useState('');
   const [motivoPromocao, setMotivoPromocao] = useState<'Promoção' | 'Reajuste anual' | 'Dissídio coletivo' | 'Outro'>('Promoção');
@@ -878,9 +879,38 @@ export default function EmployeeProfilePage() {
                 </p>
               </div>
               {e.status === 'ATIVO' && (
-                <Button variant="secondary" onClick={() => setShowPromote((s) => !s)}>
-                  Alterar salário
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      if (showPromote && promoteMode === 'salario') {
+                        setShowPromote(false);
+                        return;
+                      }
+                      setPromoteMode('salario');
+                      setNovoSalario('');
+                      setNovoCargo('');
+                      setShowPromote(true);
+                    }}
+                  >
+                    Alterar salário
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      if (showPromote && promoteMode === 'cargo') {
+                        setShowPromote(false);
+                        return;
+                      }
+                      setPromoteMode('cargo');
+                      setNovoCargo('');
+                      setNovoSalario(String(e.salario));
+                      setShowPromote(true);
+                    }}
+                  >
+                    Alterar cargo
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -906,11 +936,17 @@ export default function EmployeeProfilePage() {
                   </select>
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Novo cargo (se houver)</span>
-                  <input value={novoCargo} onChange={(ev) => setNovoCargo(ev.target.value)} placeholder={e.cargo} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                  <span className="text-text-secondary">{promoteMode === 'cargo' ? 'Novo cargo' : 'Novo cargo (se houver)'}</span>
+                  <input
+                    value={novoCargo}
+                    onChange={(ev) => setNovoCargo(ev.target.value)}
+                    placeholder={e.cargo}
+                    required={promoteMode === 'cargo'}
+                    className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  />
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Novo salário</span>
+                  <span className="text-text-secondary">{promoteMode === 'cargo' ? 'Salário (mantido)' : 'Novo salário'}</span>
                   <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
