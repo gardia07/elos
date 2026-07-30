@@ -803,30 +803,29 @@ model TerminationChecklistDef {
 }
 
 model Termination {
-  id                String            @id @default(uuid()) @db.Uuid
-  tenantId          String            @db.Uuid
-  employeeId        String            @db.Uuid
-  nome              String
-  cargo             String
-  data              DateTime          @db.Date
-  tipo              TerminationType
-  motivo            String?
-  status            TerminationStatus @default(EM_ANDAMENTO)
-  docs              Json              @default("{}")
-  esocialSent       Boolean           @default(false)
-  esocialEvento     String?
-  esocialEnviadoEm  DateTime?
-  esocialProtocolo  String?
-  termoGerado       Boolean           @default(false)
-  cartaGerada       Boolean           @default(false)
-  entrevistaMotivo  String?
-  entrevistaObs     String?
-  avisoPrevioInicio DateTime?         @db.Date
-  avisoPrevioTipo   String?
-  exigeHomologacao  Boolean           @default(false)
-  dataBeneficioInss DateTime?         @db.Date
-  calculoRescisao   Json?
-  createdAt         DateTime          @default(now())
+  id                     String            @id @default(uuid()) @db.Uuid
+  tenantId               String            @db.Uuid
+  employeeId             String            @db.Uuid
+  nome                   String
+  cargo                  String
+  data                   DateTime          @db.Date
+  tipo                   TerminationType
+  motivo                 String?
+  status                 TerminationStatus @default(EM_ANDAMENTO)
+  docs                   Json              @default("{}")
+  esocialSent            Boolean           @default(false)
+  esocialEvento          String?
+  esocialEnviadoEm       DateTime?
+  esocialProtocolo       String?
+  termoGerado            Boolean           @default(false)
+  cartaGerada            Boolean           @default(false)
+  entrevistaDesligamento Json?
+  avisoPrevioInicio      DateTime?         @db.Date
+  avisoPrevioTipo        String?
+  exigeHomologacao       Boolean           @default(false)
+  dataBeneficioInss      DateTime?         @db.Date
+  calculoRescisao        Json?
+  createdAt              DateTime          @default(now())
 
   tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)

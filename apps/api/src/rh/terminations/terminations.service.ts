@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { getRequestContext } from '../../common/request-context';
@@ -369,7 +370,10 @@ export class TerminationsService {
 
   async updateExitInterview(id: string, dto: ExitInterviewDto) {
     await this.mustFind(id);
-    return this.db().termination.update({ where: { id }, data: dto });
+    return this.db().termination.update({
+      where: { id },
+      data: { entrevistaDesligamento: dto as unknown as Prisma.InputJsonValue },
+    });
   }
 
   getChecklistConfig() {

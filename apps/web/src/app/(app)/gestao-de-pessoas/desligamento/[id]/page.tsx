@@ -37,6 +37,37 @@ interface CalculoRescisao {
   aviso: string;
 }
 
+type AvaliacaoNivel = 'INSATISFATORIO' | 'REGULAR' | 'BOM' | 'EXCELENTE';
+
+interface FatoresDesligamento {
+  remuneracao?: boolean | null;
+  faltaCrescimento?: boolean | null;
+  relacionamentoEquipe?: boolean | null;
+  relacionamentoSuperior?: boolean | null;
+  condicoesTrabalho?: boolean | null;
+  outraEmpresa?: boolean | null;
+  outros?: string;
+}
+
+interface AmbienteTrabalho {
+  integracaoEquipe?: AvaliacaoNivel | null;
+  relacionamentoSuperior?: AvaliacaoNivel | null;
+  relacionamentoGerencia?: AvaliacaoNivel | null;
+  relacionamentoRH?: AvaliacaoNivel | null;
+  comunicacaoAreas?: AvaliacaoNivel | null;
+}
+
+interface EntrevistaDesligamento {
+  fatores?: FatoresDesligamento;
+  ambiente?: AmbienteTrabalho;
+  avaliacaoGeral?: AvaliacaoNivel | null;
+  voltariaTrabalhar?: boolean | null;
+  voltariaPorque?: string;
+  pontosPositivos?: string[];
+  pontosNegativos?: string[];
+  comentarios?: string;
+}
+
 interface TerminationDetail {
   id: string;
   nome: string;
@@ -52,13 +83,66 @@ interface TerminationDetail {
   esocialProtocolo: string | null;
   termoGerado: boolean;
   cartaGerada: boolean;
-  entrevistaMotivo: string | null;
-  entrevistaObs: string | null;
+  entrevistaDesligamento: EntrevistaDesligamento | null;
   exigeHomologacao: boolean;
   calculoRescisao: CalculoRescisao | null;
   checklist: ChecklistItem[];
   readiness: Readiness;
   podeEfetivar: PodeEfetivar;
+}
+
+const AVALIACAO_OPTIONS: { value: AvaliacaoNivel; label: string }[] = [
+  { value: 'INSATISFATORIO', label: 'Insatisfatório' },
+  { value: 'REGULAR', label: 'Regular' },
+  { value: 'BOM', label: 'Bom' },
+  { value: 'EXCELENTE', label: 'Excelente' },
+];
+
+function SimNaoRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean | null | undefined;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span>{label}</span>
+      <div className="flex gap-4 shrink-0">
+        <label className="flex items-center gap-1.5">
+          <input type="radio" checked={value === true} onChange={() => onChange(true)} /> Sim
+        </label>
+        <label className="flex items-center gap-1.5">
+          <input type="radio" checked={value === false} onChange={() => onChange(false)} /> Não
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function AvaliacaoRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: AvaliacaoNivel | null | undefined;
+  onChange: (v: AvaliacaoNivel) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <span>{label}</span>
+      <div className="flex flex-wrap gap-3 shrink-0">
+        {AVALIACAO_OPTIONS.map((opt) => (
+          <label key={opt.value} className="flex items-center gap-1.5 text-xs text-text-secondary">
+            <input type="radio" checked={value === opt.value} onChange={() => onChange(opt.value)} /> {opt.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function formatBRL(v: number) {
@@ -70,8 +154,7 @@ export default function TerminationDetailPage() {
   const queryClient = useQueryClient();
   const [termoText, setTermoText] = useState('');
   const [cartaText, setCartaText] = useState('');
-  const [entrevistaMotivo, setEntrevistaMotivo] = useState('');
-  const [entrevistaObs, setEntrevistaObs] = useState('');
+  const [entrevista, setEntrevista] = useState<EntrevistaDesligamento>({});
   const [confirmandoEfetivacao, setConfirmandoEfetivacao] = useState(false);
   const [esocialEvento, setEsocialEvento] = useState('S-2299');
   const [esocialProtocolo, setEsocialProtocolo] = useState('');
@@ -87,8 +170,7 @@ export default function TerminationDetailPage() {
   // (não em useEffect) porque só precisa rodar quando o id muda, e assim evita um render extra.
   if (t && t.id !== carregadoId) {
     setCarregadoId(t.id);
-    setEntrevistaMotivo(t.entrevistaMotivo ?? '');
-    setEntrevistaObs(t.entrevistaObs ?? '');
+    setEntrevista(t.entrevistaDesligamento ?? {});
     setEsocialEvento(t.esocialEvento ?? (t.tipo === 'FIM_CONTRATO_EXPERIENCIA' ? 'S-2399' : 'S-2299'));
   }
 
@@ -128,9 +210,26 @@ export default function TerminationDetailPage() {
     },
   });
   const saveInterview = useMutation({
-    mutationFn: async () => api.patch(`/rh/terminations/${id}/exit-interview`, { entrevistaMotivo, entrevistaObs }),
+    mutationFn: async () => api.patch(`/rh/terminations/${id}/exit-interview`, entrevista),
     onSuccess: invalidate,
   });
+
+  const setFator = (key: keyof FatoresDesligamento, value: boolean | string) =>
+    setEntrevista((e) => ({ ...e, fatores: { ...e.fatores, [key]: value } }));
+  const setAmbiente = (key: keyof AmbienteTrabalho, value: AvaliacaoNivel) =>
+    setEntrevista((e) => ({ ...e, ambiente: { ...e.ambiente, [key]: value } }));
+  const setPontoPositivo = (i: number, value: string) =>
+    setEntrevista((e) => {
+      const arr = [e.pontosPositivos?.[0] ?? '', e.pontosPositivos?.[1] ?? '', e.pontosPositivos?.[2] ?? ''];
+      arr[i] = value;
+      return { ...e, pontosPositivos: arr };
+    });
+  const setPontoNegativo = (i: number, value: string) =>
+    setEntrevista((e) => {
+      const arr = [e.pontosNegativos?.[0] ?? '', e.pontosNegativos?.[1] ?? '', e.pontosNegativos?.[2] ?? ''];
+      arr[i] = value;
+      return { ...e, pontosNegativos: arr };
+    });
 
   if (!t) return <p className="text-sm text-text-tertiary">Carregando…</p>;
 
@@ -275,29 +374,165 @@ export default function TerminationDetailPage() {
         {cartaText && <p className="rounded-[10px] bg-surface-alt p-3 text-xs text-text-secondary">{cartaText}</p>}
       </Card>
 
-      <Card className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold">Entrevista de desligamento</h3>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-text-secondary">Motivo relatado</span>
-          <input
-            value={entrevistaMotivo}
-            onChange={(e) => setEntrevistaMotivo(e.target.value)}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-          />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-text-secondary">Observações</span>
-          <textarea
-            value={entrevistaObs}
-            onChange={(e) => setEntrevistaObs(e.target.value)}
-            rows={3}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-          />
-        </label>
-        <Button variant="secondary" onClick={() => saveInterview.mutate()} className="self-start">
-          Salvar
-        </Button>
-      </Card>
+      {t.tipo === 'PEDIDO_DEMISSAO' && (
+        <Card className="flex flex-col gap-5">
+          <div>
+            <h3 className="text-sm font-semibold">Entrevista de desligamento</h3>
+            <p className="mt-1 text-xs text-text-tertiary">
+              Visando a melhoria contínua da empresa, preencha a entrevista de desligamento abaixo. Fique à vontade
+              para deixar em branco qualquer item que não achar oportuno responder.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              1 — Fatores que contribuíram para o desligamento
+            </span>
+            <SimNaoRow label="Remuneração" value={entrevista.fatores?.remuneracao} onChange={(v) => setFator('remuneracao', v)} />
+            <SimNaoRow
+              label="Falta de oportunidade de crescimento no cargo"
+              value={entrevista.fatores?.faltaCrescimento}
+              onChange={(v) => setFator('faltaCrescimento', v)}
+            />
+            <SimNaoRow
+              label="Relacionamento com a equipe"
+              value={entrevista.fatores?.relacionamentoEquipe}
+              onChange={(v) => setFator('relacionamentoEquipe', v)}
+            />
+            <SimNaoRow
+              label="Relacionamento com o superior imediato"
+              value={entrevista.fatores?.relacionamentoSuperior}
+              onChange={(v) => setFator('relacionamentoSuperior', v)}
+            />
+            <SimNaoRow
+              label="Condições de trabalho"
+              value={entrevista.fatores?.condicoesTrabalho}
+              onChange={(v) => setFator('condicoesTrabalho', v)}
+            />
+            <SimNaoRow
+              label="Está saindo para trabalhar em outra empresa?"
+              value={entrevista.fatores?.outraEmpresa}
+              onChange={(v) => setFator('outraEmpresa', v)}
+            />
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Outros</span>
+              <input
+                value={entrevista.fatores?.outros ?? ''}
+                onChange={(e) => setFator('outros', e.target.value)}
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              2 — Ambiente de trabalho
+            </span>
+            <AvaliacaoRow
+              label="Integração com a equipe da área"
+              value={entrevista.ambiente?.integracaoEquipe}
+              onChange={(v) => setAmbiente('integracaoEquipe', v)}
+            />
+            <AvaliacaoRow
+              label="Relacionamento com o seu superior imediato"
+              value={entrevista.ambiente?.relacionamentoSuperior}
+              onChange={(v) => setAmbiente('relacionamentoSuperior', v)}
+            />
+            <AvaliacaoRow
+              label="Relacionamento com a gerência"
+              value={entrevista.ambiente?.relacionamentoGerencia}
+              onChange={(v) => setAmbiente('relacionamentoGerencia', v)}
+            />
+            <AvaliacaoRow
+              label="Relacionamento com a área de Recursos Humanos"
+              value={entrevista.ambiente?.relacionamentoRH}
+              onChange={(v) => setAmbiente('relacionamentoRH', v)}
+            />
+            <AvaliacaoRow
+              label="Comunicação entre as áreas"
+              value={entrevista.ambiente?.comunicacaoAreas}
+              onChange={(v) => setAmbiente('comunicacaoAreas', v)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              3 — Avaliação geral
+            </span>
+            <AvaliacaoRow
+              label="De uma forma geral, como é o ambiente de trabalho na empresa?"
+              value={entrevista.avaliacaoGeral}
+              onChange={(v) => setEntrevista((e) => ({ ...e, avaliacaoGeral: v }))}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              4 — Voltaria a trabalhar na empresa em outra oportunidade?
+            </span>
+            <SimNaoRow
+              label="Voltaria a trabalhar na empresa?"
+              value={entrevista.voltariaTrabalhar}
+              onChange={(v) => setEntrevista((e) => ({ ...e, voltariaTrabalhar: v }))}
+            />
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Por quê?</span>
+              <textarea
+                value={entrevista.voltariaPorque ?? ''}
+                onChange={(e) => setEntrevista((ent) => ({ ...ent, voltariaPorque: e.target.value }))}
+                rows={2}
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              5 — Pontos positivos (até três)
+            </span>
+            {[0, 1, 2].map((i) => (
+              <input
+                key={i}
+                value={entrevista.pontosPositivos?.[i] ?? ''}
+                onChange={(e) => setPontoPositivo(i, e.target.value)}
+                placeholder={`${i + 1}º`}
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              />
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              6 — Pontos negativos (até três)
+            </span>
+            {[0, 1, 2].map((i) => (
+              <input
+                key={i}
+                value={entrevista.pontosNegativos?.[i] ?? ''}
+                onChange={(e) => setPontoNegativo(i, e.target.value)}
+                placeholder={`${i + 1}º`}
+                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              />
+            ))}
+          </div>
+
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+              7 — Comentários livres
+            </span>
+            <textarea
+              value={entrevista.comentarios ?? ''}
+              onChange={(e) => setEntrevista((ent) => ({ ...ent, comentarios: e.target.value }))}
+              rows={4}
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            />
+          </label>
+
+          <Button variant="secondary" disabled={saveInterview.isPending} onClick={() => saveInterview.mutate()} className="self-start">
+            {saveInterview.isPending ? 'Salvando…' : 'Salvar'}
+          </Button>
+        </Card>
+      )}
 
       <Card className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold">Avançar processo</h3>

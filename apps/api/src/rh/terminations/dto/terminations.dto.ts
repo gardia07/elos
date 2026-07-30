@@ -61,9 +61,36 @@ export class SendEsocialDto {
   @IsOptional() @IsString() protocolo?: string;
 }
 
+export const AVALIACAO_NIVEIS = ['INSATISFATORIO', 'REGULAR', 'BOM', 'EXCELENTE'] as const;
+export type AvaliacaoNivel = (typeof AVALIACAO_NIVEIS)[number];
+
+export class FatoresDesligamentoDto {
+  @IsOptional() @IsBoolean() remuneracao?: boolean | null;
+  @IsOptional() @IsBoolean() faltaCrescimento?: boolean | null;
+  @IsOptional() @IsBoolean() relacionamentoEquipe?: boolean | null;
+  @IsOptional() @IsBoolean() relacionamentoSuperior?: boolean | null;
+  @IsOptional() @IsBoolean() condicoesTrabalho?: boolean | null;
+  @IsOptional() @IsBoolean() outraEmpresa?: boolean | null;
+  @IsOptional() @IsString() outros?: string;
+}
+
+export class AmbienteTrabalhoDto {
+  @IsOptional() @IsIn(AVALIACAO_NIVEIS) integracaoEquipe?: AvaliacaoNivel | null;
+  @IsOptional() @IsIn(AVALIACAO_NIVEIS) relacionamentoSuperior?: AvaliacaoNivel | null;
+  @IsOptional() @IsIn(AVALIACAO_NIVEIS) relacionamentoGerencia?: AvaliacaoNivel | null;
+  @IsOptional() @IsIn(AVALIACAO_NIVEIS) relacionamentoRH?: AvaliacaoNivel | null;
+  @IsOptional() @IsIn(AVALIACAO_NIVEIS) comunicacaoAreas?: AvaliacaoNivel | null;
+}
+
 export class ExitInterviewDto {
-  @IsOptional() @IsString() entrevistaMotivo?: string;
-  @IsOptional() @IsString() entrevistaObs?: string;
+  @IsOptional() @ValidateNested() @Type(() => FatoresDesligamentoDto) fatores?: FatoresDesligamentoDto;
+  @IsOptional() @ValidateNested() @Type(() => AmbienteTrabalhoDto) ambiente?: AmbienteTrabalhoDto;
+  @IsOptional() @IsIn(AVALIACAO_NIVEIS) avaliacaoGeral?: AvaliacaoNivel | null;
+  @IsOptional() @IsBoolean() voltariaTrabalhar?: boolean | null;
+  @IsOptional() @IsString() voltariaPorque?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) pontosPositivos?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) pontosNegativos?: string[];
+  @IsOptional() @IsString() comentarios?: string;
 }
 
 export class ChecklistItemInputDto {
