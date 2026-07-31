@@ -12,7 +12,7 @@ import { nextMatricula } from './matricula.util';
 import {
   buildAquisitivoCycles,
   computeFeriasStatus,
-  findCycleFor,
+  findCycleForUso,
 } from '../vacations/vacation-cycles.util';
 import {
   AddContatoEmergenciaDto,
@@ -231,7 +231,7 @@ export class EmployeesService {
       hoje,
     );
     const vacationRequests = employee.vacationRequests.map((v) => {
-      const ciclo = findCycleFor(periodosAquisitivos, v.inicio);
+      const ciclo = findCycleForUso(periodosAquisitivos, v.inicio);
       return {
         ...v,
         periodoAquisitivo: ciclo

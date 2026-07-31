@@ -25,15 +25,22 @@ export function buildAquisitivoCycles(
   return cycles;
 }
 
-/** Encontra o ciclo aquisitivo ao qual uma data de gozo/abono pertence (o ciclo vigente na data, ou o mais recente já encerrado). */
-export function findCycleFor(
+/**
+ * Encontra o ciclo aquisitivo a que um dia de gozo/abono pertence — não pelo período em que foi
+ * ganho, mas pelo período concessivo em que a lei exige que seja usado (os 12 meses seguintes ao
+ * fim do ciclo). Como os ciclos são contíguos, o período concessivo do ciclo N é exatamente a
+ * janela do ciclo N+1 — por isso comparamos contra `[cycle.fim, cycle.fim + 12 meses)`, não
+ * contra a janela do próprio ciclo.
+ */
+export function findCycleForUso(
   cycles: AquisitivoCycle[],
   data: Date,
 ): AquisitivoCycle | null {
-  for (let i = cycles.length - 1; i >= 0; i -= 1) {
-    if (data >= cycles[i].inicio) return cycles[i];
+  for (const cycle of cycles) {
+    const concessivoFim = addMonths(cycle.fim, 12);
+    if (data >= cycle.fim && data < concessivoFim) return cycle;
   }
-  return cycles[0] ?? null;
+  return null;
 }
 
 export function inclusiveDays(inicio: Date, fim: Date): number {
@@ -53,9 +60,10 @@ interface VacationUso {
 
 /**
  * Recalcula saldo e vencimento a partir dos ciclos aquisitivos reais — cada ciclo de 12 meses
- * concluído credita 30 dias novos, descontados os dias gozados/vendidos (abono) registrados
- * dentro daquele ciclo. Substitui Employee.feriasSaldo/feriasVencimento, que são gravados uma
- * única vez na admissão e nunca avançam para os ciclos seguintes.
+ * concluído credita 30 dias novos, descontados os dias gozados/vendidos (abono) usados dentro do
+ * respectivo período concessivo (os 12 meses seguintes ao fim do ciclo — ver findCycleForUso).
+ * Substitui Employee.feriasSaldo/feriasVencimento, que são gravados uma única vez na admissão e
+ * nunca avançam para os ciclos seguintes.
  */
 export function computeFeriasStatus(
   dataAdmissao: Date,
@@ -71,15 +79,16 @@ export function computeFeriasStatus(
       if (!vencimento) vencimento = addMonths(cycle.fim, 12);
       continue;
     }
+    const concessivoFim = addMonths(cycle.fim, 12);
     const usados = aprovadas
-      .filter((v) => v.inicio >= cycle.inicio && v.inicio < cycle.fim)
+      .filter((v) => v.inicio >= cycle.fim && v.inicio < concessivoFim)
       .reduce(
         (soma, v) => soma + inclusiveDays(v.inicio, v.fim) + v.diasAbono,
         0,
       );
     const restante = Math.max(0, 30 - usados);
     saldoDisponivel += restante;
-    if (restante > 0 && !vencimento) vencimento = addMonths(cycle.fim, 12);
+    if (restante > 0 && !vencimento) vencimento = concessivoFim;
   }
 
   return {
