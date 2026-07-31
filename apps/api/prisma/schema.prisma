@@ -90,6 +90,7 @@ model Tenant {
   pgrActions        PgrAction[]
   riskMapEntries    RiskMapEntry[]
   sstSettings       SstSettings?
+  ocorrencias       Ocorrencia[]
 
   documentRequirements DocumentRequirement[]
   tasks                Task[]
@@ -527,6 +528,7 @@ model Employee {
   accidents         Accident[]
   occupationalExams OccupationalExam[]
   nrTrainingRecords NrTrainingRecord[]
+  ocorrencias       Ocorrencia[]
 
   policyAcknowledgments PolicyAcknowledgment[]
 
@@ -578,6 +580,7 @@ model EmployeeDocumento {
   id            String   @id @default(uuid()) @db.Uuid
   employeeId    String   @db.Uuid
   terminationId String?  @db.Uuid
+  ocorrenciaId  String?  @db.Uuid
   nome          String
   tipo          String
   tamanho       String
@@ -587,10 +590,30 @@ model EmployeeDocumento {
 
   employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   termination Termination? @relation(fields: [terminationId], references: [id], onDelete: SetNull)
+  ocorrencia  Ocorrencia?  @relation(fields: [ocorrenciaId], references: [id], onDelete: SetNull)
 
   @@index([employeeId])
   @@index([terminationId])
+  @@index([ocorrenciaId])
   @@map("employee_documentos")
+}
+
+model Ocorrencia {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  employeeId String   @db.Uuid
+  tipo       String
+  data       DateTime @db.Date
+  descricao  String
+  autor      String
+  createdAt  DateTime @default(now())
+
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee   Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  documentos EmployeeDocumento[]
+
+  @@index([tenantId, employeeId])
+  @@map("ocorrencias")
 }
 
 model CargoSalarioHistorico {
@@ -725,6 +748,7 @@ model VacationRequest {
   employeeId String         @db.Uuid
   inicio     DateTime       @db.Date
   fim        DateTime       @db.Date
+  diasAbono  Int            @default(0)
   status     VacationStatus @default(PENDENTE)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt

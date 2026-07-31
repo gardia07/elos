@@ -10,8 +10,13 @@ import {
 } from '../../common/blob-storage';
 import { nextMatricula } from './matricula.util';
 import {
+  buildAquisitivoCycles,
+  findCycleFor,
+} from '../vacations/vacation-cycles.util';
+import {
   AddContatoEmergenciaDto,
   AddDependenteDto,
+  AddOcorrenciaDto,
   CreateEmployeeDto,
   ListEmployeesQueryDto,
   PromoteEmployeeDto,
@@ -194,6 +199,7 @@ export class EmployeesService {
           where: { status: 'APROVADA' },
           orderBy: { inicio: 'asc' },
         },
+        ocorrencias: { orderBy: { data: 'desc' } },
       },
     });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
@@ -204,8 +210,24 @@ export class EmployeesService {
     const proximasFerias =
       employee.vacationRequests.find((r) => r.fim >= hoje) ?? null;
 
+    const periodosAquisitivos = buildAquisitivoCycles(
+      employee.dataAdmissao,
+      hoje,
+    );
+    const vacationRequests = employee.vacationRequests.map((v) => {
+      const ciclo = findCycleFor(periodosAquisitivos, v.inicio);
+      return {
+        ...v,
+        periodoAquisitivo: ciclo
+          ? { inicio: ciclo.inicio, fim: ciclo.fim }
+          : null,
+      };
+    });
+
     return {
       ...employee,
+      vacationRequests,
+      periodosAquisitivos,
       conformidadeDocumental:
         conformidade[id] ?? employee.conformidadeDocumental,
       tempoDeCasa: monthsBetween(employee.dataAdmissao, hoje),
@@ -398,6 +420,78 @@ export class EmployeesService {
     await deleteDocumento(doc.blobPathname);
     await this.addHistorico(id, `Documento removido: ${doc.nome}`, 'Documento');
     return { ok: true };
+  }
+
+  async addOcorrencia(id: string, dto: AddOcorrenciaDto) {
+    const { tenantId, userName } = getRequestContext();
+    await this.mustFind(id);
+    const ocorrencia = await this.db().ocorrencia.create({
+      data: {
+        tenantId,
+        employeeId: id,
+        tipo: dto.tipo,
+        data: new Date(dto.data),
+        descricao: dto.descricao,
+        autor: userName,
+      },
+    });
+    await this.addHistorico(
+      id,
+      `Ocorrência registrada: ${dto.tipo}`,
+      'Ocorrência',
+    );
+    return ocorrencia;
+  }
+
+  async removeOcorrencia(id: string, ocorrenciaId: string) {
+    await this.mustFind(id);
+    const ocorrencia = await this.db().ocorrencia.findUnique({
+      where: { id: ocorrenciaId },
+    });
+    if (!ocorrencia || ocorrencia.employeeId !== id)
+      throw new NotFoundException('Ocorrência não encontrada.');
+    const documentos = await this.db().employeeDocumento.findMany({
+      where: { ocorrenciaId },
+    });
+    for (const doc of documentos) await deleteDocumento(doc.blobPathname);
+    await this.db().ocorrencia.delete({ where: { id: ocorrenciaId } });
+    await this.addHistorico(
+      id,
+      `Ocorrência removida: ${ocorrencia.tipo}`,
+      'Ocorrência',
+    );
+    return { ok: true };
+  }
+
+  async addOcorrenciaDocumento(
+    id: string,
+    ocorrenciaId: string,
+    file: Express.Multer.File,
+    nomeOverride?: string,
+  ) {
+    const { tenantId } = getRequestContext();
+    await this.mustFind(id);
+    const ocorrencia = await this.db().ocorrencia.findUnique({
+      where: { id: ocorrenciaId },
+    });
+    if (!ocorrencia || ocorrencia.employeeId !== id)
+      throw new NotFoundException('Ocorrência não encontrada.');
+    const uploaded = await uploadDocumento(
+      `colaboradores/${tenantId}/${id}/ocorrencias`,
+      file,
+    );
+    const doc = await this.db().employeeDocumento.create({
+      data: {
+        employeeId: id,
+        ocorrenciaId,
+        nome: nomeOverride || uploaded.nomeOriginal,
+        tipo: 'Ocorrência',
+        tamanho: uploaded.tamanho,
+        blobPathname: uploaded.pathname,
+        contentType: uploaded.contentType,
+      },
+    });
+    return doc;
   }
 
   private async addHistorico(

@@ -153,10 +153,18 @@ interface EmployeeDetail {
     registradoEm: string;
     registradoPor: string;
   }[];
-  documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string; terminationId: string | null }[];
+  documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string; terminationId: string | null; ocorrenciaId: string | null }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
-  vacationRequests: { id: string; inicio: string; fim: string }[];
+  periodosAquisitivos: { inicio: string; fim: string }[];
+  vacationRequests: {
+    id: string;
+    inicio: string;
+    fim: string;
+    diasAbono: number;
+    periodoAquisitivo: { inicio: string; fim: string } | null;
+  }[];
   leaveRecords: { id: string; tipo: string; inicio: string; retorno: string | null }[];
+  ocorrencias: { id: string; tipo: string; data: string; descricao: string; autor: string }[];
   accidents: {
     id: string;
     tipoAcidente: 'TIPICO' | 'TRAJETO' | 'DOENCA_OCUPACIONAL';
@@ -205,7 +213,7 @@ function toEditFields(e: EmployeeDetail): EditFields {
   };
 }
 
-const TABS = ['geral', 'cargoSalario', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'desligamento', 'registro', 'historico'] as const;
+const TABS = ['geral', 'cargoSalario', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'desligamento', 'registro', 'ocorrencias', 'historico'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
@@ -217,7 +225,10 @@ const TAB_LABEL: Record<Tab, string> = {
   historico: 'Histórico',
   desligamento: 'Desligamento',
   registro: 'Registro de Empregado',
+  ocorrencias: 'Ocorrências',
 };
+
+const OCORRENCIA_TIPOS = ['Advertência verbal', 'Advertência escrita', 'Suspensão', 'Elogio', 'Conflito/desentendimento', 'Outro'] as const;
 
 function formatBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -255,6 +266,7 @@ export default function EmployeeProfilePage() {
   const [contatoTelefone, setContatoTelefone] = useState('');
   const [vacInicio, setVacInicio] = useState('');
   const [vacFim, setVacFim] = useState('');
+  const [vacDiasAbono, setVacDiasAbono] = useState('');
   const [docNome, setDocNome] = useState('');
   const [docTipo, setDocTipo] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -393,11 +405,18 @@ export default function EmployeeProfilePage() {
   });
 
   const requestVacation = useMutation({
-    mutationFn: async () => api.post('/rh/vacations/requests', { employeeId: id, inicio: vacInicio, fim: vacFim }),
+    mutationFn: async () =>
+      api.post('/rh/vacations/requests', {
+        employeeId: id,
+        inicio: vacInicio,
+        fim: vacFim,
+        diasAbono: vacDiasAbono ? Number(vacDiasAbono) : undefined,
+      }),
     onSuccess: () => {
       invalidate();
       setVacInicio('');
       setVacFim('');
+      setVacDiasAbono('');
     },
   });
 
@@ -437,6 +456,45 @@ export default function EmployeeProfilePage() {
       setUploadingTerminationId(null);
     },
     onError: () => setUploadingTerminationId(null),
+  });
+
+  const [ocorTipo, setOcorTipo] = useState<(typeof OCORRENCIA_TIPOS)[number]>('Advertência verbal');
+  const [ocorTipoOutro, setOcorTipoOutro] = useState('');
+  const [ocorData, setOcorData] = useState('');
+  const [ocorDescricao, setOcorDescricao] = useState('');
+  const addOcorrencia = useMutation({
+    mutationFn: async () =>
+      api.post(`/rh/employees/${id}/ocorrencias`, {
+        tipo: ocorTipo === 'Outro' ? ocorTipoOutro || 'Outro' : ocorTipo,
+        data: ocorData,
+        descricao: ocorDescricao,
+      }),
+    onSuccess: () => {
+      invalidate();
+      setOcorTipo('Advertência verbal');
+      setOcorTipoOutro('');
+      setOcorData('');
+      setOcorDescricao('');
+    },
+  });
+
+  const removeOcorrencia = useMutation({
+    mutationFn: async (ocorrenciaId: string) => api.delete(`/rh/employees/${id}/ocorrencias/${ocorrenciaId}`),
+    onSuccess: invalidate,
+  });
+
+  const [uploadingOcorrenciaId, setUploadingOcorrenciaId] = useState<string | null>(null);
+  const addOcorrenciaDocumento = useMutation({
+    mutationFn: async (vars: { ocorrenciaId: string; file: File }) => {
+      const form = new FormData();
+      form.append('arquivo', vars.file);
+      return api.post(`/rh/employees/${id}/ocorrencias/${vars.ocorrenciaId}/documentos`, form);
+    },
+    onSuccess: () => {
+      invalidate();
+      setUploadingOcorrenciaId(null);
+    },
+    onError: () => setUploadingOcorrenciaId(null),
   });
 
   const { data: compliance } = useQuery({
@@ -1131,6 +1189,17 @@ export default function EmployeeProfilePage() {
                   <span className="text-text-secondary">Fim</span>
                   <input type="date" value={vacFim} onChange={(ev) => setVacFim(ev.target.value)} required className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
                 </label>
+                <label className="flex w-full flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Dias de abono pecuniário (venda de férias, opcional, máx. 10)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={vacDiasAbono}
+                    onChange={(ev) => setVacDiasAbono(ev.target.value)}
+                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  />
+                </label>
                 <Button type="submit" disabled={requestVacation.isPending}>
                   Solicitar
                 </Button>
@@ -1322,6 +1391,124 @@ export default function EmployeeProfilePage() {
         </div>
       )}
 
+      {tab === 'ocorrencias' && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            {e.ocorrencias.length === 0 && <p className="text-sm text-text-tertiary">Nenhuma ocorrência registrada.</p>}
+            <ul className="flex flex-col gap-3">
+              {e.ocorrencias.map((o) => {
+                const docs = e.documentos.filter((d) => d.ocorrenciaId === o.id);
+                return (
+                  <li key={o.id} className="flex flex-col gap-2 rounded-[10px] border border-border p-3 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-medium">{o.tipo}</div>
+                        <div className="text-xs text-text-tertiary">
+                          {formatDate(o.data)} · {o.autor}
+                        </div>
+                      </div>
+                      <button onClick={() => removeOcorrencia.mutate(o.id)} className="text-xs text-danger hover:underline">
+                        Remover
+                      </button>
+                    </div>
+                    <p className="text-text-secondary">{o.descricao}</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {docs.map((d) => (
+                        <a
+                          key={d.id}
+                          href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-accent hover:underline"
+                        >
+                          {d.nome}
+                        </a>
+                      ))}
+                      <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                        {uploadingOcorrenciaId === o.id ? 'Enviando…' : 'Anexar arquivo'}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          className="hidden"
+                          disabled={uploadingOcorrenciaId === o.id}
+                          onChange={(ev) => {
+                            const file = ev.target.files?.[0];
+                            if (file) {
+                              setUploadingOcorrenciaId(o.id);
+                              addOcorrenciaDocumento.mutate({ ocorrenciaId: o.id, file });
+                            }
+                            ev.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+
+          <Card>
+            <form
+              className="flex flex-col items-start gap-3"
+              onSubmit={(ev) => {
+                ev.preventDefault();
+                addOcorrencia.mutate();
+              }}
+            >
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Tipo</span>
+                <select
+                  value={ocorTipo}
+                  onChange={(ev) => setOcorTipo(ev.target.value as (typeof OCORRENCIA_TIPOS)[number])}
+                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                >
+                  {OCORRENCIA_TIPOS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {ocorTipo === 'Outro' && (
+                <label className="flex w-full flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Descreva o tipo</span>
+                  <input
+                    value={ocorTipoOutro}
+                    onChange={(ev) => setOcorTipoOutro(ev.target.value)}
+                    required
+                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  />
+                </label>
+              )}
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Data</span>
+                <input
+                  type="date"
+                  value={ocorData}
+                  onChange={(ev) => setOcorData(ev.target.value)}
+                  required
+                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                />
+              </label>
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Descrição</span>
+                <textarea
+                  value={ocorDescricao}
+                  onChange={(ev) => setOcorDescricao(ev.target.value)}
+                  required
+                  rows={4}
+                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                />
+              </label>
+              <Button type="submit" disabled={addOcorrencia.isPending}>
+                Registrar ocorrência
+              </Button>
+            </form>
+          </Card>
+        </div>
+      )}
+
       {tab === 'historico' && (
         <Card className="max-w-2xl">
           {e.historico.length === 0 && <p className="text-sm text-text-tertiary">Sem eventos.</p>}
@@ -1442,7 +1629,7 @@ export default function EmployeeProfilePage() {
 
             <Card>
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Empregador</h4>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Razão social" value={tenant?.razaoSocial ?? tenant?.name} className="sm:col-span-2" />
                 <FormBox label="CNPJ" value={tenant?.cnpj} />
                 <FormBox label="Endereço" value={tenant ? enderecoTenant(tenant) : '—'} className="sm:col-span-3" />
@@ -1451,7 +1638,7 @@ export default function EmployeeProfilePage() {
 
             <Card>
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Empregado</h4>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Nome" value={e.nome} className="sm:col-span-2" />
                 <FormBox label="Data de nascimento" value={e.dataNascimento ? formatDate(e.dataNascimento) : null} />
                 <FormBox label="Residência" value={e.endereco} className="sm:col-span-3" />
@@ -1465,7 +1652,7 @@ export default function EmployeeProfilePage() {
 
             <Card>
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Documentos</h4>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="CPF" value={e.cpf} />
                 <FormBox label="RG" value={e.rg} />
                 <FormBox label="Órgão/data expedição" value={e.rgOrgaoExpedidor ? `${e.rgOrgaoExpedidor}${e.rgDataExpedicao ? ' · ' + formatDate(e.rgDataExpedicao) : ''}` : null} />
@@ -1483,7 +1670,7 @@ export default function EmployeeProfilePage() {
 
             <Card>
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Cargo, admissão e remuneração</h4>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Cargo" value={e.cargo} />
                 <FormBox label="Departamento" value={e.departamento} />
                 <FormBox label="Data de admissão" value={formatDate(e.dataAdmissao)} />
@@ -1511,62 +1698,93 @@ export default function EmployeeProfilePage() {
               )}
             </Card>
 
-            <div>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — período aquisitivo</h4>
-              <Card>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-text-tertiary">
-                      <th className="pb-2">Período</th>
-                      <th className="pb-2">Dias</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {e.feriasHistorico.map((f) => (
-                      <tr key={f.id} className="border-t border-divider">
-                        <td className="py-2">{f.periodo}</td>
-                        <td className="py-2">{f.dias}</td>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 print:grid-cols-3">
+              <div>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — Período Aquisitivo</h4>
+                <Card>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-text-tertiary">
+                        <th className="pb-2">Início</th>
+                        <th className="pb-2">Fim</th>
                       </tr>
-                    ))}
-                    {e.feriasHistorico.length === 0 && (
-                      <tr>
-                        <td colSpan={2}>
-                          <EmptyState>Sem períodos registrados.</EmptyState>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </Card>
-            </div>
+                    </thead>
+                    <tbody>
+                      {e.periodosAquisitivos.map((p, i) => (
+                        <tr key={i} className="border-t border-divider">
+                          <td className="py-2">{formatDate(p.inicio)}</td>
+                          <td className="py-2">{formatDate(p.fim)}</td>
+                        </tr>
+                      ))}
+                      {e.periodosAquisitivos.length === 0 && (
+                        <tr>
+                          <td colSpan={2}>
+                            <EmptyState>Sem períodos aquisitivos.</EmptyState>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </Card>
+              </div>
 
-            <div>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — período de gozo</h4>
-              <Card>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-text-tertiary">
-                      <th className="pb-2">Início</th>
-                      <th className="pb-2">Fim</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {e.vacationRequests.map((v) => (
-                      <tr key={v.id} className="border-t border-divider">
-                        <td className="py-2">{formatDate(v.inicio)}</td>
-                        <td className="py-2">{formatDate(v.fim)}</td>
+              <div>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — Usufruto</h4>
+                <Card>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-text-tertiary">
+                        <th className="pb-2">Início</th>
+                        <th className="pb-2">Fim</th>
                       </tr>
-                    ))}
-                    {e.vacationRequests.length === 0 && (
-                      <tr>
-                        <td colSpan={2}>
-                          <EmptyState>Sem férias gozadas registradas.</EmptyState>
-                        </td>
+                    </thead>
+                    <tbody>
+                      {e.vacationRequests.map((v) => (
+                        <tr key={v.id} className="border-t border-divider">
+                          <td className="py-2">{formatDate(v.inicio)}</td>
+                          <td className="py-2">{formatDate(v.fim)}</td>
+                        </tr>
+                      ))}
+                      {e.vacationRequests.length === 0 && (
+                        <tr>
+                          <td colSpan={2}>
+                            <EmptyState>Sem férias gozadas registradas.</EmptyState>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </Card>
+              </div>
+
+              <div>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — Abono Pecuniário</h4>
+                <Card>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-text-tertiary">
+                        <th className="pb-2">Período</th>
+                        <th className="pb-2">Dias vendidos</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </Card>
+                    </thead>
+                    <tbody>
+                      {e.vacationRequests.filter((v) => v.diasAbono > 0).map((v) => (
+                        <tr key={v.id} className="border-t border-divider">
+                          <td className="py-2">{formatDate(v.inicio)} a {formatDate(v.fim)}</td>
+                          <td className="py-2">{v.diasAbono}</td>
+                        </tr>
+                      ))}
+                      {e.vacationRequests.filter((v) => v.diasAbono > 0).length === 0 && (
+                        <tr>
+                          <td colSpan={2}>
+                            <EmptyState>Sem abono pecuniário registrado.</EmptyState>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </Card>
+              </div>
             </div>
 
             <div>
@@ -1605,31 +1823,81 @@ export default function EmployeeProfilePage() {
               </Card>
             </div>
 
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 print:grid-cols-2">
+              <div>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Acidentes de trabalho e doenças ocupacionais</h4>
+                <Card>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-text-tertiary">
+                        <th className="pb-2">Data</th>
+                        <th className="pb-2">Tipo</th>
+                        <th className="pb-2">Afastamento</th>
+                        <th className="pb-2">Descrição</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {e.accidents.map((a) => (
+                        <tr key={a.id} className="border-t border-divider align-top">
+                          <td className="py-2">{formatDate(a.dataAcidente)}</td>
+                          <td className="py-2">{ACCIDENT_TIPO_LABEL[a.tipoAcidente]}</td>
+                          <td className="py-2">{a.comAfastamento ? `${a.diasAfastamento} dia(s)` : 'Não'}</td>
+                          <td className="py-2">{a.descricao ?? '—'}</td>
+                        </tr>
+                      ))}
+                      {e.accidents.length === 0 && (
+                        <tr>
+                          <td colSpan={4}>
+                            <EmptyState>Nenhum acidente ou doença ocupacional registrada.</EmptyState>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </Card>
+              </div>
+
+              <Card>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Rescisão de contrato de trabalho</h4>
+                {e.terminations.length === 0 ? (
+                  <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
+                ) : (
+                  <div className="flex flex-col gap-1 text-sm">
+                    {e.terminations.map((t) => (
+                      <div key={t.id}>
+                        Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+
             <div>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Acidentes de trabalho e doenças ocupacionais</h4>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Ocorrências</h4>
               <Card>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-text-tertiary">
                       <th className="pb-2">Data</th>
                       <th className="pb-2">Tipo</th>
-                      <th className="pb-2">Afastamento</th>
                       <th className="pb-2">Descrição</th>
+                      <th className="pb-2">Anexos</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {e.accidents.map((a) => (
-                      <tr key={a.id} className="border-t border-divider align-top">
-                        <td className="py-2">{formatDate(a.dataAcidente)}</td>
-                        <td className="py-2">{ACCIDENT_TIPO_LABEL[a.tipoAcidente]}</td>
-                        <td className="py-2">{a.comAfastamento ? `${a.diasAfastamento} dia(s)` : 'Não'}</td>
-                        <td className="py-2">{a.descricao ?? '—'}</td>
+                    {e.ocorrencias.map((o) => (
+                      <tr key={o.id} className="border-t border-divider align-top">
+                        <td className="py-2">{formatDate(o.data)}</td>
+                        <td className="py-2">{o.tipo}</td>
+                        <td className="py-2">{o.descricao}</td>
+                        <td className="py-2">{e.documentos.filter((d) => d.ocorrenciaId === o.id).length || '—'}</td>
                       </tr>
                     ))}
-                    {e.accidents.length === 0 && (
+                    {e.ocorrencias.length === 0 && (
                       <tr>
                         <td colSpan={4}>
-                          <EmptyState>Sem ocorrências registradas.</EmptyState>
+                          <EmptyState>Nenhuma ocorrência registrada.</EmptyState>
                         </td>
                       </tr>
                     )}
@@ -1637,21 +1905,6 @@ export default function EmployeeProfilePage() {
                 </table>
               </Card>
             </div>
-
-            <Card>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Rescisão de contrato de trabalho</h4>
-              {e.terminations.length === 0 ? (
-                <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
-              ) : (
-                <div className="flex flex-col gap-1 text-sm">
-                  {e.terminations.map((t) => (
-                    <div key={t.id}>
-                      Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
 
             <Card>
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Observações</h4>

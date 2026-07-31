@@ -160,3 +160,9 @@ export class AddDependenteDto {
   @IsDateString()
   dataNascimento?: string;
 }
+
+export class AddOcorrenciaDto {
+  @IsString() tipo!: string;
+  @IsDateString() data!: string;
+  @IsString() descricao!: string;
+}

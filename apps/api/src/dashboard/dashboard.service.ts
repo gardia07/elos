@@ -231,11 +231,14 @@ export class DashboardService {
       });
     }
     for (const colaborador of colaboradoresFeriasVencendo) {
+      const diasRestantes = Math.round(
+        (colaborador.feriasVencimento.getTime() - hoje.getTime()) / 86_400_000,
+      );
       alerts.push({
         hub: 'RH',
         alertKey: `rh-ferias-vencendo-${colaborador.id}`,
-        prioridade: 'MEDIA',
-        mensagem: `${colaborador.nome} — período aquisitivo de férias vence em ${formatDiasRestantes(colaborador.feriasVencimento, hoje)}`,
+        prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
+        mensagem: `${colaborador.nome} — período aquisitivo de férias ${diasRestantes < 0 ? 'venceu' : 'vence'} (${formatDiasRestantes(colaborador.feriasVencimento, hoje)})`,
         href: `/gestao-de-pessoas/colaboradores/${colaborador.id}`,
       });
     }

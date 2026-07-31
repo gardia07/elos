@@ -20,6 +20,7 @@ import { EmployeesService } from './employees.service';
 import {
   AddContatoEmergenciaDto,
   AddDependenteDto,
+  AddOcorrenciaDto,
   CreateEmployeeDto,
   ListEmployeesQueryDto,
   PromoteEmployeeDto,
@@ -166,5 +167,31 @@ export class EmployeesController {
     @Param('documentoId') documentoId: string,
   ) {
     return this.service.removeDocumento(id, documentoId);
+  }
+
+  @Post(':id/ocorrencias')
+  addOcorrencia(@Param('id') id: string, @Body() dto: AddOcorrenciaDto) {
+    return this.service.addOcorrencia(id, dto);
+  }
+
+  @Delete(':id/ocorrencias/:ocorrenciaId')
+  removeOcorrencia(
+    @Param('id') id: string,
+    @Param('ocorrenciaId') ocorrenciaId: string,
+  ) {
+    return this.service.removeOcorrencia(id, ocorrenciaId);
+  }
+
+  @Post(':id/ocorrencias/:ocorrenciaId/documentos')
+  @UseInterceptors(FileInterceptor('arquivo', documentoUploadOptions))
+  addOcorrenciaDocumento(
+    @Param('id') id: string,
+    @Param('ocorrenciaId') ocorrenciaId: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body('nome') nome?: string,
+  ) {
+    if (!file)
+      throw new BadRequestException('Envie o arquivo no campo "arquivo".');
+    return this.service.addOcorrenciaDocumento(id, ocorrenciaId, file, nome);
   }
 }

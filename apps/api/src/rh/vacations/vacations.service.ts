@@ -32,7 +32,14 @@ export class VacationsService {
     const fim = new Date(dto.fim);
     if (fim < inicio) throw new BadRequestException('A data de fim não pode ser anterior à data de início.');
     return this.db().vacationRequest.create({
-      data: { employeeId: dto.employeeId, inicio, fim, status: 'PENDENTE', tenantId: getRequestContext().tenantId },
+      data: {
+        employeeId: dto.employeeId,
+        inicio,
+        fim,
+        diasAbono: dto.diasAbono ?? 0,
+        status: 'PENDENTE',
+        tenantId: getRequestContext().tenantId,
+      },
     });
   }
 
