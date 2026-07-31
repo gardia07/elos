@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { DocumentsService } from '../rh/documents/documents.service';
 import { VacationsService } from '../rh/vacations/vacations.service';
+import { computeFeriasStatus } from '../rh/vacations/vacation-cycles.util';
 import { RequestPortalVacationDto } from './dto/portal.dto';
 
 @Injectable()
@@ -29,7 +30,7 @@ export class PortalService {
 
   async me() {
     const employeeId = await this.myEmployeeId();
-    return this.db().employee.findUniqueOrThrow({
+    const employee = await this.db().employee.findUniqueOrThrow({
       where: { id: employeeId },
       select: {
         nome: true,
@@ -41,10 +42,23 @@ export class PortalService {
         status: true,
         email: true,
         telefone: true,
-        feriasSaldo: true,
-        feriasVencimento: true,
+        vacationRequests: {
+          where: { status: 'APROVADA' },
+          select: { inicio: true, fim: true, diasAbono: true },
+        },
       },
     });
+    const { vacationRequests, ...rest } = employee;
+    const feriasStatus = computeFeriasStatus(
+      employee.dataAdmissao,
+      new Date(),
+      vacationRequests,
+    );
+    return {
+      ...rest,
+      feriasSaldo: feriasStatus.saldoDisponivel,
+      feriasVencimento: feriasStatus.vencimento,
+    };
   }
 
   async documentos() {

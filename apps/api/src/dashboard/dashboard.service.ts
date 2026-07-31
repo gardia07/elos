@@ -4,6 +4,7 @@ import { getRequestContext } from '../common/request-context';
 import { ComplianceOverviewService } from '../compliance/overview.service';
 import { DocumentsService } from '../rh/documents/documents.service';
 import { buildTerminationAlerts } from '../rh/terminations/terminations-lembretes.util';
+import { computeFeriasStatus } from '../rh/vacations/vacation-cycles.util';
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -155,8 +156,16 @@ export class DashboardService {
         where: { cumprido: false, vencimento: { lte: em30dias } },
       }),
       db.employee.findMany({
-        where: { status: 'ATIVO', feriasVencimento: { lte: em60dias } },
-        select: { id: true, nome: true, feriasVencimento: true },
+        where: { status: 'ATIVO' },
+        select: {
+          id: true,
+          nome: true,
+          dataAdmissao: true,
+          vacationRequests: {
+            where: { status: 'APROVADA' },
+            select: { inicio: true, fim: true, diasAbono: true },
+          },
+        },
       }),
       db.collectiveAgreement.count({
         where: { reajusteAplicadoEm: null, vigenciaFim: { gte: hoje } },
@@ -231,14 +240,20 @@ export class DashboardService {
       });
     }
     for (const colaborador of colaboradoresFeriasVencendo) {
+      const vencimento = computeFeriasStatus(
+        colaborador.dataAdmissao,
+        hoje,
+        colaborador.vacationRequests,
+      ).vencimento;
+      if (vencimento > em60dias) continue;
       const diasRestantes = Math.round(
-        (colaborador.feriasVencimento.getTime() - hoje.getTime()) / 86_400_000,
+        (vencimento.getTime() - hoje.getTime()) / 86_400_000,
       );
       alerts.push({
         hub: 'RH',
         alertKey: `rh-ferias-vencendo-${colaborador.id}`,
         prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
-        mensagem: `${colaborador.nome} — período aquisitivo de férias ${diasRestantes < 0 ? 'venceu' : 'vence'} (${formatDiasRestantes(colaborador.feriasVencimento, hoje)})`,
+        mensagem: `${colaborador.nome} — período aquisitivo de férias ${diasRestantes < 0 ? 'venceu' : 'vence'} (${formatDiasRestantes(vencimento, hoje)})`,
         href: `/gestao-de-pessoas/colaboradores/${colaborador.id}`,
       });
     }

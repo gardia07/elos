@@ -10,6 +10,7 @@ import { getRequestContext } from '../../common/request-context';
 import { matches } from '../documents/documents.service';
 import { anosCompletos } from '../../dp/simulacoes/constantes-trabalhistas';
 import { calcularRescisao } from '../../dp/simulacoes/calculo-rescisao';
+import { computeFeriasStatus } from '../vacations/vacation-cycles.util';
 import { buildTerminationAlerts } from './terminations-lembretes.util';
 import { DocumentTemplatesService } from '../document-templates/document-templates.service';
 import {
@@ -231,14 +232,26 @@ export class TerminationsService {
     const t = await this.mustFind(id);
     const employee = await this.db().employee.findUnique({
       where: { id: t.employeeId },
-      select: { salario: true, dataAdmissao: true, feriasSaldo: true },
+      select: {
+        salario: true,
+        dataAdmissao: true,
+        vacationRequests: {
+          where: { status: 'APROVADA' },
+          select: { inicio: true, fim: true, diasAbono: true },
+        },
+      },
     });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
 
+    const feriasStatus = computeFeriasStatus(
+      employee.dataAdmissao,
+      new Date(),
+      employee.vacationRequests,
+    );
     const resultado = calcularRescisao({
       salario: Number(employee.salario),
       dataAdmissao: employee.dataAdmissao,
-      feriasSaldo: employee.feriasSaldo,
+      feriasSaldo: feriasStatus.saldoDisponivel,
       tipo: t.tipo,
       dataPrevista: t.data,
     });

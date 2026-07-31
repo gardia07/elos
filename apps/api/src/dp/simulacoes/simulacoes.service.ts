@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { AVISO_SIMULACAO, calcularRescisao } from './calculo-rescisao';
 import { SimularFeriasDto, SimularRescisaoDto } from './dto/simulacoes.dto';
+import { computeFeriasStatus } from '../../rh/vacations/vacation-cycles.util';
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -58,7 +59,10 @@ export class SimulacoesService {
         nome: true,
         salario: true,
         dataAdmissao: true,
-        feriasSaldo: true,
+        vacationRequests: {
+          where: { status: 'APROVADA' },
+          select: { inicio: true, fim: true, diasAbono: true },
+        },
       },
     });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
@@ -72,10 +76,15 @@ export class SimulacoesService {
       );
     }
 
+    const feriasStatus = computeFeriasStatus(
+      employee.dataAdmissao,
+      new Date(),
+      employee.vacationRequests,
+    );
     const resultado = calcularRescisao({
       salario: Number(employee.salario),
       dataAdmissao: employee.dataAdmissao,
-      feriasSaldo: employee.feriasSaldo,
+      feriasSaldo: feriasStatus.saldoDisponivel,
       tipo: dto.tipo,
       dataPrevista,
       saldoFgtsEstimado: dto.saldoFgtsEstimado,

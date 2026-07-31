@@ -2,13 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { getRequestContext } from '../../common/request-context';
 import { CreateLeaveDto, CreateVacationRequestDto } from './dto/vacations.dto';
+import { computeFeriasStatus, inclusiveDays } from './vacation-cycles.util';
 
 function formatBr(date: Date): string {
   return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-}
-
-function inclusiveDays(inicio: Date, fim: Date): number {
-  return Math.round((fim.getTime() - inicio.getTime()) / 86_400_000) + 1;
 }
 
 @Injectable()
@@ -51,7 +48,6 @@ export class VacationsService {
 
     const dias = inclusiveDays(request.inicio, request.fim);
     const employee = await db.employee.findUniqueOrThrow({ where: { id: request.employeeId } });
-    const novoSaldo = Math.max(0, employee.feriasSaldo - dias);
 
     // NOTE: these are sequential (not one DB transaction) because each call
     // through the tenant-scoped client already opens its own transaction to
@@ -59,7 +55,23 @@ export class VacationsService {
     // partial failure here would need manual reconciliation; acceptable for
     // this stage, revisit if/when a combinable RLS+transaction pattern is needed.
     const updated = await db.vacationRequest.update({ where: { id }, data: { status: 'APROVADA' } });
-    await db.employee.update({ where: { id: request.employeeId }, data: { feriasSaldo: novoSaldo } });
+
+    const aprovadas = await db.vacationRequest.findMany({
+      where: { employeeId: request.employeeId, status: 'APROVADA' },
+      select: { inicio: true, fim: true, diasAbono: true },
+    });
+    const status = computeFeriasStatus(
+      employee.dataAdmissao,
+      new Date(),
+      aprovadas,
+    );
+    await db.employee.update({
+      where: { id: request.employeeId },
+      data: {
+        feriasSaldo: status.saldoDisponivel,
+        feriasVencimento: status.vencimento,
+      },
+    });
     await db.feriasHistorico.create({
       data: { employeeId: request.employeeId, periodo: `${formatBr(request.inicio)} a ${formatBr(request.fim)}`, dias },
     });
@@ -106,17 +118,33 @@ export class VacationsService {
   async balances() {
     const employees = await this.db().employee.findMany({
       where: { status: 'ATIVO' },
-      select: { id: true, nome: true, feriasSaldo: true },
+      select: {
+        id: true,
+        nome: true,
+        dataAdmissao: true,
+        vacationRequests: {
+          where: { status: 'APROVADA' },
+          select: { inicio: true, fim: true, diasAbono: true },
+        },
+      },
       orderBy: { nome: 'asc' },
     });
-    return employees.map((e) => ({
-      employeeId: e.id,
-      nome: e.nome,
-      direito: 30,
-      gozados: 30 - e.feriasSaldo,
-      aVencer: e.feriasSaldo,
-      alerta: e.feriasSaldo <= 5,
-    }));
+    const hoje = new Date();
+    return employees.map((e) => {
+      const status = computeFeriasStatus(
+        e.dataAdmissao,
+        hoje,
+        e.vacationRequests,
+      );
+      return {
+        employeeId: e.id,
+        nome: e.nome,
+        direito: 30,
+        gozados: 30 - status.saldoDisponivel,
+        aVencer: status.saldoDisponivel,
+        alerta: status.saldoDisponivel <= 5,
+      };
+    });
   }
 
   listLeaves() {

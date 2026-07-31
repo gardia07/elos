@@ -11,6 +11,7 @@ import {
 import { nextMatricula } from './matricula.util';
 import {
   buildAquisitivoCycles,
+  computeFeriasStatus,
   findCycleFor,
 } from '../vacations/vacation-cycles.util';
 import {
@@ -118,16 +119,31 @@ export class EmployeesService {
     const employees = await this.db().employee.findMany({
       where,
       orderBy: { nome: 'asc' },
+      include: {
+        vacationRequests: {
+          where: { status: 'APROVADA' },
+          select: { inicio: true, fim: true, diasAbono: true },
+        },
+      },
     });
     const { byEmployee: conformidade } =
       await this.documents.complianceOverview(employees.map((e) => e.id));
     const hoje = new Date();
-    let mapped = employees.map((e) => ({
-      ...e,
-      conformidadeDocumental: conformidade[e.id] ?? e.conformidadeDocumental,
-      tempoDeCasa: monthsBetween(e.dataAdmissao, hoje),
-      feriasVencimentoAlerta: daysUntil(e.feriasVencimento, hoje) <= 60,
-    }));
+    let mapped = employees.map((e) => {
+      const feriasStatus = computeFeriasStatus(
+        e.dataAdmissao,
+        hoje,
+        e.vacationRequests,
+      );
+      return {
+        ...e,
+        feriasSaldo: feriasStatus.saldoDisponivel,
+        feriasVencimento: feriasStatus.vencimento,
+        conformidadeDocumental: conformidade[e.id] ?? e.conformidadeDocumental,
+        tempoDeCasa: monthsBetween(e.dataAdmissao, hoje),
+        feriasVencimentoAlerta: daysUntil(feriasStatus.vencimento, hoje) <= 60,
+      };
+    });
 
     if (query.feriasVencendo)
       mapped = mapped.filter((e) => e.feriasVencimentoAlerta);
@@ -223,15 +239,22 @@ export class EmployeesService {
           : null,
       };
     });
+    const feriasStatus = computeFeriasStatus(
+      employee.dataAdmissao,
+      hoje,
+      employee.vacationRequests,
+    );
 
     return {
       ...employee,
       vacationRequests,
       periodosAquisitivos,
+      feriasSaldo: feriasStatus.saldoDisponivel,
+      feriasVencimento: feriasStatus.vencimento,
       conformidadeDocumental:
         conformidade[id] ?? employee.conformidadeDocumental,
       tempoDeCasa: monthsBetween(employee.dataAdmissao, hoje),
-      feriasVencimentoAlerta: daysUntil(employee.feriasVencimento, hoje) <= 60,
+      feriasVencimentoAlerta: daysUntil(feriasStatus.vencimento, hoje) <= 60,
       proximasFerias: proximasFerias
         ? { inicio: proximasFerias.inicio, fim: proximasFerias.fim }
         : null,
