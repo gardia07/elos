@@ -78,7 +78,7 @@ export class SimulacoesService {
 
     const feriasStatus = computeFeriasStatus(
       employee.dataAdmissao,
-      new Date(),
+      dataPrevista,
       employee.vacationRequests,
     );
     const resultado = calcularRescisao({

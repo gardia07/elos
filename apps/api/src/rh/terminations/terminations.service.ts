@@ -245,7 +245,7 @@ export class TerminationsService {
 
     const feriasStatus = computeFeriasStatus(
       employee.dataAdmissao,
-      new Date(),
+      t.data,
       employee.vacationRequests,
     );
     const resultado = calcularRescisao({
