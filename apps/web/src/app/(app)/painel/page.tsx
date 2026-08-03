@@ -47,6 +47,29 @@ interface AgendaItem {
   origem: string;
 }
 
+type EventoOrigem =
+  | 'AGENDA_ITEM'
+  | 'LABOR_DEADLINE'
+  | 'OCCUPATIONAL_EXAM'
+  | 'NR_TRAINING'
+  | 'VACATION_REQUEST'
+  | 'TERMINATION'
+  | 'TERMINATION_AVISO_FIM'
+  | 'TERMINATION_PAGAMENTO';
+
+interface Evento {
+  id: string;
+  origem: EventoOrigem;
+  data: string;
+  titulo: string;
+  hub: string;
+  bucket: 'vencido' | 'hoje' | 'semana' | 'mes' | 'futuro';
+  concluida: boolean;
+  hora?: string | null;
+  tipo?: AgendaItemTipo;
+  notas?: string | null;
+}
+
 const AGENDA_TIPO_COLOR: Record<AgendaItemTipo, string> = {
   REUNIAO: '#3B82F6',
   PRAZO: '#A94438',
@@ -141,9 +164,14 @@ export default function PainelPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard', 'tasks'] }),
   });
 
-  const { data: agendaItems } = useQuery({
-    queryKey: ['agenda', 'items', today],
-    queryFn: async () => (await api.get<AgendaItem[]>('/agenda/items', { params: { data: today } })).data,
+  // Agenda do dia consulta a Agenda Geral (não só /agenda/items) para trazer,
+  // além dos itens manuais/da Elô, os prazos calculados a partir de outros
+  // registros do sistema (ex.: fim do aviso prévio e prazo de pagamento de um
+  // desligamento em andamento) — sem isso esses prazos só apareciam na página
+  // separada de Agenda Geral, nunca no widget do dia a dia.
+  const { data: eventosHoje } = useQuery({
+    queryKey: ['ferramentas', 'agenda-geral', today],
+    queryFn: async () => (await api.get<Evento[]>('/ferramentas/agenda-geral', { params: { data: today } })).data,
   });
 
   const { data: weekItems } = useQuery({
@@ -161,7 +189,7 @@ export default function PainelPage() {
   }, [weekItems]);
 
   const invalidateAgenda = () => {
-    queryClient.invalidateQueries({ queryKey: ['agenda', 'items', today] });
+    queryClient.invalidateQueries({ queryKey: ['ferramentas', 'agenda-geral', today] });
     queryClient.invalidateQueries({ queryKey: ['agenda', 'items', 'semana', weekStart, weekEnd] });
   };
 
@@ -181,16 +209,20 @@ export default function PainelPage() {
     onSuccess: invalidateAgenda,
   });
 
+  const concluirEvento = useMutation({
+    mutationFn: async (vars: { origem: EventoOrigem; id: string }) => api.post('/ferramentas/agenda-geral/concluir', vars),
+    onSuccess: invalidateAgenda,
+  });
+
   const saveNotas = useMutation({
     mutationFn: async (vars: { id: string; notas: string }) => api.patch(`/agenda/items/${vars.id}`, { notas: vars.notas }),
     onSuccess: invalidateAgenda,
   });
 
   // Agenda do dia mostra o que foi digitado manualmente/pela Elô (AgendaItem)
-  // e as tarefas manuais (Task origem=MANUAL). Pendências geradas
-  // automaticamente pelo sistema (origem=SISTEMA) vão para o card de
-  // Alertas prioritários, não duplicam aqui.
-  const timedItems = (agendaItems ?? [])
+  // e as tarefas manuais (Task origem=MANUAL), além dos prazos calculados
+  // pela Agenda Geral (ex.: desligamento, férias, exames, treinamentos).
+  const timedItems = (eventosHoje ?? [])
     .slice()
     .sort((a, b) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99'));
   const taskItems = (tasks ?? [])
@@ -273,21 +305,31 @@ export default function PainelPage() {
 
               <ul className="flex max-h-[420px] flex-col gap-2 overflow-y-auto">
                 {timedItems.map((item) => {
-                  const isExpanded = expandedId === item.id;
+                  const isAgendaItem = item.origem === 'AGENDA_ITEM';
+                  const isExpanded = isAgendaItem && expandedId === item.id;
                   return (
                     <li key={`agenda-${item.id}`} className="rounded-[10px] border border-border p-2.5">
                       <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
                           checked={item.concluida}
-                          onChange={(e) => toggleItem.mutate({ id: item.id, concluida: e.target.checked })}
+                          disabled={!isAgendaItem && item.concluida}
+                          onChange={(e) =>
+                            isAgendaItem
+                              ? toggleItem.mutate({ id: item.id, concluida: e.target.checked })
+                              : concluirEvento.mutate({ origem: item.origem, id: item.id })
+                          }
                           className="mt-0.5"
                         />
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: AGENDA_TIPO_COLOR[item.tipo] }} title={AGENDA_TIPO_LABEL[item.tipo]} />
+                        {isAgendaItem && item.tipo ? (
+                          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: AGENDA_TIPO_COLOR[item.tipo] }} title={AGENDA_TIPO_LABEL[item.tipo]} />
+                        ) : null}
                         <button
                           type="button"
                           className="flex-1 text-left"
+                          disabled={!isAgendaItem}
                           onClick={() => {
+                            if (!isAgendaItem) return;
                             if (isExpanded) {
                               setExpandedId(null);
                             } else {
@@ -297,9 +339,10 @@ export default function PainelPage() {
                           }}
                         >
                           {item.hora && <div className="text-xs font-medium text-text-tertiary">{item.hora}</div>}
-                          <div className={`text-sm ${item.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{item.descricao}</div>
+                          <div className={`text-sm ${item.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{item.titulo}</div>
                         </button>
-                        <span className="mt-0.5 text-text-tertiary">{isExpanded ? '▾' : '▸'}</span>
+                        {!isAgendaItem && <span className="text-xs text-text-tertiary">{item.hub}</span>}
+                        {isAgendaItem && <span className="mt-0.5 text-text-tertiary">{isExpanded ? '▾' : '▸'}</span>}
                       </div>
                       {isExpanded && (
                         <div className="mt-2 flex flex-col gap-2 border-t border-divider pt-2 pl-6">
