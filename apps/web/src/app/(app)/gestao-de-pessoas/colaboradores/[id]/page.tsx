@@ -142,7 +142,7 @@ interface EmployeeDetail {
   proximasFerias: { inicio: string; fim: string } | null;
   tempoDeCasa: { anos: number; meses: number };
   dependentes: { id: string; nome: string; parentesco: string; cpf: string | null; dataNascimento: string | null }[];
-  historico: { id: string; evento: string; categoria: string; autor: string; data: string }[];
+  historico: { id: string; evento: string; categoria: string; autor: string; data: string; revertivel: boolean }[];
   cargoSalarioHistorico: {
     id: string;
     vigenciaDesde: string;
@@ -338,6 +338,15 @@ export default function EmployeeProfilePage() {
       setDeletingHistoricoId(null);
       setHistoricoMotivoExclusao('');
     },
+  });
+
+  const [revertingHistoricoId, setRevertingHistoricoId] = useState<string | null>(null);
+
+  const revertHistorico = useMutation({
+    mutationFn: async (historicoId: string) => api.post(`/rh/employees/${id}/historico/${historicoId}/reverter`),
+    onMutate: (historicoId: string) => setRevertingHistoricoId(historicoId),
+    onSuccess: () => invalidate(),
+    onSettled: () => setRevertingHistoricoId(null),
   });
 
   const salarioAlterado = !!edit && !!e && Number(edit.salario) !== Number(e.salario);
@@ -1514,11 +1523,23 @@ export default function EmployeeProfilePage() {
           {e.historico.length === 0 && <p className="text-sm text-text-tertiary">Sem eventos.</p>}
           <ul className="flex flex-col gap-2 text-sm">
             {e.historico.map((h) => (
-              <li key={h.id} className="flex flex-col">
-                <span>{h.evento}</span>
-                <span className="text-xs text-text-tertiary">
-                  {h.categoria} · {formatDate(h.data)} · {h.autor}
-                </span>
+              <li key={h.id} className="flex items-center justify-between gap-3">
+                <div className="flex flex-col">
+                  <span>{h.evento}</span>
+                  <span className="text-xs text-text-tertiary">
+                    {h.categoria} · {formatDate(h.data)} · {h.autor}
+                  </span>
+                </div>
+                {h.revertivel && (
+                  <button
+                    type="button"
+                    disabled={revertHistorico.isPending && revertingHistoricoId === h.id}
+                    onClick={() => revertHistorico.mutate(h.id)}
+                    className="shrink-0 text-xs font-medium text-accent hover:underline disabled:opacity-60"
+                  >
+                    {revertHistorico.isPending && revertingHistoricoId === h.id ? 'Revertendo…' : 'Reverter'}
+                  </button>
+                )}
               </li>
             ))}
           </ul>

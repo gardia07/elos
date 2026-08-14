@@ -185,6 +185,14 @@ export class EmployeesController {
     return this.service.removeOcorrencia(id, ocorrenciaId);
   }
 
+  @Post(':id/historico/:historicoId/reverter')
+  reverterExclusao(
+    @Param('id') id: string,
+    @Param('historicoId') historicoId: string,
+  ) {
+    return this.service.reverterExclusao(id, historicoId);
+  }
+
   @Post(':id/ocorrencias/:ocorrenciaId/documentos')
   @UseInterceptors(FileInterceptor('arquivo', documentoUploadOptions))
   addOcorrenciaDocumento(

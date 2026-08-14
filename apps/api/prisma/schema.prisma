@@ -572,11 +572,12 @@ model Dependente {
 }
 
 model ContatoEmergencia {
-  id         String  @id @default(uuid()) @db.Uuid
-  employeeId String  @db.Uuid
+  id         String    @id @default(uuid()) @db.Uuid
+  employeeId String    @db.Uuid
   nome       String
   parentesco String
   telefone   String?
+  deletedAt  DateTime?
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
@@ -584,12 +585,17 @@ model ContatoEmergencia {
 }
 
 model HistoricoEvento {
-  id         String   @id @default(uuid()) @db.Uuid
-  employeeId String   @db.Uuid
-  evento     String
-  categoria  String
-  autor      String
-  data       DateTime @default(now())
+  id           String   @id @default(uuid()) @db.Uuid
+  employeeId   String   @db.Uuid
+  evento       String
+  categoria    String
+  autor        String
+  data         DateTime @default(now())
+  // Presentes só em eventos de exclusão de um registro revertível — é o que
+  // permite o botão "Reverter" na tela de histórico. Sem relação formal com
+  // @relation porque entidadeTipo varia entre várias tabelas diferentes.
+  entidadeTipo String?
+  entidadeId   String?  @db.Uuid
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
@@ -598,16 +604,17 @@ model HistoricoEvento {
 }
 
 model EmployeeDocumento {
-  id            String   @id @default(uuid()) @db.Uuid
-  employeeId    String   @db.Uuid
-  terminationId String?  @db.Uuid
-  ocorrenciaId  String?  @db.Uuid
+  id            String    @id @default(uuid()) @db.Uuid
+  employeeId    String    @db.Uuid
+  terminationId String?   @db.Uuid
+  ocorrenciaId  String?   @db.Uuid
   nome          String
   tipo          String
   tamanho       String
   blobPathname  String?
   contentType   String?
-  uploadEm      DateTime @default(now())
+  uploadEm      DateTime  @default(now())
+  deletedAt     DateTime?
 
   employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   termination Termination? @relation(fields: [terminationId], references: [id], onDelete: SetNull)
@@ -620,14 +627,15 @@ model EmployeeDocumento {
 }
 
 model Ocorrencia {
-  id         String   @id @default(uuid()) @db.Uuid
-  tenantId   String   @db.Uuid
-  employeeId String   @db.Uuid
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @db.Uuid
+  employeeId String    @db.Uuid
   tipo       String
-  data       DateTime @db.Date
+  data       DateTime  @db.Date
   descricao  String
   autor      String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
 
   tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   employee   Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -638,15 +646,16 @@ model Ocorrencia {
 }
 
 model CargoSalarioHistorico {
-  id            String   @id @default(uuid()) @db.Uuid
-  employeeId    String   @db.Uuid
-  vigenciaDesde DateTime @db.Date
+  id            String    @id @default(uuid()) @db.Uuid
+  employeeId    String    @db.Uuid
+  vigenciaDesde DateTime  @db.Date
   cargo         String
-  salario       Decimal  @db.Decimal(12, 2)
+  salario       Decimal   @db.Decimal(12, 2)
   motivo        String
   observacao    String?
-  registradoEm  DateTime @default(now())
+  registradoEm  DateTime  @default(now())
   registradoPor String
+  deletedAt     DateTime?
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 

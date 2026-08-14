@@ -1,13 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DocumentsService } from '../documents/documents.service';
 import { getRequestContext } from '../../common/request-context';
-import {
-  deleteDocumento,
-  downloadDocumento,
-  uploadDocumento,
-} from '../../common/blob-storage';
+import { downloadDocumento, uploadDocumento } from '../../common/blob-storage';
 import { nextMatricula } from './matricula.util';
 import {
   buildAquisitivoCycles,
@@ -202,11 +198,11 @@ export class EmployeesService {
       where: { id },
       include: {
         dependentes: true,
-        contatosEmergencia: true,
+        contatosEmergencia: { where: { deletedAt: null } },
         historico: { orderBy: { data: 'desc' } },
-        documentos: { orderBy: { uploadEm: 'desc' } },
+        documentos: { where: { deletedAt: null }, orderBy: { uploadEm: 'desc' } },
         feriasHistorico: true,
-        cargoSalarioHistorico: { orderBy: { vigenciaDesde: 'desc' } },
+        cargoSalarioHistorico: { where: { deletedAt: null }, orderBy: { vigenciaDesde: 'desc' } },
         accidents: { orderBy: { dataAcidente: 'desc' } },
         terminations: { orderBy: { data: 'desc' } },
         evaluationRecords: { include: { cycle: true } },
@@ -215,10 +211,12 @@ export class EmployeesService {
           where: { status: 'APROVADA' },
           orderBy: { inicio: 'asc' },
         },
-        ocorrencias: { orderBy: { data: 'desc' } },
+        ocorrencias: { where: { deletedAt: null }, orderBy: { data: 'desc' } },
       },
     });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
+
+    const historico = await this.attachRevertivel(id, employee.historico);
 
     const { byEmployee: conformidade } =
       await this.documents.complianceOverview([id]);
@@ -247,6 +245,7 @@ export class EmployeesService {
 
     return {
       ...employee,
+      historico,
       vacationRequests,
       periodosAquisitivos,
       feriasSaldo: feriasStatus.saldoDisponivel,
@@ -372,9 +371,13 @@ export class EmployeesService {
     const contato = await this.db().contatoEmergencia.findUnique({
       where: { id: contatoId },
     });
-    if (!contato || contato.employeeId !== id)
+    if (!contato || contato.employeeId !== id || contato.deletedAt)
       throw new NotFoundException('Contato não encontrado.');
-    await this.db().contatoEmergencia.delete({ where: { id: contatoId } });
+    await this.db().contatoEmergencia.update({ where: { id: contatoId }, data: { deletedAt: new Date() } });
+    await this.addHistorico(id, `Contato de emergência removido: ${contato.nome}`, 'Contato de emergência', {
+      tipo: 'ContatoEmergencia',
+      id: contatoId,
+    });
     return { ok: true };
   }
 
@@ -427,7 +430,7 @@ export class EmployeesService {
     const doc = await this.db().employeeDocumento.findUnique({
       where: { id: documentoId },
     });
-    if (!doc || doc.employeeId !== id)
+    if (!doc || doc.employeeId !== id || doc.deletedAt)
       throw new NotFoundException('Documento não encontrado.');
     const arquivo = doc.blobPathname
       ? await downloadDocumento(doc.blobPathname)
@@ -442,11 +445,15 @@ export class EmployeesService {
     const doc = await this.db().employeeDocumento.findUnique({
       where: { id: documentoId },
     });
-    if (!doc || doc.employeeId !== id)
+    if (!doc || doc.employeeId !== id || doc.deletedAt)
       throw new NotFoundException('Documento não encontrado.');
-    await this.db().employeeDocumento.delete({ where: { id: documentoId } });
-    await deleteDocumento(doc.blobPathname);
-    await this.addHistorico(id, `Documento removido: ${doc.nome}`, 'Documento');
+    // Soft delete — o arquivo no blob storage é mantido para permitir
+    // reverter a exclusão pelo histórico; não é apagado aqui.
+    await this.db().employeeDocumento.update({ where: { id: documentoId }, data: { deletedAt: new Date() } });
+    await this.addHistorico(id, `Documento removido: ${doc.nome}`, 'Documento', {
+      tipo: 'EmployeeDocumento',
+      id: documentoId,
+    });
     return { ok: true };
   }
 
@@ -476,17 +483,20 @@ export class EmployeesService {
     const ocorrencia = await this.db().ocorrencia.findUnique({
       where: { id: ocorrenciaId },
     });
-    if (!ocorrencia || ocorrencia.employeeId !== id)
+    if (!ocorrencia || ocorrencia.employeeId !== id || ocorrencia.deletedAt)
       throw new NotFoundException('Ocorrência não encontrada.');
-    const documentos = await this.db().employeeDocumento.findMany({
-      where: { ocorrenciaId },
+    // Soft delete — inclusive dos documentos anexados, pra reverter a
+    // exclusão da ocorrência restaurar tudo junto (ver reverterExclusao).
+    await this.db().employeeDocumento.updateMany({
+      where: { ocorrenciaId, deletedAt: null },
+      data: { deletedAt: new Date() },
     });
-    for (const doc of documentos) await deleteDocumento(doc.blobPathname);
-    await this.db().ocorrencia.delete({ where: { id: ocorrenciaId } });
+    await this.db().ocorrencia.update({ where: { id: ocorrenciaId }, data: { deletedAt: new Date() } });
     await this.addHistorico(
       id,
       `Ocorrência removida: ${ocorrencia.tipo}`,
       'Ocorrência',
+      { tipo: 'Ocorrencia', id: ocorrenciaId },
     );
     return { ok: true };
   }
@@ -502,7 +512,7 @@ export class EmployeesService {
     const ocorrencia = await this.db().ocorrencia.findUnique({
       where: { id: ocorrenciaId },
     });
-    if (!ocorrencia || ocorrencia.employeeId !== id)
+    if (!ocorrencia || ocorrencia.employeeId !== id || ocorrencia.deletedAt)
       throw new NotFoundException('Ocorrência não encontrada.');
     const uploaded = await uploadDocumento(
       `colaboradores/${tenantId}/${id}/ocorrencias`,
@@ -526,11 +536,128 @@ export class EmployeesService {
     employeeId: string,
     evento: string,
     categoria: string,
+    entidade?: { tipo: string; id: string },
   ) {
     const { userName } = getRequestContext();
     return this.db().historicoEvento.create({
-      data: { employeeId, evento, categoria, autor: userName },
+      data: {
+        employeeId,
+        evento,
+        categoria,
+        autor: userName,
+        entidadeTipo: entidade?.tipo,
+        entidadeId: entidade?.id,
+      },
     });
+  }
+
+  /** Marca em cada evento de histórico se ele ainda se refere a um registro excluído (e portanto revertível pela tela). */
+  private async attachRevertivel<
+    T extends { id: string; entidadeTipo: string | null; entidadeId: string | null },
+  >(employeeId: string, historico: T[]): Promise<(T & { revertivel: boolean })[]> {
+    const idsPorTipo = new Map<string, Set<string>>();
+    for (const h of historico) {
+      if (!h.entidadeTipo || !h.entidadeId) continue;
+      if (!idsPorTipo.has(h.entidadeTipo)) idsPorTipo.set(h.entidadeTipo, new Set());
+      idsPorTipo.get(h.entidadeTipo)!.add(h.entidadeId);
+    }
+    if (idsPorTipo.size === 0) {
+      return historico.map((h) => ({ ...h, revertivel: false }));
+    }
+
+    const db = this.db();
+    const buscaExcluidos = async (tipo: string, finder: (ids: string[]) => Promise<{ id: string }[]>) => {
+      const ids = idsPorTipo.get(tipo);
+      if (!ids) return new Set<string>();
+      const rows = await finder([...ids]);
+      return new Set(rows.map((r) => r.id));
+    };
+
+    const [contatos, documentos, ocorrencias, cargoSalario] = await Promise.all([
+      buscaExcluidos('ContatoEmergencia', (ids) =>
+        db.contatoEmergencia.findMany({ where: { employeeId, id: { in: ids }, deletedAt: { not: null } }, select: { id: true } }),
+      ),
+      buscaExcluidos('EmployeeDocumento', (ids) =>
+        db.employeeDocumento.findMany({ where: { employeeId, id: { in: ids }, deletedAt: { not: null } }, select: { id: true } }),
+      ),
+      buscaExcluidos('Ocorrencia', (ids) =>
+        db.ocorrencia.findMany({ where: { employeeId, id: { in: ids }, deletedAt: { not: null } }, select: { id: true } }),
+      ),
+      buscaExcluidos('CargoSalarioHistorico', (ids) =>
+        db.cargoSalarioHistorico.findMany({ where: { employeeId, id: { in: ids }, deletedAt: { not: null } }, select: { id: true } }),
+      ),
+    ]);
+    const excluidosPorTipo: Record<string, Set<string>> = {
+      ContatoEmergencia: contatos,
+      EmployeeDocumento: documentos,
+      Ocorrencia: ocorrencias,
+      CargoSalarioHistorico: cargoSalario,
+    };
+
+    return historico.map((h) => ({
+      ...h,
+      revertivel: !!(h.entidadeTipo && h.entidadeId && excluidosPorTipo[h.entidadeTipo]?.has(h.entidadeId)),
+    }));
+  }
+
+  /** Reverte a exclusão de um registro a partir do evento de histórico que a registrou. */
+  async reverterExclusao(id: string, historicoId: string) {
+    await this.mustFind(id);
+    const evento = await this.db().historicoEvento.findUnique({ where: { id: historicoId } });
+    if (!evento || evento.employeeId !== id) {
+      throw new NotFoundException('Evento de histórico não encontrado.');
+    }
+    if (!evento.entidadeTipo || !evento.entidadeId) {
+      throw new BadRequestException('Este evento não pode ser revertido.');
+    }
+
+    const jaRestaurado = new BadRequestException('Este registro já foi restaurado ou não está mais excluído.');
+    switch (evento.entidadeTipo) {
+      case 'ContatoEmergencia': {
+        const { count } = await this.db().contatoEmergencia.updateMany({
+          where: { id: evento.entidadeId, employeeId: id, deletedAt: { not: null } },
+          data: { deletedAt: null },
+        });
+        if (count === 0) throw jaRestaurado;
+        await this.addHistorico(id, 'Contato de emergência restaurado', 'Contato de emergência');
+        break;
+      }
+      case 'EmployeeDocumento': {
+        const { count } = await this.db().employeeDocumento.updateMany({
+          where: { id: evento.entidadeId, employeeId: id, deletedAt: { not: null } },
+          data: { deletedAt: null },
+        });
+        if (count === 0) throw jaRestaurado;
+        await this.addHistorico(id, 'Documento restaurado', 'Documento');
+        break;
+      }
+      case 'Ocorrencia': {
+        const { count } = await this.db().ocorrencia.updateMany({
+          where: { id: evento.entidadeId, employeeId: id, deletedAt: { not: null } },
+          data: { deletedAt: null },
+        });
+        if (count === 0) throw jaRestaurado;
+        // Restaura junto os documentos anexados que foram excluídos com ela.
+        await this.db().employeeDocumento.updateMany({
+          where: { ocorrenciaId: evento.entidadeId, deletedAt: { not: null } },
+          data: { deletedAt: null },
+        });
+        await this.addHistorico(id, 'Ocorrência restaurada', 'Ocorrência');
+        break;
+      }
+      case 'CargoSalarioHistorico': {
+        const { count } = await this.db().cargoSalarioHistorico.updateMany({
+          where: { id: evento.entidadeId, employeeId: id, deletedAt: { not: null } },
+          data: { deletedAt: null },
+        });
+        if (count === 0) throw jaRestaurado;
+        await this.addHistorico(id, 'Registro de cargo/salário restaurado', 'Correção cadastral');
+        break;
+      }
+      default:
+        throw new BadRequestException('Este evento não pode ser revertido.');
+    }
+    return { ok: true };
   }
 
   private async addCargoSalarioHistorico(
@@ -558,7 +685,7 @@ export class EmployeesService {
     const entry = await this.db().cargoSalarioHistorico.findUnique({
       where: { id: historicoId },
     });
-    if (!entry || entry.employeeId !== id) {
+    if (!entry || entry.employeeId !== id || entry.deletedAt) {
       throw new NotFoundException('Registro de histórico não encontrado.');
     }
     const updated = await this.db().cargoSalarioHistorico.update({
@@ -586,14 +713,15 @@ export class EmployeesService {
     const entry = await this.db().cargoSalarioHistorico.findUnique({
       where: { id: historicoId },
     });
-    if (!entry || entry.employeeId !== id) {
+    if (!entry || entry.employeeId !== id || entry.deletedAt) {
       throw new NotFoundException('Registro de histórico não encontrado.');
     }
-    await this.db().cargoSalarioHistorico.delete({ where: { id: historicoId } });
+    await this.db().cargoSalarioHistorico.update({ where: { id: historicoId }, data: { deletedAt: new Date() } });
     await this.addHistorico(
       id,
       `Registro de cargo/salário removido (era: vigência desde ${entry.vigenciaDesde.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}, ${entry.cargo}, ${formatBRL(Number(entry.salario))}) — ${dto.motivoCorrecao}`,
       'Correção cadastral',
+      { tipo: 'CargoSalarioHistorico', id: historicoId },
     );
     return { ok: true };
   }
