@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { ExamsService } from './exams.service';
 import { CreateExamDto, RegisterResultDto } from './dto/exams.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('sst/exams')
 export class ExamsController {
   constructor(private readonly service: ExamsService) {}

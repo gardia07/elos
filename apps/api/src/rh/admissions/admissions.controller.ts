@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { AdmissionsService } from './admissions.service';
 import { SetChecklistConfigDto, ToggleDocDto } from './dto/admissions.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('rh/admissions')
 export class AdmissionsController {
   constructor(private readonly service: AdmissionsService) {}

@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { TimeclockService } from './timeclock.service';
 import { CreateJustificationDto } from './dto/timeclock.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('dp/timeclock')
 export class TimeclockController {
   constructor(private readonly service: TimeclockService) {}

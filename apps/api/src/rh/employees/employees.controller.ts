@@ -16,6 +16,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { EmployeesService } from './employees.service';
 import {
   AddContatoEmergenciaDto,
@@ -49,7 +51,8 @@ const documentoUploadOptions = {
   },
 };
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('rh/employees')
 export class EmployeesController {
   constructor(private readonly service: EmployeesService) {}

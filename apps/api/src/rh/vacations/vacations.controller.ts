@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { VacationsService } from './vacations.service';
 import { CreateLeaveDto, CreateVacationRequestDto } from './dto/vacations.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('rh/vacations')
 export class VacationsController {
   constructor(private readonly service: VacationsService) {}

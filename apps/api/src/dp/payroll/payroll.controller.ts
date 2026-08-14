@@ -13,6 +13,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { PayrollService } from './payroll.service';
 import {
   CalcularCustoQueryDto,
@@ -38,7 +40,8 @@ const uploadOptions = {
   },
 };
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('dp/payroll')
 export class PayrollController {
   constructor(private readonly service: PayrollService) {}

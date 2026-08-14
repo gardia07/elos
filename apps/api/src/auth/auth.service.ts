@@ -36,6 +36,7 @@ function generateSixDigitCode(): string {
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILED_BY_EMAIL = 5;
 const MAX_FAILED_BY_IP = 20;
+const MAX_MFA_ATTEMPTS = 5;
 const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
 export const TRUSTED_DEVICE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -238,7 +239,7 @@ export class AuthService {
     const mfaCodeHash = await bcrypt.hash(code, 10);
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { mfaCodeHash, mfaCodeExpiresAt: new Date(Date.now() + 5 * 60 * 1000) },
+      data: { mfaCodeHash, mfaCodeExpiresAt: new Date(Date.now() + 5 * 60 * 1000), mfaAttempts: 0 },
     });
 
     const loginTicket = this.jwt.sign({ sub: user.id, purpose: 'mfa' }, { expiresIn: '5m' });
@@ -288,12 +289,22 @@ export class AuthService {
       throw new UnauthorizedException('Código expirado, tente novamente.');
     }
 
+    // Limita tentativas de força bruta contra o código de 6 dígitos dentro
+    // da janela de 5 minutos do ticket — sem isso, o TTL sozinho não impede
+    // um script de testar as 1 milhão de combinações nesse tempo.
+    if (user.mfaAttempts >= MAX_MFA_ATTEMPTS) {
+      throw new HttpException('Muitas tentativas. Solicite um novo código.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
     const codeOk = await bcrypt.compare(dto.code, user.mfaCodeHash);
-    if (!codeOk) throw new BadRequestException('Código inválido.');
+    if (!codeOk) {
+      await this.prisma.user.update({ where: { id: user.id }, data: { mfaAttempts: { increment: 1 } } });
+      throw new BadRequestException('Código inválido.');
+    }
 
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { mfaCodeHash: null, mfaCodeExpiresAt: null },
+      data: { mfaCodeHash: null, mfaCodeExpiresAt: null, mfaAttempts: 0 },
     });
 
     const deviceToken = randomBytes(32).toString('hex');

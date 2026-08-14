@@ -15,6 +15,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { DocumentsService } from './documents.service';
 import {
   CreateDocumentRequirementDto,
@@ -42,7 +44,8 @@ const documentoUploadOptions = {
   },
 };
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('rh/documents')
 export class DocumentsController {
   constructor(private readonly service: DocumentsService) {}

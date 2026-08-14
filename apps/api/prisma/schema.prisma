@@ -129,6 +129,7 @@ model User {
   mfaEnabled       Boolean   @default(true)
   mfaCodeHash      String?
   mfaCodeExpiresAt DateTime?
+  mfaAttempts      Int       @default(0)
   createdAt        DateTime  @default(now())
 
   tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)

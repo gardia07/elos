@@ -419,6 +419,11 @@ export class EmployeesService {
   }
 
   async getDocumentoArquivo(id: string, documentoId: string) {
+    // employee_documentos não tem RLS própria (isolamento herdado do
+    // employee_id pai) — sem este mustFind, um id de colaborador de outro
+    // tenant passaria batido e só a comparação abaixo (também controlada
+    // pelo atacante) "protegeria" o acesso. Mesmo padrão do removeDocumento.
+    await this.mustFind(id);
     const doc = await this.db().employeeDocumento.findUnique({
       where: { id: documentoId },
     });

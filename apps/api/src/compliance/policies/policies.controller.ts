@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { PoliciesService } from './policies.service';
 import { AcknowledgePolicyDto, CreatePolicyDto, UpdatePolicyDto } from './dto/policies.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'COMPLIANCE', 'COMITE_ETICA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('compliance/policies')
 export class PoliciesController {
   constructor(private readonly service: PoliciesService) {}

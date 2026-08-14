@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { AccidentsService } from './accidents.service';
 import { CloseAccidentDto, CreateAccidentDto, UpdateInvestigationDto } from './dto/accidents.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('sst/accidents')
 export class AccidentsController {
   constructor(private readonly service: AccidentsService) {}

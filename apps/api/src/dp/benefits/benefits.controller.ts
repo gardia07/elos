@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { BenefitsService } from './benefits.service';
 import {
   AddDependentePlanoSaudeDto,
@@ -22,7 +24,8 @@ import {
   UpdatePlanoSaudeDto,
 } from './dto/benefits.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('dp/benefits')
 export class BenefitsController {
   constructor(private readonly service: BenefitsService) {}

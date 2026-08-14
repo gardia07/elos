@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { EvaluationsService } from './evaluations.service';
 import {
   CreateCycleDto,
@@ -10,7 +12,8 @@ import {
   UpsertRecordDto,
 } from './dto/evaluations.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('rh/evaluations')
 export class EvaluationsController {
   constructor(private readonly service: EvaluationsService) {}

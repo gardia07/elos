@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { DeadlinesService } from './deadlines.service';
 import { CreateDeadlineDto, UpdateDeadlineDto } from './dto/deadlines.dto';
 
-@UseGuards(AuthGuard)
+@Roles('ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA')
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('dp/deadlines')
 export class DeadlinesController {
   constructor(private readonly service: DeadlinesService) {}
