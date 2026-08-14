@@ -3,7 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { ComplianceOverviewService } from '../compliance/overview.service';
 import { DocumentsService } from '../rh/documents/documents.service';
-import { buildTerminationAlerts } from '../rh/terminations/terminations-lembretes.util';
+import { LicenseService } from '../license/license.service';
+import { buildTerminationAlerts, PRAZO_DIAS } from '../rh/terminations/terminations-lembretes.util';
 import { computeFeriasStatus } from '../rh/vacations/vacation-cycles.util';
 
 function addMonths(date: Date, months: number): Date {
@@ -39,6 +40,7 @@ export class DashboardService {
     private readonly prisma: PrismaService,
     private readonly compliance: ComplianceOverviewService,
     private readonly documents: DocumentsService,
+    private readonly license: LicenseService,
   ) {}
 
   private db() {
@@ -66,12 +68,26 @@ export class DashboardService {
 
     const { conformidadeDocumental } = await this.refreshTasks();
     const complianceOverview = await this.compliance.get();
-    // Um único índice para "a empresa inteira": documentação obrigatória dos
-    // colaboradores + programa de ética/políticas, não dois números soltos.
-    const conformidadeGeral = Math.round(
-      (conformidadeDocumental + complianceOverview.maturidade) / 2,
-    );
-    const { riscoGeral, alertasCriticosAtivos } = await this.calcRisco();
+    const { modulos } = await this.license.publicLicense(getRequestContext().tenantId);
+    const [sst, dp] = await Promise.all([
+      modulos.includes('sst') ? this.sstSignals() : null,
+      modulos.includes('dp') ? this.dpSignals() : null,
+    ]);
+
+    // Um único índice para "a empresa inteira", só com os módulos que a
+    // empresa realmente contratou — um módulo não habilitado não entra na
+    // conta (nem pra cima nem pra baixo).
+    const componentesConformidade = [
+      modulos.includes('rh') ? conformidadeDocumental : null,
+      sst?.conformidade ?? null,
+      dp?.conformidade ?? null,
+      modulos.includes('compliance') ? complianceOverview.maturidade : null,
+    ].filter((v): v is number => v != null);
+    const conformidadeGeral = componentesConformidade.length
+      ? Math.round(componentesConformidade.reduce((a, b) => a + b, 0) / componentesConformidade.length)
+      : Math.round((conformidadeDocumental + complianceOverview.maturidade) / 2);
+
+    const { riscoGeral, alertasCriticosAtivos } = await this.calcRisco(colaboradoresAtivos, modulos, sst, dp);
 
     await Promise.all([
       this.captureSnapshot('COLABORADORES_ATIVOS', colaboradoresAtivos),
@@ -451,43 +467,98 @@ export class DashboardService {
   }
 
   /**
-   * Risco geral: heurística simplificada combinando sinais de SST (mapa de
-   * riscos, acidentes em análise), Compliance (casos éticos graves em aberto)
-   * e DP (prazos trabalhistas já vencidos) — não é um score atuarial formal.
+   * Sinais de SST usados tanto pela conformidade geral (% de obrigações em
+   * dia) quanto pelo risco geral (contagem de itens vencidos) — computados
+   * juntos pra não repetir as mesmas consultas duas vezes por request.
    */
-  private async calcRisco() {
+  private async sstSignals() {
     const db = this.db();
     const hoje = new Date();
 
-    const [
-      alertasCriticosAtivos,
-      riscosAltoMapa,
-      acidentesAbertos,
-      casosEticaGravesAbertos,
-      prazosVencidos,
-    ] = await Promise.all([
+    const [examesTotal, examesAtrasados, treinamentos, pgrTotal, pgrAtrasadas, riscosAltoMapa, acidentesAbertos] =
+      await Promise.all([
+        db.occupationalExam.count(),
+        db.occupationalExam.count({ where: { dataRealizada: null, dataPrevista: { lt: hoje } } }),
+        db.nrTrainingRecord.findMany({ select: { dataRealizacao: true, validadeMeses: true } }),
+        db.pgrAction.count(),
+        db.pgrAction.count({ where: { status: { not: 'CONCLUIDA' }, prazo: { lt: hoje } } }),
+        db.riskMapEntry.count({ where: { nivel: 'ALTO' } }),
+        db.accident.count({ where: { status: 'EM_ANALISE' } }),
+      ]);
+
+    const treinamentosVencidos = treinamentos.filter((t) => addMonths(t.dataRealizacao, t.validadeMeses) < hoje).length;
+    const totalItens = examesTotal + treinamentos.length + pgrTotal;
+    const pendentes = examesAtrasados + treinamentosVencidos + pgrAtrasadas;
+    const conformidade = totalItens === 0 ? 100 : Math.round((1 - pendentes / totalItens) * 100);
+
+    return { conformidade, examesAtrasados, treinamentosVencidos, pgrAtrasadas, riscosAltoMapa, acidentesAbertos };
+  }
+
+  /** Idem, para prazos trabalhistas de DP (LaborDeadline). */
+  private async dpSignals() {
+    const db = this.db();
+    const hoje = new Date();
+
+    const [total, vencidos] = await Promise.all([
+      db.laborDeadline.count(),
+      db.laborDeadline.count({ where: { cumprido: false, vencimento: { lt: hoje } } }),
+    ]);
+    const conformidade = total === 0 ? 100 : Math.round((1 - vencidos / total) * 100);
+
+    return { conformidade, vencidos };
+  }
+
+  /**
+   * Risco geral: heurística simplificada (não um score atuarial formal)
+   * combinando sinais de SST, Compliance (casos éticos graves em aberto), DP
+   * (prazos trabalhistas vencidos) e RH (rescisão com eSocial/pagamento em
+   * atraso) — cada categoria só entra na conta se o módulo correspondente
+   * estiver contratado. O limiar escala com o porte da empresa: a mesma
+   * quantidade de pendências pesa mais numa empresa pequena do que numa com
+   * centenas de colaboradores.
+   */
+  private async calcRisco(
+    colaboradoresAtivos: number,
+    modulos: string[],
+    sst: Awaited<ReturnType<DashboardService['sstSignals']>> | null,
+    dp: Awaited<ReturnType<DashboardService['dpSignals']>> | null,
+  ) {
+    const db = this.db();
+    const hoje = new Date();
+    const prazoRescisaoLimite = new Date(hoje.getTime() - PRAZO_DIAS * 86_400_000);
+
+    const [alertasCriticosAtivos, casosEticaGravesAbertos, rescisoesVencidas] = await Promise.all([
       db.task.count({
         where: { status: 'ABERTA', prioridade: { in: ['ALTA', 'CRITICA'] } },
       }),
-      db.riskMapEntry.count({ where: { nivel: 'ALTO' } }),
-      db.accident.count({ where: { status: 'EM_ANALISE' } }),
-      db.ethicsCase.count({
-        where: {
-          status: { in: ['ABERTO', 'EM_INVESTIGACAO'] },
-          categoria: { in: ['ASSEDIO', 'FRAUDE', 'DISCRIMINACAO'] },
-        },
-      }),
-      db.laborDeadline.count({
-        where: { cumprido: false, vencimento: { lt: hoje } },
-      }),
+      modulos.includes('compliance')
+        ? db.ethicsCase.count({
+            where: {
+              status: { in: ['ABERTO', 'EM_INVESTIGACAO'] },
+              categoria: { in: ['ASSEDIO', 'FRAUDE', 'DISCRIMINACAO'] },
+            },
+          })
+        : 0,
+      modulos.includes('rh')
+        ? db.termination.count({
+            where: {
+              status: { in: ['EFETIVADO', 'EM_HOMOLOGACAO'] },
+              data: { lt: prazoRescisaoLimite },
+              esocialSent: false,
+            },
+          })
+        : 0,
     ]);
 
     const score =
-      riscosAltoMapa +
-      acidentesAbertos * 2 +
+      (sst ? sst.riscosAltoMapa + sst.acidentesAbertos * 2 + sst.examesAtrasados + sst.treinamentosVencidos + sst.pgrAtrasadas : 0) +
       casosEticaGravesAbertos * 2 +
-      prazosVencidos * 2;
-    const riscoGeral = score === 0 ? 'Baixo' : score <= 3 ? 'Médio' : 'Alto';
+      (dp ? dp.vencidos * 2 : 0) +
+      rescisoesVencidas * 3;
+
+    const sizeFactor = Math.max(1, Math.ceil(colaboradoresAtivos / 50));
+    const scoreNormalizado = score / sizeFactor;
+    const riscoGeral = scoreNormalizado === 0 ? 'Baixo' : scoreNormalizado <= 3 ? 'Médio' : 'Alto';
     return { riscoGeral, alertasCriticosAtivos };
   }
 

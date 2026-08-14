@@ -25,7 +25,13 @@ export default function LoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async () => (await api.post('/auth/login', { tenantSlug, email, password })).data,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Dispositivo já reconhecido (verificado por e-mail antes): pula a etapa de código.
+      if (data.user) {
+        await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+        router.replace('/painel');
+        return;
+      }
       setLoginTicket(data.loginTicket);
       setDevCode(data.devCode ?? '');
       setCode(data.devCode ?? '');
@@ -71,9 +77,9 @@ export default function LoginPage() {
               loginMutation.mutate();
             }}
           >
-            <Field label="Código da empresa" value={tenantSlug} onChange={setTenantSlug} />
-            <Field label="E-mail" type="email" value={email} onChange={setEmail} />
-            <Field label="Senha" type="password" value={password} onChange={setPassword} />
+            <Field label="Código da empresa" name="organization" autoComplete="organization" value={tenantSlug} onChange={setTenantSlug} />
+            <Field label="E-mail" type="email" name="username" autoComplete="username" value={email} onChange={setEmail} />
+            <Field label="Senha" type="password" name="current-password" autoComplete="current-password" value={password} onChange={setPassword} />
             {error && <p className="text-sm text-danger">{error}</p>}
             <button
               type="submit"
@@ -139,8 +145,8 @@ export default function LoginPage() {
                 }}
               >
                 <p className="text-sm text-text-secondary">Informe sua empresa e e-mail para receber o link de redefinição.</p>
-                <Field label="Código da empresa" value={tenantSlug} onChange={setTenantSlug} />
-                <Field label="E-mail" type="email" value={email} onChange={setEmail} />
+                <Field label="Código da empresa" name="organization" autoComplete="organization" value={tenantSlug} onChange={setTenantSlug} />
+                <Field label="E-mail" type="email" name="username" autoComplete="username" value={email} onChange={setEmail} />
                 <button
                   type="submit"
                   disabled={forgotMutation.isPending}
@@ -175,18 +181,24 @@ function Field({
   onChange,
   type = 'text',
   maxLength,
+  name,
+  autoComplete,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   maxLength?: number;
+  name?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
       <span className="text-text-secondary">{label}</span>
       <input
         type={type}
+        name={name}
+        autoComplete={autoComplete}
         value={value}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}

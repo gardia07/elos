@@ -37,6 +37,7 @@ const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILED_BY_EMAIL = 5;
 const MAX_FAILED_BY_IP = 20;
 const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
+export const TRUSTED_DEVICE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -197,8 +198,14 @@ export class AuthService {
     return { tenantSlug: tenant.slug, name: tenant.name };
   }
 
-  /** Step 1: validate credentials, issue a short-lived MFA ticket + 6-digit code. */
-  async login(dto: LoginDto, ip: string) {
+  /**
+   * Step 1: validate credentials. If the request carries a token for a
+   * device this user already verified via MFA (and it hasn't expired),
+   * skips straight to issuing the session — same "remember this browser"
+   * pattern as Google/etc. Otherwise issues a short-lived MFA ticket +
+   * 6-digit code as before.
+   */
+  async login(dto: LoginDto, ip: string, deviceToken?: string) {
     await this.assertLoginAllowed(dto.email.toLowerCase(), ip);
 
     const tenant = await this.prisma.tenant.findUnique({ where: { slug: dto.tenantSlug.trim().toUpperCase() }  });
@@ -223,6 +230,10 @@ export class AuthService {
 
     await this.recordLoginAttempt(dto.email, ip, true);
 
+    if (deviceToken && (await this.isDeviceTrusted(user.id, deviceToken))) {
+      return this.issueSession(user);
+    }
+
     const code = generateSixDigitCode();
     const mfaCodeHash = await bcrypt.hash(code, 10);
     await this.prisma.user.update({
@@ -243,7 +254,26 @@ export class AuthService {
     return sent ? { loginTicket } : { loginTicket, devCode: code };
   }
 
-  /** Step 2: verify the 6-digit code, issue the real access token as an httpOnly cookie. */
+  private async isDeviceTrusted(userId: string, deviceToken: string): Promise<boolean> {
+    const device = await this.prisma.trustedDevice.findUnique({ where: { tokenHash: hashToken(deviceToken) } });
+    return !!device && device.userId === userId && device.expiresAt > new Date();
+  }
+
+  /** Issues the real access token (httpOnly cookie) — shared by verifyMfa and the trusted-device skip path in login(). */
+  private async issueSession(user: { id: string; tenantId: string; name: string; email: string; role: string }) {
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({ where: { id: user.tenantId } });
+
+    const payload: JwtPayload = { sub: user.id, tenantId: user.tenantId, name: user.name, role: user.role };
+    const accessToken = this.jwt.sign(payload, { expiresIn: '8h' });
+
+    return {
+      accessToken,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      tenant: { slug: tenant.slug, name: tenant.name, nomeFantasia: tenant.nomeFantasia, logoUrl: tenant.logoUrl },
+    };
+  }
+
+  /** Step 2: verify the 6-digit code, issue the real access token, and mark this device as trusted going forward. */
   async verifyMfa(dto: VerifyMfaDto) {
     let ticketPayload: { sub: string; purpose: string };
     try {
@@ -266,16 +296,17 @@ export class AuthService {
       data: { mfaCodeHash: null, mfaCodeExpiresAt: null },
     });
 
-    const tenant = await this.prisma.tenant.findUniqueOrThrow({ where: { id: user.tenantId } });
+    const deviceToken = randomBytes(32).toString('hex');
+    await this.prisma.trustedDevice.create({
+      data: {
+        userId: user.id,
+        tokenHash: hashToken(deviceToken),
+        expiresAt: new Date(Date.now() + TRUSTED_DEVICE_TTL_MS),
+      },
+    });
 
-    const payload: JwtPayload = { sub: user.id, tenantId: user.tenantId, name: user.name, role: user.role };
-    const accessToken = this.jwt.sign(payload, { expiresIn: '8h' });
-
-    return {
-      accessToken,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      tenant: { slug: tenant.slug, name: tenant.name, nomeFantasia: tenant.nomeFantasia, logoUrl: tenant.logoUrl },
-    };
+    const session = await this.issueSession(user);
+    return { ...session, deviceToken };
   }
 
   /** Brute-force protection — checked before password comparison, across all tenants. */
@@ -301,6 +332,9 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    // Uma senha comprometida pode ter sido usada num navegador atacante já
+    // marcado como confiável — trocar a senha revoga esse "atalho" de MFA.
+    await this.prisma.trustedDevice.deleteMany({ where: { userId } });
     return { ok: true };
   }
 
@@ -343,6 +377,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.newPassword, 12);
     await this.prisma.user.update({ where: { id: record.userId }, data: { passwordHash } });
     await this.prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
+    await this.prisma.trustedDevice.deleteMany({ where: { userId: record.userId } });
     return { ok: true };
   }
 

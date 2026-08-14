@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { AuthService } from './auth.service';
+import { AuthService, TRUSTED_DEVICE_TTL_MS } from './auth.service';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { SwitchTenantDto } from './dto/switch-tenant.dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -26,6 +26,13 @@ const COOKIE_OPTIONS = {
   maxAge: 8 * 60 * 60 * 1000,
 };
 
+const DEVICE_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+  secure: isProd,
+  maxAge: TRUSTED_DEVICE_TTL_MS,
+};
+
 @SkipLicenseCheck()
 @Controller('auth')
 export class AuthController {
@@ -38,8 +45,14 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
-  login(@Body() dto: LoginDto, @Req() req: Request) {
-    return this.auth.login(dto, req.ip ?? 'unknown');
+  async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const deviceToken: string | undefined = req.cookies?.elos_device;
+    const result = await this.auth.login(dto, req.ip ?? 'unknown', deviceToken);
+    if ('accessToken' in result) {
+      res.cookie('elos_token', result.accessToken, COOKIE_OPTIONS);
+      return { user: result.user, tenant: result.tenant };
+    }
+    return result;
   }
 
   @Post('verify-mfa')
@@ -47,6 +60,7 @@ export class AuthController {
   async verifyMfa(@Body() dto: VerifyMfaDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.auth.verifyMfa(dto);
     res.cookie('elos_token', result.accessToken, COOKIE_OPTIONS);
+    res.cookie('elos_device', result.deviceToken, DEVICE_COOKIE_OPTIONS);
     return { user: result.user, tenant: result.tenant };
   }
 

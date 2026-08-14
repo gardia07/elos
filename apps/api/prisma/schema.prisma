@@ -131,11 +131,31 @@ model User {
   mfaCodeExpiresAt DateTime?
   createdAt        DateTime  @default(now())
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  employee Employee? @relation(fields: [employeeId], references: [id])
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee       Employee?       @relation(fields: [employeeId], references: [id])
+  trustedDevices TrustedDevice[]
 
   @@unique([tenantId, email])
   @@map("users")
+}
+
+// Um dispositivo/navegador que já passou pelo código de verificação por
+// e-mail uma vez não precisa passar de novo até o token expirar — mesmo
+// padrão de "lembrar este dispositivo" usado por Google/etc. O token cru só
+// existe no cookie do navegador; aqui fica só o hash (mesmo esquema do
+// PasswordResetToken), então um vazamento do banco não permite reconstruir
+// cookies válidos.
+model TrustedDevice {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  tokenHash String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("trusted_devices")
 }
 
 // Cross-tenant on purpose — brute-force protection has to see attempts

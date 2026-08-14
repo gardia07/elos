@@ -8,7 +8,7 @@ export interface TerminationAlert {
   href: string;
 }
 
-const PRAZO_DIAS = 10;
+export const PRAZO_DIAS = 10;
 
 function formatDiasRestantes(alvo: Date, hoje: Date): string {
   const dias = Math.round((alvo.getTime() - hoje.getTime()) / 86_400_000);
