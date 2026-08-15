@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Header } from '@/components/header';
-import { AgendaHeader, CategoryLegend, EventFormDrawer, EventFormValues } from './components';
+import { AgendaHeader, CategoryLegend, EventFormDrawer, EventFormValues, recorrenciaFromValues } from './components';
 import { MonthView } from './month-view';
 import { TimelineView } from './timeline-view';
 import { ListView } from './list-view';
@@ -51,6 +51,24 @@ function itemToCalendarEvent(item: AgendaItem): CalendarEvent {
     notas: item.notas,
     tipo: item.tipo,
     raw: item,
+  };
+}
+
+/** Usado só para abrir o drawer de edição a partir da visão Lista, onde a query de /agenda/items fica desabilitada — o feed de agenda-geral já carrega tudo que o form precisa. */
+function geralToAgendaItem(e: AgendaGeralEvento): AgendaItem {
+  return {
+    id: e.id,
+    data: e.data,
+    hora: e.hora ?? null,
+    horaFim: null,
+    descricao: e.titulo,
+    notas: e.notas ?? null,
+    tipo: e.tipo ?? 'TAREFA',
+    categoriaId: e.categoriaId ?? null,
+    categoria: null,
+    concluida: e.concluida,
+    origem: 'MANUAL',
+    recorrenciaId: e.recorrenciaId ?? null,
   };
 }
 
@@ -154,6 +172,10 @@ export default function AgendaPage() {
     mutationFn: async (id: string) => api.delete(`/agenda/items/${id}`),
     onSuccess: invalidateAll,
   });
+  const deleteSeries = useMutation({
+    mutationFn: async (recorrenciaId: string) => api.delete(`/agenda/recorrencias/${recorrenciaId}`),
+    onSuccess: invalidateAll,
+  });
   const concluirGeral = useMutation({
     mutationFn: async (vars: { origem: string; id: string }) => api.post('/ferramentas/agenda-geral/concluir', vars),
     onSuccess: invalidateAll,
@@ -207,7 +229,7 @@ export default function AgendaPage() {
   }
 
   function handleSave(values: EventFormValues) {
-    const payload = {
+    const payload: Record<string, unknown> = {
       data: values.data,
       hora: values.diaInteiro ? null : values.hora || null,
       horaFim: values.diaInteiro ? null : values.horaFim || null,
@@ -219,6 +241,8 @@ export default function AgendaPage() {
     if (drawer.item) {
       updateItem.mutate({ id: drawer.item.id, payload }, { onSuccess: () => setDrawer({ open: false, item: null }) });
     } else {
+      const recorrencia = recorrenciaFromValues(values);
+      if (recorrencia) payload.recorrencia = recorrencia;
       createItem.mutate(payload, { onSuccess: () => setDrawer({ open: false, item: null }) });
     }
   }
@@ -226,6 +250,11 @@ export default function AgendaPage() {
   function handleDelete() {
     if (!drawer.item) return;
     deleteItem.mutate(drawer.item.id, { onSuccess: () => setDrawer({ open: false, item: null }) });
+  }
+
+  function handleDeleteSeries() {
+    if (!drawer.item?.recorrenciaId) return;
+    deleteSeries.mutate(drawer.item.recorrenciaId, { onSuccess: () => setDrawer({ open: false, item: null }) });
   }
 
   function toggleConcluida(event: CalendarEvent) {
@@ -381,9 +410,7 @@ export default function AgendaPage() {
                   isDark={isDark}
                   onEventClick={(e) => {
                     if (e.origem !== 'AGENDA_ITEM') return;
-                    const item = (items ?? []).find((i) => i.id === e.id);
-                    if (item) setDrawer({ open: true, item });
-                    else openEdit(geralToCalendarEvent(e));
+                    setDrawer({ open: true, item: geralToAgendaItem(e) });
                   }}
                   onToggleConcluida={(e) => toggleConcluida(geralToCalendarEvent(e))}
                 />
@@ -407,6 +434,7 @@ export default function AgendaPage() {
         defaultHora={drawer.defaultHora}
         onSave={handleSave}
         onDelete={drawer.item ? handleDelete : undefined}
+        onDeleteSeries={drawer.item?.recorrenciaId ? handleDeleteSeries : undefined}
         saving={createItem.isPending || updateItem.isPending}
       />
     </>

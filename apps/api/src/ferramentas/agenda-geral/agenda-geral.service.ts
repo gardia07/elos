@@ -55,6 +55,7 @@ export interface AgendaGeralEvento {
   tipo?: string;
   notas?: string | null;
   categoriaId?: string | null;
+  recorrenciaId?: string | null;
 }
 
 function addMonths(date: Date, months: number): Date {
@@ -164,6 +165,7 @@ export class AgendaGeralService {
         tipo: a.tipo,
         notas: a.notas,
         categoriaId: a.categoriaId,
+        recorrenciaId: a.recorrenciaId,
       });
     }
     for (const d of deadlines) {

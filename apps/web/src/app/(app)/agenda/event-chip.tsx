@@ -1,6 +1,7 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
+import { Repeat } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { CalendarEvent } from './types';
 
@@ -62,6 +63,7 @@ export function EventChip({
       <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: cor }} />
       {!compact && event.hora && <span className="shrink-0 font-medium text-text-tertiary">{event.hora}</span>}
       <span className={cn('truncate', event.concluida && 'line-through')}>{event.titulo}</span>
+      {event.raw?.recorrenciaId && <Repeat className="h-2.5 w-2.5 shrink-0 text-text-tertiary" />}
     </button>
   );
 }

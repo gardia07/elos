@@ -30,6 +30,45 @@ export interface AgendaItem {
   categoria: Categoria | null;
   concluida: boolean;
   origem: string;
+  recorrenciaId: string | null;
+}
+
+export type AgendaRecorrenciaFrequencia = 'DIARIA' | 'SEMANAL' | 'MENSAL' | 'ANUAL' | 'PERSONALIZADA';
+
+export const FREQUENCIA_LABEL: Record<AgendaRecorrenciaFrequencia, string> = {
+  DIARIA: 'Diária',
+  SEMANAL: 'Semanal',
+  MENSAL: 'Mensal',
+  ANUAL: 'Anual',
+  PERSONALIZADA: 'Personalizada',
+};
+
+export const DIA_SEMANA_CODES = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'] as const;
+export const DIA_SEMANA_LABEL: Record<(typeof DIA_SEMANA_CODES)[number], string> = {
+  DOM: 'Dom',
+  SEG: 'Seg',
+  TER: 'Ter',
+  QUA: 'Qua',
+  QUI: 'Qui',
+  SEX: 'Sex',
+  SAB: 'Sáb',
+};
+export const DIA_SEMANA_LABEL_LONGO: Record<(typeof DIA_SEMANA_CODES)[number], string> = {
+  DOM: 'domingo',
+  SEG: 'segunda-feira',
+  TER: 'terça-feira',
+  QUA: 'quarta-feira',
+  QUI: 'quinta-feira',
+  SEX: 'sexta-feira',
+  SAB: 'sábado',
+};
+
+export interface RecorrenciaInput {
+  frequencia: AgendaRecorrenciaFrequencia;
+  intervalo?: number;
+  diasDaSemana?: string[];
+  posicaoNoMes?: number;
+  dataFim: string;
 }
 
 export type EventoOrigem =
@@ -55,6 +94,7 @@ export interface AgendaGeralEvento {
   tipo?: AgendaItemTipo;
   notas?: string | null;
   categoriaId?: string | null;
+  recorrenciaId?: string | null;
 }
 
 export type AgendaView = 'mes' | 'semana' | 'dia' | 'lista';

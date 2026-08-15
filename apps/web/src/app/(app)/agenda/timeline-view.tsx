@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { Repeat } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { categoriaCor, HORA_FIM, HORA_INICIO, horaToMinutos, minutosToHora } from './lib';
 import type { CalendarEvent, Categoria } from './types';
@@ -108,6 +109,7 @@ function TimedBlock({
     >
       {event.hora && <span className="mr-1 font-medium text-text-tertiary">{event.hora}</span>}
       {event.titulo}
+      {event.raw?.recorrenciaId && <Repeat className="ml-1 inline h-2.5 w-2.5 text-text-tertiary" />}
       {event.editable && event.hora && (
         <div
           onPointerDown={onResizePointerDown}

@@ -80,10 +80,11 @@ model Tenant {
   payrollImportBatches    PayrollImportBatch[]
   payrollImportTemplates  PayrollImportTemplate[]
 
-  agendaItems      AgendaItem[]
-  agendaDismissals AgendaDismissal[]
-  notepadEntries   NotepadEntry[]
-  agendaCategorias AgendaCategoria[]
+  agendaItems        AgendaItem[]
+  agendaDismissals   AgendaDismissal[]
+  notepadEntries     NotepadEntry[]
+  agendaCategorias   AgendaCategoria[]
+  agendaRecorrencias AgendaRecorrencia[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -1416,26 +1417,62 @@ model AgendaCategoria {
 }
 
 model AgendaItem {
-  id          String         @id @default(uuid()) @db.Uuid
-  tenantId    String         @db.Uuid
-  userId      String         @db.Uuid
-  data        DateTime       @db.Date
-  hora        String?
-  horaFim     String?
-  descricao   String
-  notas       String?
-  tipo        AgendaItemTipo @default(TAREFA)
-  categoriaId String?        @db.Uuid
-  concluida   Boolean        @default(false)
-  origem      String         @default("MANUAL")
-  createdAt   DateTime       @default(now())
-  deletedAt   DateTime?
+  id            String         @id @default(uuid()) @db.Uuid
+  tenantId      String         @db.Uuid
+  userId        String         @db.Uuid
+  data          DateTime       @db.Date
+  hora          String?
+  horaFim       String?
+  descricao     String
+  notas         String?
+  tipo          AgendaItemTipo @default(TAREFA)
+  categoriaId   String?        @db.Uuid
+  recorrenciaId String?        @db.Uuid
+  concluida     Boolean        @default(false)
+  origem        String         @default("MANUAL")
+  createdAt     DateTime       @default(now())
+  deletedAt     DateTime?
 
-  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  categoria AgendaCategoria? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoria   AgendaCategoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  recorrencia AgendaRecorrencia? @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, userId, data])
+  @@index([recorrenciaId])
   @@map("agenda_items")
+}
+
+enum AgendaRecorrenciaFrequencia {
+  DIARIA
+  SEMANAL
+  MENSAL
+  ANUAL
+  PERSONALIZADA
+
+  @@map("agenda_recorrencia_frequencia")
+}
+
+/// Regra de repetição materializada como várias linhas AgendaItem (mesma
+/// recorrenciaId), não expandida em tempo de consulta — ver plano da Fase 2.
+/// dataFim é obrigatória (o form sempre preenche, no máximo +2 anos) para
+/// limitar o tamanho da série.
+model AgendaRecorrencia {
+  id           String                      @id @default(uuid()) @db.Uuid
+  tenantId     String                      @db.Uuid
+  userId       String                      @db.Uuid
+  frequencia   AgendaRecorrenciaFrequencia
+  intervalo    Int                         @default(1)
+  diasDaSemana String[]                    @default([])
+  posicaoNoMes Int?
+  dataInicio   DateTime                    @db.Date
+  dataFim      DateTime                    @db.Date
+  createdAt    DateTime                    @default(now())
+
+  tenant Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  itens  AgendaItem[]
+
+  @@index([tenantId])
+  @@map("agenda_recorrencias")
 }
 
 /// "Visto/dispensado" pelo usuário para eventos de agenda-geral que não têm

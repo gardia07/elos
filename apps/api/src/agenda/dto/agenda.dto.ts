@@ -1,7 +1,20 @@
-import { IsBoolean, IsDateString, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayMaxSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min, ValidateNested } from 'class-validator';
 
 const TIPOS = ['REUNIAO', 'PRAZO', 'TAREFA', 'PESSOAL', 'LEMBRETE'] as const;
 export type AgendaItemTipo = (typeof TIPOS)[number];
+
+const FREQUENCIAS = ['DIARIA', 'SEMANAL', 'MENSAL', 'ANUAL', 'PERSONALIZADA'] as const;
+export type AgendaRecorrenciaFrequenciaDto = (typeof FREQUENCIAS)[number];
+const DIAS_SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'] as const;
+
+export class RecorrenciaInputDto {
+  @IsIn(FREQUENCIAS) frequencia!: AgendaRecorrenciaFrequenciaDto;
+  @IsOptional() @IsInt() @Min(1) intervalo?: number;
+  @IsOptional() @IsArray() @ArrayMaxSize(7) @IsIn(DIAS_SEMANA, { each: true }) diasDaSemana?: string[];
+  @IsOptional() @IsInt() @Min(-1) @Max(4) posicaoNoMes?: number;
+  @IsDateString() dataFim!: string;
+}
 
 export class CreateAgendaItemDto {
   @IsDateString() data!: string;
@@ -11,6 +24,7 @@ export class CreateAgendaItemDto {
   @IsOptional() @IsString() notas?: string;
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
   @IsOptional() @IsUUID() categoriaId?: string;
+  @IsOptional() @ValidateNested() @Type(() => RecorrenciaInputDto) recorrencia?: RecorrenciaInputDto;
 }
 
 export class UpdateAgendaItemDto {

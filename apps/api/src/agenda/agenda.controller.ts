@@ -33,6 +33,11 @@ export class AgendaController {
     return this.service.deleteItem(id);
   }
 
+  @Delete('recorrencias/:id')
+  deleteSeries(@Param('id') id: string) {
+    return this.service.deleteSeries(id);
+  }
+
   @Post('items/:id/restore')
   restoreItem(@Param('id') id: string) {
     return this.service.restoreItem(id);

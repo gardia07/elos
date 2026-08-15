@@ -24,6 +24,13 @@ export function addDaysLocal(d: Date, n: number): Date {
   return copy;
 }
 
+/** Soma N anos a uma data YYYY-MM-DD e devolve outra string YYYY-MM-DD (aritmética local, para pré-preencher o fim de uma recorrência). */
+export function addAnosIso(iso: string, n: number): string {
+  const d = parseIsoLocal(iso);
+  d.setFullYear(d.getFullYear() + n);
+  return localIso(d);
+}
+
 export function startOfWeekSunday(d: Date): Date {
   const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   copy.setDate(copy.getDate() - copy.getDay());
