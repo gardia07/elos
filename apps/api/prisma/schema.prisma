@@ -83,6 +83,7 @@ model Tenant {
   agendaItems      AgendaItem[]
   agendaDismissals AgendaDismissal[]
   notepadEntries   NotepadEntry[]
+  agendaCategorias AgendaCategoria[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -1387,24 +1388,51 @@ enum AgendaItemTipo {
   PRAZO
   TAREFA
   PESSOAL
+  LEMBRETE
 
   @@map("agenda_item_tipo")
 }
 
-model AgendaItem {
-  id        String         @id @default(uuid()) @db.Uuid
-  tenantId  String         @db.Uuid
-  userId    String         @db.Uuid
-  data      DateTime       @db.Date
-  hora      String?
-  descricao String
-  notas     String?
-  tipo      AgendaItemTipo @default(TAREFA)
-  concluida Boolean        @default(false)
-  origem    String         @default("MANUAL")
-  createdAt DateTime       @default(now())
+/// Categoria de cor livre para itens de agenda (RH-Legal/Prazo, RH-Rotina,
+/// Pessoal/Equipe, Anotação/Lembrete) — as 4 são semeadas por tenant em
+/// AuthService.provisionNewTenant e na migration de dados que criou a
+/// tabela; `sistema=true` marca as categorias-padrão (não removíveis).
+model AgendaCategoria {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  nome      String
+  cor       String
+  corDark   String
+  icone     String
+  ordem     Int      @default(0)
+  sistema   Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  itens  AgendaItem[]
+
+  @@index([tenantId])
+  @@map("agenda_categorias")
+}
+
+model AgendaItem {
+  id          String         @id @default(uuid()) @db.Uuid
+  tenantId    String         @db.Uuid
+  userId      String         @db.Uuid
+  data        DateTime       @db.Date
+  hora        String?
+  horaFim     String?
+  descricao   String
+  notas       String?
+  tipo        AgendaItemTipo @default(TAREFA)
+  categoriaId String?        @db.Uuid
+  concluida   Boolean        @default(false)
+  origem      String         @default("MANUAL")
+  createdAt   DateTime       @default(now())
+  deletedAt   DateTime?
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoria AgendaCategoria? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, userId, data])
   @@map("agenda_items")

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { AgendaService } from './agenda.service';
 import { CreateAgendaItemDto, SaveNotepadDto, UpdateAgendaItemDto } from './dto/agenda.dto';
@@ -7,6 +7,11 @@ import { CreateAgendaItemDto, SaveNotepadDto, UpdateAgendaItemDto } from './dto/
 @Controller('agenda')
 export class AgendaController {
   constructor(private readonly service: AgendaService) {}
+
+  @Get('categorias')
+  listCategorias() {
+    return this.service.listCategorias();
+  }
 
   @Get('items')
   listItems(@Query('data') date?: string, @Query('dataInicio') dataInicio?: string, @Query('dataFim') dataFim?: string) {
@@ -19,8 +24,18 @@ export class AgendaController {
   }
 
   @Patch('items/:id')
-  toggleItem(@Param('id') id: string, @Body() dto: UpdateAgendaItemDto) {
-    return this.service.toggleItem(id, dto);
+  updateItem(@Param('id') id: string, @Body() dto: UpdateAgendaItemDto) {
+    return this.service.updateItem(id, dto);
+  }
+
+  @Delete('items/:id')
+  deleteItem(@Param('id') id: string) {
+    return this.service.deleteItem(id);
+  }
+
+  @Post('items/:id/restore')
+  restoreItem(@Param('id') id: string) {
+    return this.service.restoreItem(id);
   }
 
   @Get('notepad/:date')

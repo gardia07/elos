@@ -14,6 +14,7 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateTenantDto } from '../tenant/dto/tenant.dto';
 import { CLT_DOCUMENT_REQUIREMENTS } from '../rh/documents/clt-requirements';
 import { DEFAULT_DOCUMENT_TEMPLATES } from '../rh/document-templates/default-templates';
+import { DEFAULT_AGENDA_CATEGORIAS } from '../agenda/default-categorias';
 import { JwtPayload } from '../common/jwt-payload';
 
 // Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
@@ -134,6 +135,18 @@ export class AuthService {
         nome: d.nome,
         corpo: d.corpo,
         aplicaTipos: d.aplicaTipos,
+        sistema: true,
+      })),
+    });
+
+    await this.prisma.forTenant(tenantId).agendaCategoria.createMany({
+      data: DEFAULT_AGENDA_CATEGORIAS.map((c) => ({
+        tenantId,
+        nome: c.nome,
+        cor: c.cor,
+        corDark: c.corDark,
+        icone: c.icone,
+        ordem: c.ordem,
         sistema: true,
       })),
     });

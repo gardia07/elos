@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from '@/components/header';
 
 const SUBPAGES = [
-  { label: 'Agenda', href: '/ferramentas/agenda' },
+  { label: 'Agenda', href: '/agenda' },
   { label: 'Documentos', href: '/ferramentas/documentos' },
   { label: 'Relatórios', href: '/ferramentas/relatorios' },
   { label: 'Comunicação', href: '/ferramentas/comunicacao' },

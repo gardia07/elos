@@ -11,7 +11,8 @@ export type AgendaGeralOrigem =
   | 'VACATION_REQUEST'
   | 'TERMINATION'
   | 'TERMINATION_AVISO_FIM'
-  | 'TERMINATION_PAGAMENTO';
+  | 'TERMINATION_PAGAMENTO'
+  | 'DOCUMENT_REQUIREMENT';
 
 /** Origens sem um campo de conclusão real no registro de origem — o check aqui só "dispensa" o lembrete (AgendaDismissal), não altera o registro. */
 const ORIGENS_DISPENSAVEIS: AgendaGeralOrigem[] = [
@@ -21,7 +22,26 @@ const ORIGENS_DISPENSAVEIS: AgendaGeralOrigem[] = [
   'TERMINATION',
   'TERMINATION_AVISO_FIM',
   'TERMINATION_PAGAMENTO',
+  'DOCUMENT_REQUIREMENT',
 ];
+
+/**
+ * Origens que espelham dados de módulos restritos a RH/gestão (DP, SST,
+ * Gestão de Pessoas) — só entram no feed agregado para papéis que já têm
+ * acesso a esses módulos de origem. AGENDA_ITEM é sempre pessoal (filtrado
+ * por userId) e por isso nunca é restringido aqui.
+ */
+const ORIGENS_RESTRITAS_A_RH: AgendaGeralOrigem[] = [
+  'LABOR_DEADLINE',
+  'OCCUPATIONAL_EXAM',
+  'NR_TRAINING',
+  'VACATION_REQUEST',
+  'TERMINATION',
+  'TERMINATION_AVISO_FIM',
+  'TERMINATION_PAGAMENTO',
+  'DOCUMENT_REQUIREMENT',
+];
+const PAPEIS_RH = new Set(['ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA']);
 
 export interface AgendaGeralEvento {
   id: string;
@@ -34,6 +54,7 @@ export interface AgendaGeralEvento {
   hora?: string | null;
   tipo?: string;
   notas?: string | null;
+  categoriaId?: string | null;
 }
 
 function addMonths(date: Date, months: number): Date {
@@ -66,7 +87,8 @@ export class AgendaGeralService {
 
   async list(data?: string) {
     const db = this.db();
-    const { userId } = getRequestContext();
+    const { userId, role } = getRequestContext();
+    const podeVerOrigensRh = PAPEIS_RH.has(role);
     const now = new Date();
     // Datas de origem (AgendaItem.data, LaborDeadline.vencimento etc.) são
     // gravadas como meia-noite UTC do dia informado pelo usuário — "hoje"
@@ -85,27 +107,46 @@ export class AgendaGeralService {
     const rangeExam = diaUnico ? { dataPrevista: diaUnico } : { dataPrevista: { lte: janela } };
     const rangeVacation = diaUnico ? { inicio: diaUnico } : { inicio: { gte: today, lte: janela } };
     const rangeTermination = diaUnico ? { data: diaUnico } : { data: { lte: janela } };
+    const rangeDocReq = diaUnico ? { expiraEm: diaUnico } : { expiraEm: { not: null, lte: janela } };
 
-    const [agendaItems, deadlines, exams, trainings, vacations, terminationsAbertas, terminations] = await Promise.all([
-      db.agendaItem.findMany({ where: { userId, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem } }),
-      db.laborDeadline.findMany({ where: { ...(diaUnico ? {} : { cumprido: false }), ...rangeDeadline } }),
-      db.occupationalExam.findMany({
-        where: { ...(diaUnico ? {} : { resultado: null }), ...rangeExam },
-        include: { employee: { select: { nome: true } } },
-      }),
-      db.nrTrainingRecord.findMany({ include: { employee: { select: { nome: true } } } }),
-      db.vacationRequest.findMany({
-        where: { status: 'APROVADA', ...rangeVacation },
-        include: { employee: { select: { nome: true } } },
-      }),
-      db.termination.findMany({
-        where: { status: { notIn: ['CONCLUIDO', 'CANCELADO'] } },
-        include: { employee: { select: { nome: true, dataAdmissao: true } } },
-      }),
-      db.termination.findMany({
-        where: { ...(diaUnico ? {} : { status: 'EM_ANDAMENTO' }), ...rangeTermination },
-        include: { employee: { select: { nome: true } } },
-      }),
+    const [agendaItems, deadlines, exams, trainings, vacations, terminationsAbertas, terminations, docRequirements] = await Promise.all([
+      db.agendaItem.findMany({ where: { userId, deletedAt: null, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem } }),
+      podeVerOrigensRh
+        ? db.laborDeadline.findMany({ where: { ...(diaUnico ? {} : { cumprido: false }), ...rangeDeadline } })
+        : Promise.resolve([]),
+      podeVerOrigensRh
+        ? db.occupationalExam.findMany({
+            where: { ...(diaUnico ? {} : { resultado: null }), ...rangeExam },
+            include: { employee: { select: { nome: true } } },
+          })
+        : Promise.resolve([]),
+      podeVerOrigensRh
+        ? db.nrTrainingRecord.findMany({ include: { employee: { select: { nome: true } } } })
+        : Promise.resolve([]),
+      podeVerOrigensRh
+        ? db.vacationRequest.findMany({
+            where: { status: 'APROVADA', ...rangeVacation },
+            include: { employee: { select: { nome: true } } },
+          })
+        : Promise.resolve([]),
+      podeVerOrigensRh
+        ? db.termination.findMany({
+            where: { status: { notIn: ['CONCLUIDO', 'CANCELADO'] } },
+            include: { employee: { select: { nome: true, dataAdmissao: true } } },
+          })
+        : Promise.resolve([]),
+      podeVerOrigensRh
+        ? db.termination.findMany({
+            where: { ...(diaUnico ? {} : { status: 'EM_ANDAMENTO' }), ...rangeTermination },
+            include: { employee: { select: { nome: true } } },
+          })
+        : Promise.resolve([]),
+      podeVerOrigensRh
+        ? db.employeeDocumentRequirement.findMany({
+            where: { status: { in: ['MISSING', 'PENDING', 'EXPIRED'] }, ...rangeDocReq },
+            include: { employee: { select: { nome: true } }, requirement: { select: { nome: true } } },
+          })
+        : Promise.resolve([]),
     ]);
 
     const eventos: AgendaGeralEvento[] = [];
@@ -122,6 +163,7 @@ export class AgendaGeralService {
         hora: a.hora,
         tipo: a.tipo,
         notas: a.notas,
+        categoriaId: a.categoriaId,
       });
     }
     for (const d of deadlines) {
@@ -185,6 +227,19 @@ export class AgendaGeralService {
         concluida: t.status === 'CONCLUIDO',
       });
     }
+    for (const r of docRequirements) {
+      if (!r.expiraEm) continue;
+      if (isDismissed('DOCUMENT_REQUIREMENT', r.id)) continue;
+      eventos.push({
+        id: r.id,
+        origem: 'DOCUMENT_REQUIREMENT',
+        data: r.expiraEm.toISOString(),
+        titulo: `Documentação pendente: ${r.requirement.nome} — ${r.employee.nome}`,
+        hub: 'Gestão de Pessoas',
+        bucket: bucketFor(r.expiraEm, today),
+        concluida: false,
+      });
+    }
 
     for (const t of terminationsAbertas) {
       const { fim } = calcularAvisoPrevio(t.employee.dataAdmissao, t.data, t.avisoPrevioInicio);
@@ -220,11 +275,15 @@ export class AgendaGeralService {
   }
 
   async concluir(origem: AgendaGeralOrigem, id: string) {
-    const { userId, tenantId } = getRequestContext();
+    const { userId, tenantId, role } = getRequestContext();
     const db = this.db();
 
+    if (ORIGENS_RESTRITAS_A_RH.includes(origem) && !PAPEIS_RH.has(role)) {
+      return { ok: false };
+    }
+
     if (origem === 'AGENDA_ITEM') {
-      const item = await db.agendaItem.findFirst({ where: { id, userId, tenantId } });
+      const item = await db.agendaItem.findFirst({ where: { id, userId, tenantId, deletedAt: null } });
       if (item) await db.agendaItem.update({ where: { id }, data: { concluida: true } });
       return { ok: true };
     }

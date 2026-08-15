@@ -9,6 +9,9 @@ import { complianceTone } from '@/lib/format';
 import { Badge, Button, Card, KpiCard } from '@/components/ui';
 import { Header } from '@/components/header';
 import { PriorityAlert, PriorityAlerts } from '@/components/priority-alerts';
+import { categoriaCor, useIsDarkTheme } from '../agenda/lib';
+import type { Categoria } from '../agenda/types';
+import { HUB_FALLBACK_COLOR } from '../agenda/types';
 
 interface Kpis {
   colaboradoresAtivos: number;
@@ -34,7 +37,7 @@ const PRIORIDADE_TONE = { BAIXA: 'grey', MEDIA: 'blue', ALTA: 'amber', CRITICA: 
 const PRIORIDADE_PESO = { CRITICA: 3, ALTA: 2, MEDIA: 1, BAIXA: 0 } as const;
 const RISCO_TONE = { Baixo: 'green', Médio: 'amber', Alto: 'red' } as const;
 
-type AgendaItemTipo = 'REUNIAO' | 'PRAZO' | 'TAREFA' | 'PESSOAL';
+type AgendaItemTipo = 'REUNIAO' | 'PRAZO' | 'TAREFA' | 'PESSOAL' | 'LEMBRETE';
 
 interface AgendaItem {
   id: string;
@@ -55,7 +58,8 @@ type EventoOrigem =
   | 'VACATION_REQUEST'
   | 'TERMINATION'
   | 'TERMINATION_AVISO_FIM'
-  | 'TERMINATION_PAGAMENTO';
+  | 'TERMINATION_PAGAMENTO'
+  | 'DOCUMENT_REQUIREMENT';
 
 interface Evento {
   id: string;
@@ -68,19 +72,15 @@ interface Evento {
   hora?: string | null;
   tipo?: AgendaItemTipo;
   notas?: string | null;
+  categoriaId?: string | null;
 }
 
-const AGENDA_TIPO_COLOR: Record<AgendaItemTipo, string> = {
-  REUNIAO: '#3B82F6',
-  PRAZO: '#A94438',
-  TAREFA: '#6D8A3D',
-  PESSOAL: '#8A7FB0',
-};
 const AGENDA_TIPO_LABEL: Record<AgendaItemTipo, string> = {
-  REUNIAO: 'Reunião',
+  REUNIAO: 'Evento',
   PRAZO: 'Prazo',
   TAREFA: 'Tarefa',
   PESSOAL: 'Pessoal',
+  LEMBRETE: 'Lembrete',
 };
 
 function todayIso(): string {
@@ -179,6 +179,16 @@ export default function PainelPage() {
     queryFn: async () => (await api.get<AgendaItem[]>('/agenda/items', { params: { dataInicio: weekStart, dataFim: weekEnd } })).data,
   });
 
+  const { data: categorias } = useQuery({
+    queryKey: ['agenda', 'categorias'],
+    queryFn: async () => (await api.get<Categoria[]>('/agenda/categorias')).data,
+  });
+  const isDark = useIsDarkTheme();
+  const corDoItem = (item: Pick<Evento, 'categoriaId' | 'hub'>) =>
+    item.categoriaId
+      ? categoriaCor(categorias?.find((c) => c.id === item.categoriaId), isDark)
+      : HUB_FALLBACK_COLOR[item.hub] ?? '#a89c8d';
+
   const countsByDay = useMemo(() => {
     const map: Record<string, number> = {};
     for (const item of weekItems ?? []) {
@@ -274,9 +284,14 @@ export default function PainelPage() {
             <Card className="lg:col-span-3">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Agenda do dia</h3>
-                <span className="text-xs text-text-tertiary">
-                  {concluidas} de {total} concluídas
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-text-tertiary">
+                    {concluidas} de {total} concluídas
+                  </span>
+                  <Link href="/agenda?view=semana" className="text-xs text-accent hover:underline">
+                    Ver semana completa →
+                  </Link>
+                </div>
               </div>
 
               <div className="mb-4">
@@ -289,7 +304,7 @@ export default function PainelPage() {
                       <button
                         key={d.iso}
                         type="button"
-                        onClick={() => router.push(`/ferramentas/agenda?data=${d.iso}`)}
+                        onClick={() => router.push(`/agenda?view=dia&data=${d.iso}`)}
                         className={`flex flex-col items-center gap-1 rounded-[10px] border p-2 text-center transition ${
                           isToday ? 'border-accent bg-tint-blue' : 'border-border hover:border-accent'
                         }`}
@@ -321,9 +336,11 @@ export default function PainelPage() {
                           }
                           className="mt-0.5"
                         />
-                        {isAgendaItem && item.tipo ? (
-                          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: AGENDA_TIPO_COLOR[item.tipo] }} title={AGENDA_TIPO_LABEL[item.tipo]} />
-                        ) : null}
+                        <span
+                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: corDoItem(item) }}
+                          title={item.tipo ? AGENDA_TIPO_LABEL[item.tipo] : item.hub}
+                        />
                         <button
                           type="button"
                           className="flex-1 text-left"
@@ -361,7 +378,7 @@ export default function PainelPage() {
                             >
                               {saveNotas.isPending ? 'Salvando…' : 'Salvar nota'}
                             </Button>
-                            <Link href={`/ferramentas/agenda?data=${today}&item=${item.id}`} className="text-xs text-accent hover:underline">
+                            <Link href={`/agenda?view=dia&data=${today}`} className="text-xs text-accent hover:underline">
                               Abrir na Agenda →
                             </Link>
                           </div>
