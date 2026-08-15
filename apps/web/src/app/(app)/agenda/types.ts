@@ -31,6 +31,20 @@ export interface AgendaItem {
   concluida: boolean;
   origem: string;
   recorrenciaId: string | null;
+  responsavelId: string | null;
+}
+
+export interface Usuario {
+  id: string;
+  name: string;
+  role: string;
+}
+
+export interface Comentario {
+  id: string;
+  autor: string;
+  texto: string;
+  createdAt: string;
 }
 
 export type AgendaRecorrenciaFrequencia = 'DIARIA' | 'SEMANAL' | 'MENSAL' | 'ANUAL' | 'PERSONALIZADA';
@@ -95,6 +109,7 @@ export interface AgendaGeralEvento {
   notas?: string | null;
   categoriaId?: string | null;
   recorrenciaId?: string | null;
+  responsavelId?: string | null;
 }
 
 export type AgendaView = 'mes' | 'semana' | 'dia' | 'lista';

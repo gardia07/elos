@@ -85,6 +85,7 @@ model Tenant {
   notepadEntries     NotepadEntry[]
   agendaCategorias   AgendaCategoria[]
   agendaRecorrencias AgendaRecorrencia[]
+  agendaComentarios  AgendaComentario[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -1420,6 +1421,8 @@ model AgendaItem {
   id            String         @id @default(uuid()) @db.Uuid
   tenantId      String         @db.Uuid
   userId        String         @db.Uuid
+  /// Coluna solta, sem relação Prisma para User (mesmo padrão de AuditEvent.actorId) — quem vê/edita o item passa a ser userId OU responsavelId, ver AgendaService.meuOuAtribuido.
+  responsavelId String?        @db.Uuid
   data          DateTime       @db.Date
   hora          String?
   horaFim       String?
@@ -1436,10 +1439,29 @@ model AgendaItem {
   tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   categoria   AgendaCategoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
   recorrencia AgendaRecorrencia? @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
+  comentarios AgendaComentario[]
 
   @@index([tenantId, userId, data])
   @@index([recorrenciaId])
+  @@index([responsavelId])
   @@map("agenda_items")
+}
+
+/// Comentários simples, append-only (sem edição/exclusão) — mesmo padrão de Ocorrencia (rh/employees): autor gravado como snapshot de nome, sem depender de join.
+model AgendaComentario {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  agendaItemId String   @db.Uuid
+  userId       String   @db.Uuid
+  autor        String
+  texto        String
+  createdAt    DateTime @default(now())
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  agendaItem AgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, agendaItemId])
+  @@map("agenda_comentarios")
 }
 
 enum AgendaRecorrenciaFrequencia {

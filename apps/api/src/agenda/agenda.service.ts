@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { AuditService } from '../audit/audit.service';
-import { CreateAgendaItemDto, SaveNotepadDto, UpdateAgendaItemDto } from './dto/agenda.dto';
+import { CreateAgendaItemDto, CreateComentarioDto, SaveNotepadDto, UpdateAgendaItemDto } from './dto/agenda.dto';
 import { computeOccurrences } from './recurrence.util';
 
 function startOfDayUtc(dateStr: string): Date {
@@ -23,12 +23,17 @@ export class AgendaService {
     return this.prisma.forCurrentTenant();
   }
 
+  /** Um item é visível/editável por quem o criou OU por quem foi atribuído como responsável. */
+  private meuOuAtribuido(userId: string) {
+    return { OR: [{ userId }, { responsavelId: userId }] };
+  }
+
   async listItems(date?: string, dataInicio?: string, dataFim?: string) {
     const { userId, tenantId } = getRequestContext();
     const where =
       dataInicio && dataFim
-        ? { userId, tenantId, deletedAt: null, data: { gte: startOfDayUtc(dataInicio), lte: startOfDayUtc(dataFim) } }
-        : { userId, tenantId, deletedAt: null, data: startOfDayUtc(date!) };
+        ? { tenantId, deletedAt: null, ...this.meuOuAtribuido(userId), data: { gte: startOfDayUtc(dataInicio), lte: startOfDayUtc(dataFim) } }
+        : { tenantId, deletedAt: null, ...this.meuOuAtribuido(userId), data: startOfDayUtc(date!) };
     return this.db().agendaItem.findMany({
       where,
       include: { categoria: true },
@@ -47,6 +52,7 @@ export class AgendaService {
     const camposComuns = {
       tenantId,
       userId,
+      responsavelId: dto.responsavelId,
       hora: dto.hora,
       horaFim: dto.horaFim,
       descricao: dto.descricao,
@@ -111,13 +117,13 @@ export class AgendaService {
 
   private async mustFind(id: string) {
     const { userId, tenantId } = getRequestContext();
-    const item = await this.db().agendaItem.findFirst({ where: { id, userId, tenantId, deletedAt: null } });
+    const item = await this.db().agendaItem.findFirst({ where: { id, tenantId, deletedAt: null, ...this.meuOuAtribuido(userId) } });
     if (!item) throw new NotFoundException('Item de agenda não encontrado.');
     return item;
   }
 
   async updateItem(id: string, dto: UpdateAgendaItemDto) {
-    await this.mustFind(id);
+    const antes = await this.mustFind(id);
     const db = this.db();
     const updated = await db.agendaItem.update({
       where: { id },
@@ -130,10 +136,12 @@ export class AgendaService {
         notas: dto.notas,
         tipo: dto.tipo,
         categoriaId: dto.categoriaId,
+        responsavelId: dto.responsavelId,
       },
       include: { categoria: true },
     });
-    const action = dto.concluida === true ? 'concluido' : dto.concluida === false ? 'reaberto' : 'editado';
+    const reatribuido = dto.responsavelId !== undefined && dto.responsavelId !== antes.responsavelId;
+    const action = reatribuido ? 'atribuido' : dto.concluida === true ? 'concluido' : dto.concluida === false ? 'reaberto' : 'editado';
     await this.audit.log('agenda_item', id, action, { ...dto });
     return updated;
   }
@@ -151,7 +159,7 @@ export class AgendaService {
     const db = this.db();
     const hojeUtc = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
     const { count } = await db.agendaItem.updateMany({
-      where: { recorrenciaId, userId, tenantId, deletedAt: null, data: { gte: hojeUtc } },
+      where: { recorrenciaId, tenantId, deletedAt: null, data: { gte: hojeUtc }, ...this.meuOuAtribuido(userId) },
       data: { deletedAt: new Date() },
     });
     await this.audit.log('agenda_recorrencia', recorrenciaId, 'serie_excluida', { ocorrenciasExcluidas: count });
@@ -161,11 +169,37 @@ export class AgendaService {
   async restoreItem(id: string) {
     const { userId, tenantId } = getRequestContext();
     const db = this.db();
-    const item = await db.agendaItem.findFirst({ where: { id, userId, tenantId } });
+    const item = await db.agendaItem.findFirst({ where: { id, tenantId, ...this.meuOuAtribuido(userId) } });
     if (!item) throw new NotFoundException('Item de agenda não encontrado.');
     const restored = await db.agendaItem.update({ where: { id }, data: { deletedAt: null }, include: { categoria: true } });
     await this.audit.log('agenda_item', id, 'restaurado');
     return restored;
+  }
+
+  async listUsuariosRh() {
+    const { tenantId } = getRequestContext();
+    // User não tem RLS (mesmo aviso em tenant.service.ts) — o filtro por tenantId aqui é obrigatório, não redundante.
+    return this.prisma.user.findMany({
+      where: { tenantId, role: { in: ['ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA'] } },
+      select: { id: true, name: true, role: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async listComentarios(agendaItemId: string) {
+    await this.mustFind(agendaItemId);
+    const { tenantId } = getRequestContext();
+    return this.db().agendaComentario.findMany({ where: { tenantId, agendaItemId }, orderBy: { createdAt: 'asc' } });
+  }
+
+  async criarComentario(agendaItemId: string, dto: CreateComentarioDto) {
+    await this.mustFind(agendaItemId);
+    const { tenantId, userId, userName } = getRequestContext();
+    const comentario = await this.db().agendaComentario.create({
+      data: { tenantId, agendaItemId, userId, autor: userName, texto: dto.texto },
+    });
+    await this.audit.log('agenda_item', agendaItemId, 'comentario_adicionado', { comentarioId: comentario.id });
+    return comentario;
   }
 
   async getNotepad(date: string) {

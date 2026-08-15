@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { AgendaService } from './agenda.service';
-import { CreateAgendaItemDto, SaveNotepadDto, UpdateAgendaItemDto } from './dto/agenda.dto';
+import { CreateAgendaItemDto, CreateComentarioDto, SaveNotepadDto, UpdateAgendaItemDto } from './dto/agenda.dto';
 
 @UseGuards(AuthGuard)
 @Controller('agenda')
@@ -11,6 +11,11 @@ export class AgendaController {
   @Get('categorias')
   listCategorias() {
     return this.service.listCategorias();
+  }
+
+  @Get('usuarios')
+  listUsuarios() {
+    return this.service.listUsuariosRh();
   }
 
   @Get('items')
@@ -41,6 +46,16 @@ export class AgendaController {
   @Post('items/:id/restore')
   restoreItem(@Param('id') id: string) {
     return this.service.restoreItem(id);
+  }
+
+  @Get('items/:id/comentarios')
+  listComentarios(@Param('id') id: string) {
+    return this.service.listComentarios(id);
+  }
+
+  @Post('items/:id/comentarios')
+  criarComentario(@Param('id') id: string, @Body() dto: CreateComentarioDto) {
+    return this.service.criarComentario(id, dto);
   }
 
   @Get('notepad/:date')

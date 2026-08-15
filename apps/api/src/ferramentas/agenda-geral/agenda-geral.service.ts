@@ -56,6 +56,7 @@ export interface AgendaGeralEvento {
   notas?: string | null;
   categoriaId?: string | null;
   recorrenciaId?: string | null;
+  responsavelId?: string | null;
 }
 
 function addMonths(date: Date, months: number): Date {
@@ -111,7 +112,9 @@ export class AgendaGeralService {
     const rangeDocReq = diaUnico ? { expiraEm: diaUnico } : { expiraEm: { not: null, lte: janela } };
 
     const [agendaItems, deadlines, exams, trainings, vacations, terminationsAbertas, terminations, docRequirements] = await Promise.all([
-      db.agendaItem.findMany({ where: { userId, deletedAt: null, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem } }),
+      db.agendaItem.findMany({
+        where: { OR: [{ userId }, { responsavelId: userId }], deletedAt: null, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem },
+      }),
       podeVerOrigensRh
         ? db.laborDeadline.findMany({ where: { ...(diaUnico ? {} : { cumprido: false }), ...rangeDeadline } })
         : Promise.resolve([]),
@@ -166,6 +169,7 @@ export class AgendaGeralService {
         notas: a.notas,
         categoriaId: a.categoriaId,
         recorrenciaId: a.recorrenciaId,
+        responsavelId: a.responsavelId,
       });
     }
     for (const d of deadlines) {
@@ -285,7 +289,7 @@ export class AgendaGeralService {
     }
 
     if (origem === 'AGENDA_ITEM') {
-      const item = await db.agendaItem.findFirst({ where: { id, userId, tenantId, deletedAt: null } });
+      const item = await db.agendaItem.findFirst({ where: { id, tenantId, deletedAt: null, OR: [{ userId }, { responsavelId: userId }] } });
       if (item) await db.agendaItem.update({ where: { id }, data: { concluida: true } });
       return { ok: true };
     }

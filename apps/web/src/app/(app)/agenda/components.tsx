@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Repeat, Search, StickyNote, Trash2, Users, PartyPopper } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
+import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, Categoria, RecorrenciaInput } from './types';
+import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, Categoria, Comentario, RecorrenciaInput, Usuario } from './types';
 import { DIA_SEMANA_CODES, DIA_SEMANA_LABEL, DIA_SEMANA_LABEL_LONGO, FREQUENCIA_LABEL, TIPO_LABEL } from './types';
 import { addAnosIso, categoriaCor, localIso, parseIsoLocal } from './lib';
 
@@ -149,6 +151,7 @@ export interface EventFormValues {
   notas: string;
   tipo: AgendaItemTipo;
   categoriaId: string;
+  responsavelId: string;
   repetir: boolean;
   frequencia: AgendaRecorrenciaFrequencia;
   intervalo: number;
@@ -182,6 +185,7 @@ export function EventFormDrawer({
   open,
   onClose,
   categorias,
+  usuarios,
   isDark,
   item,
   defaultDate,
@@ -194,6 +198,7 @@ export function EventFormDrawer({
   open: boolean;
   onClose: () => void;
   categorias: Categoria[];
+  usuarios: Usuario[];
   isDark: boolean;
   item?: AgendaItem | null;
   defaultDate?: string;
@@ -220,6 +225,7 @@ export function EventFormDrawer({
       notas: it?.notas ?? '',
       tipo: it?.tipo ?? 'TAREFA',
       categoriaId: it?.categoriaId ?? '',
+      responsavelId: it?.responsavelId ?? '',
       repetir: false,
       frequencia: 'SEMANAL',
       intervalo: 1,
@@ -467,6 +473,22 @@ export function EventFormDrawer({
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-text-secondary">Responsável</span>
+          <select
+            value={values.responsavelId}
+            onChange={(e) => setValues((v) => ({ ...v, responsavelId: e.target.value }))}
+            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+          >
+            <option value="">Ninguém (só eu)</option>
+            {usuarios.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Descrição / anotações</span>
           <textarea
             value={values.notas}
@@ -475,6 +497,8 @@ export function EventFormDrawer({
             className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
           />
         </label>
+
+        {item && <CommentsSection agendaItemId={item.id} />}
 
         <div className="mt-2 flex items-center justify-between">
           {onDelete ? (
@@ -502,5 +526,64 @@ export function EventFormDrawer({
         </div>
       </form>
     </Drawer>
+  );
+}
+
+function CommentsSection({ agendaItemId }: { agendaItemId: string }) {
+  const queryClient = useQueryClient();
+  const [texto, setTexto] = useState('');
+
+  const { data: comentarios } = useQuery({
+    queryKey: ['agenda', 'comentarios', agendaItemId],
+    queryFn: async () => (await api.get<Comentario[]>(`/agenda/items/${agendaItemId}/comentarios`)).data,
+  });
+
+  const criar = useMutation({
+    mutationFn: async () => api.post(`/agenda/items/${agendaItemId}/comentarios`, { texto }),
+    onSuccess: () => {
+      setTexto('');
+      queryClient.invalidateQueries({ queryKey: ['agenda', 'comentarios', agendaItemId] });
+    },
+  });
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm text-text-secondary">Comentários</span>
+      <div className="flex max-h-48 flex-col gap-2 overflow-y-auto">
+        {comentarios?.map((c) => (
+          <div key={c.id} className="rounded-[10px] bg-surface-alt p-2.5 text-sm">
+            <div className="mb-0.5 flex items-center gap-1.5 text-xs font-semibold text-text">
+              <UserRound className="h-3 w-3 text-text-tertiary" />
+              {c.autor}
+              <span className="font-normal text-text-tertiary">{new Date(c.createdAt).toLocaleString('pt-BR')}</span>
+            </div>
+            <p className="text-text">{c.texto}</p>
+          </div>
+        ))}
+        {comentarios?.length === 0 && <p className="text-xs text-text-tertiary">Nenhum comentário ainda.</p>}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder="Adicionar comentário…"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && texto.trim()) {
+              e.preventDefault();
+              criar.mutate();
+            }
+          }}
+          className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+        />
+        <button
+          type="button"
+          disabled={!texto.trim() || criar.isPending}
+          onClick={() => criar.mutate()}
+          className="flex items-center justify-center rounded-[10px] bg-accent px-3 text-on-accent disabled:opacity-50"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }

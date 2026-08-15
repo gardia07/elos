@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min, MinLength, ValidateNested } from 'class-validator';
 
 const TIPOS = ['REUNIAO', 'PRAZO', 'TAREFA', 'PESSOAL', 'LEMBRETE'] as const;
 export type AgendaItemTipo = (typeof TIPOS)[number];
@@ -24,6 +24,7 @@ export class CreateAgendaItemDto {
   @IsOptional() @IsString() notas?: string;
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
   @IsOptional() @IsUUID() categoriaId?: string;
+  @IsOptional() @IsUUID() responsavelId?: string;
   @IsOptional() @ValidateNested() @Type(() => RecorrenciaInputDto) recorrencia?: RecorrenciaInputDto;
 }
 
@@ -36,8 +37,13 @@ export class UpdateAgendaItemDto {
   @IsOptional() @IsString() notas?: string;
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
   @IsOptional() @IsUUID() categoriaId?: string;
+  @IsOptional() @IsUUID() responsavelId?: string;
 }
 
 export class SaveNotepadDto {
   @IsString() conteudo!: string;
+}
+
+export class CreateComentarioDto {
+  @IsString() @MinLength(1) texto!: string;
 }

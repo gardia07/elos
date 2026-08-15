@@ -23,7 +23,7 @@ import {
   startOfWeekSunday,
   useIsDarkTheme,
 } from './lib';
-import type { AgendaGeralEvento, AgendaItem, CalendarEvent, Categoria, AgendaView } from './types';
+import type { AgendaGeralEvento, AgendaItem, CalendarEvent, Categoria, AgendaView, Usuario } from './types';
 
 function useIsMobile(breakpointPx = 640) {
   const [isMobile, setIsMobile] = useState(false);
@@ -69,6 +69,7 @@ function geralToAgendaItem(e: AgendaGeralEvento): AgendaItem {
     concluida: e.concluida,
     origem: 'MANUAL',
     recorrenciaId: e.recorrenciaId ?? null,
+    responsavelId: e.responsavelId ?? null,
   };
 }
 
@@ -142,6 +143,11 @@ export default function AgendaPage() {
   const { data: categorias } = useQuery({
     queryKey: ['agenda', 'categorias'],
     queryFn: async () => (await api.get<Categoria[]>('/agenda/categorias')).data,
+  });
+
+  const { data: usuarios } = useQuery({
+    queryKey: ['agenda', 'usuarios'],
+    queryFn: async () => (await api.get<Usuario[]>('/agenda/usuarios')).data,
   });
 
   const { data: items } = useQuery({
@@ -237,6 +243,7 @@ export default function AgendaPage() {
       notas: values.notas || null,
       tipo: values.tipo,
       categoriaId: values.categoriaId || null,
+      responsavelId: values.responsavelId || null,
     };
     if (drawer.item) {
       updateItem.mutate({ id: drawer.item.id, payload }, { onSuccess: () => setDrawer({ open: false, item: null }) });
@@ -428,6 +435,7 @@ export default function AgendaPage() {
         open={drawer.open}
         onClose={() => setDrawer({ open: false, item: null })}
         categorias={categorias ?? []}
+        usuarios={usuarios ?? []}
         isDark={isDark}
         item={drawer.item}
         defaultDate={drawer.defaultDate}
