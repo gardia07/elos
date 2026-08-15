@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { AuditService } from '../audit/audit.service';
-import { CreateAgendaItemDto, CreateComentarioDto, SaveNotepadDto, UpdateAgendaItemDto } from './dto/agenda.dto';
+import { CreateAgendaItemDto, CreateComentarioDto, SaveNotepadDto, SaveRevisaoDto, UpdateAgendaItemDto } from './dto/agenda.dto';
 import { computeOccurrences } from './recurrence.util';
 
 function startOfDayUtc(dateStr: string): Date {
@@ -217,6 +217,24 @@ export class AgendaService {
       where: { tenantId_userId_data: { tenantId, userId, data } },
       create: { tenantId, userId, data, conteudo: dto.conteudo },
       update: { conteudo: dto.conteudo },
+    });
+  }
+
+  async getRevisao(date: string) {
+    const { userId, tenantId } = getRequestContext();
+    const entry = await this.db().agendaRevisaoDiaria.findUnique({
+      where: { tenantId_userId_data: { tenantId, userId, data: startOfDayUtc(date) } },
+    });
+    return { reflexao: entry?.reflexao ?? '' };
+  }
+
+  async saveRevisao(date: string, dto: SaveRevisaoDto) {
+    const { userId, tenantId } = getRequestContext();
+    const data = startOfDayUtc(date);
+    return this.db().agendaRevisaoDiaria.upsert({
+      where: { tenantId_userId_data: { tenantId, userId, data } },
+      create: { tenantId, userId, data, reflexao: dto.reflexao },
+      update: { reflexao: dto.reflexao },
     });
   }
 }

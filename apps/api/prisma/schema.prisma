@@ -80,12 +80,13 @@ model Tenant {
   payrollImportBatches    PayrollImportBatch[]
   payrollImportTemplates  PayrollImportTemplate[]
 
-  agendaItems        AgendaItem[]
-  agendaDismissals   AgendaDismissal[]
-  notepadEntries     NotepadEntry[]
-  agendaCategorias   AgendaCategoria[]
-  agendaRecorrencias AgendaRecorrencia[]
-  agendaComentarios  AgendaComentario[]
+  agendaItems           AgendaItem[]
+  agendaDismissals      AgendaDismissal[]
+  notepadEntries        NotepadEntry[]
+  agendaCategorias      AgendaCategoria[]
+  agendaRecorrencias    AgendaRecorrencia[]
+  agendaComentarios     AgendaComentario[]
+  agendaRevisoesDiarias AgendaRevisaoDiaria[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -1528,6 +1529,24 @@ model NotepadEntry {
 
   @@unique([tenantId, userId, data])
   @@map("notepad_entries")
+}
+
+/// "Daily shutdown" (spec §6.9) — reflexão/observação de fim de dia por
+/// usuário. Concluídos/pendentes do dia não ficam aqui, são derivados de
+/// AgendaItem direto no frontend (GET /agenda/items?data=).
+model AgendaRevisaoDiaria {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  data      DateTime @db.Date
+  reflexao  String   @default("")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("agenda_revisoes_diarias")
 }
 
 // ─────────────────────────────────────────────────────────────

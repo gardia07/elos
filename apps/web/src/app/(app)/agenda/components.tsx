@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -32,6 +32,7 @@ export function AgendaHeader({
   onNext,
   onToday,
   onNew,
+  onOpenReview,
   search,
   onSearchChange,
 }: {
@@ -42,6 +43,7 @@ export function AgendaHeader({
   onNext: () => void;
   onToday: () => void;
   onNew: () => void;
+  onOpenReview: () => void;
   search: string;
   onSearchChange: (v: string) => void;
 }) {
@@ -98,6 +100,14 @@ export function AgendaHeader({
             className="w-40 rounded-full border border-border-strong bg-surface py-2 pl-8 pr-3 text-sm"
           />
         </div>
+
+        <button
+          type="button"
+          onClick={onOpenReview}
+          className="flex items-center gap-1.5 rounded-[10px] border border-border-strong bg-surface px-3.5 py-2 text-sm font-medium text-text-secondary hover:border-accent hover:text-accent"
+        >
+          <Moon className="h-4 w-4" /> Revisão do dia
+        </button>
 
         <Button onClick={onNew} className="flex items-center gap-1.5">
           <Plus className="h-4 w-4" /> Novo

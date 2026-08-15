@@ -11,6 +11,7 @@ import { MonthView } from './month-view';
 import { TimelineView } from './timeline-view';
 import { ListView } from './list-view';
 import { NotesPanel } from './notes-panel';
+import { DailyReviewDrawer } from './daily-review';
 import {
   addDaysLocal,
   formatDiaLongo,
@@ -110,6 +111,7 @@ export default function AgendaPage() {
     open: false,
     item: null,
   });
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   const today = new Date();
   const todayIso = localIso(today);
@@ -329,6 +331,7 @@ export default function AgendaPage() {
             onNext={() => stepPeriod(1)}
             onToday={() => setAnchorDate(new Date())}
             onNew={() => openCreate()}
+            onOpenReview={() => setReviewOpen(true)}
             search={search}
             onSearchChange={setSearch}
           />
@@ -445,6 +448,8 @@ export default function AgendaPage() {
         onDeleteSeries={drawer.item?.recorrenciaId ? handleDeleteSeries : undefined}
         saving={createItem.isPending || updateItem.isPending}
       />
+
+      <DailyReviewDrawer open={reviewOpen} onClose={() => setReviewOpen(false)} date={todayIso} />
     </>
   );
 }

@@ -47,3 +47,7 @@ export class SaveNotepadDto {
 export class CreateComentarioDto {
   @IsString() @MinLength(1) texto!: string;
 }
+
+export class SaveRevisaoDto {
+  @IsString() reflexao!: string;
+}
