@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ChevronLeft, ChevronRight, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
+import { AlertTriangle, Bell, ChevronLeft, ChevronRight, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -168,6 +168,15 @@ export interface EventFormValues {
   diasDaSemana: string[];
   posicaoNoMes: number;
   dataFimRecorrencia: string;
+  lembretes: number[];
+  lembreteEmail: boolean;
+}
+
+const LEMBRETE_ANTECEDENCIA_LABEL: Record<number, string> = { 0: 'No dia', 1: '1 dia antes', 7: '1 semana antes' };
+const LEMBRETE_ANTECEDENCIAS = [0, 1, 7];
+
+export function lembretesInputFromValues(v: EventFormValues) {
+  return { antecedencias: v.lembretes, email: v.lembreteEmail };
 }
 
 const UNIDADE_INTERVALO: Record<AgendaRecorrenciaFrequencia, string> = {
@@ -242,6 +251,8 @@ export function EventFormDrawer({
       diasDaSemana: [],
       posicaoNoMes: -1,
       dataFimRecorrencia: addAnosIso(data, 1),
+      lembretes: it?.lembretes?.map((l) => l.antecedenciaDias) ?? [],
+      lembreteEmail: it?.lembretes?.some((l) => l.notificarEmail) ?? false,
     };
   }
 
@@ -447,6 +458,45 @@ export function EventFormDrawer({
             )}
           </div>
         )}
+
+        <div className="flex flex-col gap-2 rounded-[10px] border border-border p-3">
+          <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+            <Bell className="h-3.5 w-3.5" /> Lembrete
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {LEMBRETE_ANTECEDENCIAS.map((dias) => {
+              const ativo = values.lembretes.includes(dias);
+              return (
+                <button
+                  key={dias}
+                  type="button"
+                  onClick={() =>
+                    setValues((v) => ({
+                      ...v,
+                      lembretes: ativo ? v.lembretes.filter((x) => x !== dias) : [...v.lembretes, dias],
+                    }))
+                  }
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs',
+                    ativo ? 'border-accent bg-tint-blue text-accent' : 'border-border-strong bg-surface text-text-secondary',
+                  )}
+                >
+                  {LEMBRETE_ANTECEDENCIA_LABEL[dias]}
+                </button>
+              );
+            })}
+          </div>
+          {values.lembretes.length > 0 && (
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
+              <input
+                type="checkbox"
+                checked={values.lembreteEmail}
+                onChange={(e) => setValues((v) => ({ ...v, lembreteEmail: e.target.checked }))}
+              />
+              Também por e-mail
+            </label>
+          )}
+        </div>
 
         <div>
           <span className="mb-1.5 block text-sm text-text-secondary">Categoria</span>

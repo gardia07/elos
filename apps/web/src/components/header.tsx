@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { Badge, Button, Drawer } from '@/components/ui';
+import { cn } from '@/lib/cn';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -30,6 +31,13 @@ interface Task {
   titulo: string;
   prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   detalhes: { href?: string } | null;
+}
+
+interface AgendaNotificacao {
+  id: string;
+  titulo: string;
+  lida: boolean;
+  createdAt: string;
 }
 
 function useTheme() {
@@ -82,6 +90,16 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
     queryFn: async () => (await api.get<Task[]>('/dashboard/tasks')).data,
   });
 
+  const { data: notificacoes } = useQuery({
+    queryKey: ['agenda', 'notificacoes'],
+    queryFn: async () => (await api.get<AgendaNotificacao[]>('/agenda/notificacoes')).data,
+  });
+
+  const marcarNotificacaoLida = useMutation({
+    mutationFn: async (id: string) => api.post(`/agenda/notificacoes/${id}/marcar-lida`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agenda', 'notificacoes'] }),
+  });
+
   const logout = useMutation({
     mutationFn: async () => api.post('/auth/logout'),
     onSuccess: async () => {
@@ -120,7 +138,8 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
     .join('')
     .toUpperCase();
 
-  const criticalCount = tasks?.filter((t) => t.prioridade === 'ALTA' || t.prioridade === 'CRITICA').length ?? 0;
+  const unreadNotificacoes = notificacoes?.filter((n) => !n.lida).length ?? 0;
+  const criticalCount = (tasks?.filter((t) => t.prioridade === 'ALTA' || t.prioridade === 'CRITICA').length ?? 0) + unreadNotificacoes;
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-divider bg-page-bg px-8 py-5">
@@ -210,6 +229,27 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
                   );
                 })}
                 {tasks?.length === 0 && <li className="px-3 py-2 text-sm text-text-tertiary">Nenhum alerta no momento.</li>}
+              </ul>
+
+              <div className="border-t border-divider px-3 py-2 text-xs font-semibold uppercase tracking-[0.06em] text-text-tertiary">
+                Lembretes de agenda
+              </div>
+              <ul className="max-h-56 overflow-y-auto py-1">
+                {notificacoes?.map((n) => (
+                  <li key={n.id}>
+                    <Link
+                      href="/agenda?view=lista"
+                      onClick={() => {
+                        setShowNotifications(false);
+                        if (!n.lida) marcarNotificacaoLida.mutate(n.id);
+                      }}
+                      className={cn('flex items-center gap-2 px-3 py-2 hover:bg-surface-alt', !n.lida && 'font-medium text-text')}
+                    >
+                      <span className="flex-1 text-sm">{n.titulo}</span>
+                    </Link>
+                  </li>
+                ))}
+                {notificacoes?.length === 0 && <li className="px-3 py-2 text-sm text-text-tertiary">Nenhum lembrete.</li>}
               </ul>
             </div>
           )}

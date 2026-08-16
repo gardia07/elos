@@ -16,6 +16,13 @@ export class RecorrenciaInputDto {
   @IsDateString() dataFim!: string;
 }
 
+const ANTECEDENCIAS = [0, 1, 7] as const;
+
+export class LembreteInputDto {
+  @IsArray() @ArrayMaxSize(3) @IsIn(ANTECEDENCIAS, { each: true }) antecedencias!: number[];
+  @IsOptional() @IsBoolean() email?: boolean;
+}
+
 export class CreateAgendaItemDto {
   @IsDateString() data!: string;
   @IsOptional() @IsString() hora?: string;
@@ -26,6 +33,7 @@ export class CreateAgendaItemDto {
   @IsOptional() @IsUUID() categoriaId?: string;
   @IsOptional() @IsUUID() responsavelId?: string;
   @IsOptional() @ValidateNested() @Type(() => RecorrenciaInputDto) recorrencia?: RecorrenciaInputDto;
+  @IsOptional() @ValidateNested() @Type(() => LembreteInputDto) lembretes?: LembreteInputDto;
 }
 
 export class UpdateAgendaItemDto {
@@ -38,6 +46,7 @@ export class UpdateAgendaItemDto {
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
   @IsOptional() @IsUUID() categoriaId?: string;
   @IsOptional() @IsUUID() responsavelId?: string;
+  @IsOptional() @ValidateNested() @Type(() => LembreteInputDto) lembretes?: LembreteInputDto;
 }
 
 export class SaveNotepadDto {

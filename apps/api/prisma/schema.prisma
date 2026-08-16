@@ -87,6 +87,8 @@ model Tenant {
   agendaRecorrencias    AgendaRecorrencia[]
   agendaComentarios     AgendaComentario[]
   agendaRevisoesDiarias AgendaRevisaoDiaria[]
+  agendaLembretes       AgendaLembrete[]
+  agendaNotificacoes    AgendaNotificacao[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -1441,6 +1443,7 @@ model AgendaItem {
   categoria   AgendaCategoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
   recorrencia AgendaRecorrencia? @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
   comentarios AgendaComentario[]
+  lembretes   AgendaLembrete[]
 
   @@index([tenantId, userId, data])
   @@index([recorrenciaId])
@@ -1463,6 +1466,46 @@ model AgendaComentario {
 
   @@index([tenantId, agendaItemId])
   @@map("agenda_comentarios")
+}
+
+/// Regra de lembrete de um item de agenda — o sino (AgendaNotificacao) é
+/// sempre criado quando dispara; notificarEmail liga um envio extra por
+/// e-mail. Disparo via LembretesCronService (varredura diária), não por
+/// request — ver agenda/lembretes-cron.service.ts.
+model AgendaLembrete {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  agendaItemId     String   @db.Uuid
+  userId           String   @db.Uuid
+  antecedenciaDias Int
+  notificarEmail   Boolean  @default(false)
+  enviado          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  agendaItem AgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, enviado])
+  @@map("agenda_lembretes")
+}
+
+/// Notificação por usuário exibida no sino do sistema (components/header.tsx
+/// no frontend). agendaItemId é solto (sem FK Prisma, mesmo padrão de
+/// AuditEvent.actorId) — se o item for excluído, a notificação permanece
+/// como histórico.
+model AgendaNotificacao {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  userId       String   @db.Uuid
+  agendaItemId String?  @db.Uuid
+  titulo       String
+  lida         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, lida])
+  @@map("agenda_notificacoes")
 }
 
 enum AgendaRecorrenciaFrequencia {

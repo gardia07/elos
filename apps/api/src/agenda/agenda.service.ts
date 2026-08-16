@@ -2,8 +2,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { AuditService } from '../audit/audit.service';
-import { CreateAgendaItemDto, CreateComentarioDto, SaveNotepadDto, SaveRevisaoDto, UpdateAgendaItemDto } from './dto/agenda.dto';
+import { CreateAgendaItemDto, CreateComentarioDto, LembreteInputDto, SaveNotepadDto, SaveRevisaoDto, UpdateAgendaItemDto } from './dto/agenda.dto';
 import { computeOccurrences } from './recurrence.util';
+import { hojeBrasiliaUtc } from './date-utils';
 
 function startOfDayUtc(dateStr: string): Date {
   const d = new Date(dateStr);
@@ -28,6 +29,32 @@ export class AgendaService {
     return { OR: [{ userId }, { responsavelId: userId }] };
   }
 
+  /** Cria os lembretes de uma seleção de itens (1 item, ou todas as ocorrências de uma série) — ignora alvos que já passaram. */
+  private async criarLembretesParaItens(
+    db: ReturnType<AgendaService['db']>,
+    tenantId: string,
+    userId: string,
+    itens: { id: string; data: Date }[],
+    lembretes: LembreteInputDto,
+  ) {
+    const hojeUtc = hojeBrasiliaUtc();
+    const linhas = itens.flatMap((item) =>
+      lembretes.antecedencias
+        .map((antecedenciaDias) => ({
+          tenantId,
+          agendaItemId: item.id,
+          userId,
+          antecedenciaDias,
+          notificarEmail: lembretes.email ?? false,
+          alvo: new Date(item.data.getTime() - antecedenciaDias * 86_400_000),
+        }))
+        .filter((l) => l.alvo.getTime() >= hojeUtc.getTime())
+        .map(({ alvo, ...resto }) => resto),
+    );
+    if (linhas.length === 0) return;
+    await db.agendaLembrete.createMany({ data: linhas });
+  }
+
   async listItems(date?: string, dataInicio?: string, dataFim?: string) {
     const { userId, tenantId } = getRequestContext();
     const where =
@@ -36,7 +63,7 @@ export class AgendaService {
         : { tenantId, deletedAt: null, ...this.meuOuAtribuido(userId), data: startOfDayUtc(date!) };
     return this.db().agendaItem.findMany({
       where,
-      include: { categoria: true },
+      include: { categoria: true, lembretes: { where: { enviado: false }, select: { antecedenciaDias: true, notificarEmail: true } } },
       orderBy: [{ data: 'asc' }, { hora: 'asc' }, { createdAt: 'asc' }],
     });
   }
@@ -67,6 +94,7 @@ export class AgendaService {
         include: { categoria: true },
       });
       await this.audit.log('agenda_item', created.id, 'criado', { descricao: created.descricao, data: dto.data });
+      if (dto.lembretes) await this.criarLembretesParaItens(db, tenantId, userId, [{ id: created.id, data: created.data }], dto.lembretes);
       return created;
     }
 
@@ -98,7 +126,7 @@ export class AgendaService {
     });
     if (datas.length === 0) throw new BadRequestException('Nenhuma ocorrência cai dentro do período informado para essa recorrência.');
 
-    await db.agendaItem.createMany({
+    const criadas = await db.agendaItem.createManyAndReturn({
       data: datas.map((data) => ({ ...camposComuns, data, recorrenciaId: recorrencia.id })),
     });
     await this.audit.log('agenda_recorrencia', recorrencia.id, 'criado', {
@@ -106,6 +134,7 @@ export class AgendaService {
       frequencia: dto.recorrencia.frequencia,
       totalOcorrencias: datas.length,
     });
+    if (dto.lembretes) await this.criarLembretesParaItens(db, tenantId, userId, criadas, dto.lembretes);
 
     const primeiraOcorrencia = await db.agendaItem.findFirst({
       where: { recorrenciaId: recorrencia.id },
@@ -123,6 +152,7 @@ export class AgendaService {
   }
 
   async updateItem(id: string, dto: UpdateAgendaItemDto) {
+    const { userId, tenantId } = getRequestContext();
     const antes = await this.mustFind(id);
     const db = this.db();
     const updated = await db.agendaItem.update({
@@ -143,6 +173,10 @@ export class AgendaService {
     const reatribuido = dto.responsavelId !== undefined && dto.responsavelId !== antes.responsavelId;
     const action = reatribuido ? 'atribuido' : dto.concluida === true ? 'concluido' : dto.concluida === false ? 'reaberto' : 'editado';
     await this.audit.log('agenda_item', id, action, { ...dto });
+    if (dto.lembretes) {
+      await db.agendaLembrete.deleteMany({ where: { agendaItemId: id, enviado: false } });
+      await this.criarLembretesParaItens(db, tenantId, userId, [{ id: updated.id, data: updated.data }], dto.lembretes);
+    }
     return updated;
   }
 
@@ -236,5 +270,16 @@ export class AgendaService {
       create: { tenantId, userId, data, reflexao: dto.reflexao },
       update: { reflexao: dto.reflexao },
     });
+  }
+
+  async listNotificacoes() {
+    const { userId, tenantId } = getRequestContext();
+    return this.db().agendaNotificacao.findMany({ where: { tenantId, userId }, orderBy: { createdAt: 'desc' }, take: 20 });
+  }
+
+  async marcarNotificacaoLida(id: string) {
+    const { userId, tenantId } = getRequestContext();
+    await this.db().agendaNotificacao.updateMany({ where: { id, tenantId, userId }, data: { lida: true } });
+    return { ok: true };
   }
 }

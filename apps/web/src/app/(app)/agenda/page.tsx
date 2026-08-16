@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Header } from '@/components/header';
-import { AgendaHeader, CategoryLegend, EventFormDrawer, EventFormValues, recorrenciaFromValues } from './components';
+import { AgendaHeader, CategoryLegend, EventFormDrawer, EventFormValues, lembretesInputFromValues, recorrenciaFromValues } from './components';
 import { MonthView } from './month-view';
 import { TimelineView } from './timeline-view';
 import { ListView } from './list-view';
@@ -246,6 +246,7 @@ export default function AgendaPage() {
       tipo: values.tipo,
       categoriaId: values.categoriaId || null,
       responsavelId: values.responsavelId || null,
+      lembretes: lembretesInputFromValues(values),
     };
     if (drawer.item) {
       updateItem.mutate({ id: drawer.item.id, payload }, { onSuccess: () => setDrawer({ open: false, item: null }) });

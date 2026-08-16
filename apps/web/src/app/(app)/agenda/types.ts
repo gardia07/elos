@@ -32,6 +32,7 @@ export interface AgendaItem {
   origem: string;
   recorrenciaId: string | null;
   responsavelId: string | null;
+  lembretes?: { antecedenciaDias: number; notificarEmail: boolean }[];
 }
 
 export interface Usuario {

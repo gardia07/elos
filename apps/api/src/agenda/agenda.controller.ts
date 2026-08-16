@@ -77,4 +77,14 @@ export class AgendaController {
   saveRevisao(@Param('date') date: string, @Body() dto: SaveRevisaoDto) {
     return this.service.saveRevisao(date, dto);
   }
+
+  @Get('notificacoes')
+  listNotificacoes() {
+    return this.service.listNotificacoes();
+  }
+
+  @Post('notificacoes/:id/marcar-lida')
+  marcarNotificacaoLida(@Param('id') id: string) {
+    return this.service.marcarNotificacaoLida(id);
+  }
 }
