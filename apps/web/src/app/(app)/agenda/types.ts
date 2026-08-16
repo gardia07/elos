@@ -94,7 +94,9 @@ export type EventoOrigem =
   | 'TERMINATION'
   | 'TERMINATION_AVISO_FIM'
   | 'TERMINATION_PAGAMENTO'
-  | 'DOCUMENT_REQUIREMENT';
+  | 'DOCUMENT_REQUIREMENT'
+  | 'ANIVERSARIO_COLABORADOR'
+  | 'ANIVERSARIO_ADMISSAO';
 
 export interface AgendaGeralEvento {
   id: string;

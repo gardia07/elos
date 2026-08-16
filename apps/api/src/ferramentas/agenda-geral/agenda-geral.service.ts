@@ -12,7 +12,9 @@ export type AgendaGeralOrigem =
   | 'TERMINATION'
   | 'TERMINATION_AVISO_FIM'
   | 'TERMINATION_PAGAMENTO'
-  | 'DOCUMENT_REQUIREMENT';
+  | 'DOCUMENT_REQUIREMENT'
+  | 'ANIVERSARIO_COLABORADOR'
+  | 'ANIVERSARIO_ADMISSAO';
 
 /** Origens sem um campo de conclusão real no registro de origem — o check aqui só "dispensa" o lembrete (AgendaDismissal), não altera o registro. */
 const ORIGENS_DISPENSAVEIS: AgendaGeralOrigem[] = [
@@ -40,6 +42,8 @@ const ORIGENS_RESTRITAS_A_RH: AgendaGeralOrigem[] = [
   'TERMINATION_AVISO_FIM',
   'TERMINATION_PAGAMENTO',
   'DOCUMENT_REQUIREMENT',
+  'ANIVERSARIO_COLABORADOR',
+  'ANIVERSARIO_ADMISSAO',
 ];
 const PAPEIS_RH = new Set(['ADMIN', 'RH_GENERALISTA', 'GESTOR_AREA']);
 
@@ -63,6 +67,15 @@ function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
   d.setMonth(d.getMonth() + months);
   return d;
+}
+
+/** Próxima ocorrência (mês/dia de `base`) a partir de `today`, em UTC — usado para aniversário e tempo de empresa, que se repetem todo ano. */
+function nextOccurrence(base: Date, today: Date): Date {
+  let candidate = new Date(Date.UTC(today.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()));
+  if (candidate.getTime() < today.getTime()) {
+    candidate = new Date(Date.UTC(today.getUTCFullYear() + 1, base.getUTCMonth(), base.getUTCDate()));
+  }
+  return candidate;
 }
 
 function bucketFor(date: Date, today: Date): AgendaGeralEvento['bucket'] {
@@ -111,7 +124,7 @@ export class AgendaGeralService {
     const rangeTermination = diaUnico ? { data: diaUnico } : { data: { lte: janela } };
     const rangeDocReq = diaUnico ? { expiraEm: diaUnico } : { expiraEm: { not: null, lte: janela } };
 
-    const [agendaItems, deadlines, exams, trainings, vacations, terminationsAbertas, terminations, docRequirements] = await Promise.all([
+    const [agendaItems, deadlines, exams, trainings, vacations, terminationsAbertas, terminations, docRequirements, employeesAniversario] = await Promise.all([
       db.agendaItem.findMany({
         where: { OR: [{ userId }, { responsavelId: userId }], deletedAt: null, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem },
       }),
@@ -150,6 +163,9 @@ export class AgendaGeralService {
             where: { status: { in: ['MISSING', 'PENDING', 'EXPIRED'] }, ...rangeDocReq },
             include: { employee: { select: { nome: true } }, requirement: { select: { nome: true } } },
           })
+        : Promise.resolve([]),
+      podeVerOrigensRh
+        ? db.employee.findMany({ where: { status: 'ATIVO' }, select: { id: true, nome: true, dataNascimento: true, dataAdmissao: true } })
         : Promise.resolve([]),
     ]);
 
@@ -245,6 +261,39 @@ export class AgendaGeralService {
         bucket: bucketFor(r.expiraEm, today),
         concluida: false,
       });
+    }
+
+    for (const e of employeesAniversario) {
+      if (e.dataNascimento) {
+        const alvo = nextOccurrence(e.dataNascimento, today);
+        const dentroDaJanela = diaUnico ? alvo.getTime() === diaUnico.getTime() : alvo.getTime() <= janela.getTime();
+        if (dentroDaJanela) {
+          eventos.push({
+            id: `${e.id}-nascimento`,
+            origem: 'ANIVERSARIO_COLABORADOR',
+            data: alvo.toISOString(),
+            titulo: `Aniversário — ${e.nome}`,
+            hub: 'Gestão de Pessoas',
+            bucket: bucketFor(alvo, today),
+            concluida: false,
+          });
+        }
+      }
+
+      const alvoAdmissao = nextOccurrence(e.dataAdmissao, today);
+      const anos = alvoAdmissao.getUTCFullYear() - e.dataAdmissao.getUTCFullYear();
+      const dentroDaJanelaAdmissao = diaUnico ? alvoAdmissao.getTime() === diaUnico.getTime() : alvoAdmissao.getTime() <= janela.getTime();
+      if (anos >= 1 && dentroDaJanelaAdmissao) {
+        eventos.push({
+          id: `${e.id}-admissao`,
+          origem: 'ANIVERSARIO_ADMISSAO',
+          data: alvoAdmissao.toISOString(),
+          titulo: `${anos} ${anos === 1 ? 'ano' : 'anos'} de empresa — ${e.nome}`,
+          hub: 'Gestão de Pessoas',
+          bucket: bucketFor(alvoAdmissao, today),
+          concluida: false,
+        });
+      }
     }
 
     for (const t of terminationsAbertas) {
