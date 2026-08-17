@@ -23,10 +23,19 @@ export class PesoMedidaService {
   set(dto: SetPesoMedidaDto) {
     const { tenantId, userId } = getRequestContext();
     const data = startOfDayUtc(dto.data);
+    const campos = {
+      pesoKg: dto.pesoKg,
+      alturaCm: dto.alturaCm,
+      cinturaCm: dto.cinturaCm,
+      quadrilCm: dto.quadrilCm,
+      bracoCm: dto.bracoCm,
+      aguaMl: dto.aguaMl,
+      notas: dto.notas,
+    };
     return this.db().pesoMedidaRegistro.upsert({
       where: { tenantId_userId_data: { tenantId, userId, data } },
-      create: { tenantId, userId, data, pesoKg: dto.pesoKg, cinturaCm: dto.cinturaCm, quadrilCm: dto.quadrilCm, bracoCm: dto.bracoCm, notas: dto.notas },
-      update: { pesoKg: dto.pesoKg, cinturaCm: dto.cinturaCm, quadrilCm: dto.quadrilCm, bracoCm: dto.bracoCm, notas: dto.notas },
+      create: { tenantId, userId, data, ...campos },
+      update: campos,
     });
   }
 }

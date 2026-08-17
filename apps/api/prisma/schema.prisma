@@ -118,6 +118,8 @@ model Tenant {
   humorRegistros             HumorRegistro[]
   cicloMenstrualRegistros    CicloMenstrualRegistro[]
   pesoMedidaRegistros        PesoMedidaRegistro[]
+  rodaDaVidaAvaliacoes       RodaDaVidaAvaliacao[]
+  revisoesMensais            RevisaoMensal[]
 
   @@map("tenants")
 }
@@ -2186,9 +2188,11 @@ model PesoMedidaRegistro {
   userId    String   @db.Uuid
   data      DateTime @db.Date
   pesoKg    Decimal? @db.Decimal(5, 2)
+  alturaCm  Decimal? @db.Decimal(5, 2)
   cinturaCm Decimal? @db.Decimal(5, 2)
   quadrilCm Decimal? @db.Decimal(5, 2)
   bracoCm   Decimal? @db.Decimal(5, 2)
+  aguaMl    Int?
   notas     String?
   createdAt DateTime @default(now())
 
@@ -2196,6 +2200,48 @@ model PesoMedidaRegistro {
 
   @@unique([tenantId, userId, data])
   @@map("peso_medida_registros")
+}
+
+/** Roda da vida — autoavaliação de satisfação (1-10) em 8 áreas clássicas da ferramenta de coaching. Refeita quando o usuário quiser, pra comparar evolução ao longo do ano. */
+model RodaDaVidaAvaliacao {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @db.Uuid
+  userId             String   @db.Uuid
+  data               DateTime @db.Date
+  carreira           Int
+  financas           Int
+  saude              Int
+  familiaAmigos      Int
+  relacionamento     Int
+  crescimentoPessoal Int
+  lazer              Int
+  ambienteFisico     Int
+  createdAt          DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("roda_da_vida_avaliacoes")
+}
+
+/** Revisão mensal — intenções no início do mês e reflexão guiada no fim (o que funcionou / o que não funcionou / o que precisa mudar). */
+model RevisaoMensal {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  userId           String   @db.Uuid
+  ano              Int
+  mes              Int
+  intencoes        String?
+  oQueFuncionou    String?
+  oQueNaoFuncionou String?
+  oQuePrecisaMudar String?
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, ano, mes])
+  @@map("revisoes_mensais")
 }
 
 // ─────────────────────────────────────────────────────────────

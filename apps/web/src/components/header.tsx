@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Bell } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
@@ -195,7 +196,7 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
             className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border-strong bg-surface text-text-secondary hover:text-text"
             aria-label="Alertas"
           >
-            🔔
+            <Bell className="h-4 w-4" />
             {criticalCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-semibold text-white">
                 {criticalCount}

@@ -4,15 +4,18 @@ import { useState } from 'react';
 import { Header } from '@/components/header';
 import { cn } from '@/lib/cn';
 import { SECOES, type SecaoId } from './theme';
+import { DashboardSection } from './dashboard';
 import { MetasSection } from './metas';
 import { HabitosSection } from './habitos';
 import { FinancasSection } from './financas';
 import { HumorSection } from './humor';
 import { CicloSection } from './ciclo';
 import { PesoMedidaSection } from './peso-medida';
+import { RodaDaVidaSection } from './roda-da-vida';
+import { RevisaoMensalSection } from './revisao-mensal';
 
 export default function PlannerPage() {
-  const [secaoId, setSecaoId] = useState<SecaoId>('metas');
+  const [secaoId, setSecaoId] = useState<SecaoId>('dashboard');
   const ano = new Date().getFullYear();
   const tema = SECOES.find((s) => s.id === secaoId)!;
 
@@ -40,12 +43,15 @@ export default function PlannerPage() {
         </nav>
 
         <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
+          {secaoId === 'dashboard' && <DashboardSection ano={ano} tema={tema} />}
           {secaoId === 'metas' && <MetasSection ano={ano} tema={tema} />}
           {secaoId === 'habitos' && <HabitosSection ano={ano} tema={tema} />}
           {secaoId === 'financas' && <FinancasSection ano={ano} tema={tema} />}
           {secaoId === 'humor' && <HumorSection ano={ano} tema={tema} />}
           {secaoId === 'ciclo' && <CicloSection tema={tema} />}
           {secaoId === 'peso' && <PesoMedidaSection ano={ano} tema={tema} />}
+          {secaoId === 'roda' && <RodaDaVidaSection tema={tema} />}
+          {secaoId === 'revisao' && <RevisaoMensalSection ano={ano} tema={tema} />}
         </main>
       </div>
     </>

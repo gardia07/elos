@@ -78,8 +78,35 @@ export class UpdateCicloDto {
 export class SetPesoMedidaDto {
   @IsDateString() data!: string;
   @IsOptional() @IsNumber() pesoKg?: number;
+  @IsOptional() @IsNumber() alturaCm?: number;
   @IsOptional() @IsNumber() cinturaCm?: number;
   @IsOptional() @IsNumber() quadrilCm?: number;
   @IsOptional() @IsNumber() bracoCm?: number;
+  @IsOptional() @IsInt() @Min(0) aguaMl?: number;
   @IsOptional() @IsString() notas?: string;
+}
+
+// ── Roda da vida ───────────────────────────────────────────────
+
+export class SetRodaDaVidaDto {
+  @IsDateString() data!: string;
+  @IsInt() @Min(1) @Max(10) carreira!: number;
+  @IsInt() @Min(1) @Max(10) financas!: number;
+  @IsInt() @Min(1) @Max(10) saude!: number;
+  @IsInt() @Min(1) @Max(10) familiaAmigos!: number;
+  @IsInt() @Min(1) @Max(10) relacionamento!: number;
+  @IsInt() @Min(1) @Max(10) crescimentoPessoal!: number;
+  @IsInt() @Min(1) @Max(10) lazer!: number;
+  @IsInt() @Min(1) @Max(10) ambienteFisico!: number;
+}
+
+// ── Revisão mensal ─────────────────────────────────────────────
+
+export class SetRevisaoMensalDto {
+  @IsInt() ano!: number;
+  @IsInt() @Min(1) @Max(12) mes!: number;
+  @IsOptional() @IsString() intencoes?: string;
+  @IsOptional() @IsString() oQueFuncionou?: string;
+  @IsOptional() @IsString() oQueNaoFuncionou?: string;
+  @IsOptional() @IsString() oQuePrecisaMudar?: string;
 }

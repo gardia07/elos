@@ -6,6 +6,8 @@ import { FinancasService } from './financas.service';
 import { HumorService } from './humor.service';
 import { CicloService } from './ciclo.service';
 import { PesoMedidaService } from './peso-medida.service';
+import { RodaDaVidaService } from './roda-da-vida.service';
+import { RevisaoMensalService } from './revisao-mensal.service';
 import {
   CreateCategoriaFinanceiraDto,
   CreateCicloDto,
@@ -14,6 +16,8 @@ import {
   SetHumorDto,
   SetLancamentoDto,
   SetPesoMedidaDto,
+  SetRevisaoMensalDto,
+  SetRodaDaVidaDto,
   ToggleHabitoDto,
   UpdateCategoriaFinanceiraDto,
   UpdateCicloDto,
@@ -32,6 +36,8 @@ export class PlannerController {
     private readonly humor: HumorService,
     private readonly ciclo: CicloService,
     private readonly pesoMedida: PesoMedidaService,
+    private readonly rodaDaVida: RodaDaVidaService,
+    private readonly revisaoMensal: RevisaoMensalService,
   ) {}
 
   // ── Metas ────────────────────────────────────────────────────
@@ -154,5 +160,29 @@ export class PlannerController {
   @Put('peso-medida')
   setPesoMedida(@Body() dto: SetPesoMedidaDto) {
     return this.pesoMedida.set(dto);
+  }
+
+  // ── Roda da vida ─────────────────────────────────────────────
+
+  @Get('roda-da-vida')
+  listRodaDaVida() {
+    return this.rodaDaVida.list();
+  }
+
+  @Put('roda-da-vida')
+  setRodaDaVida(@Body() dto: SetRodaDaVidaDto) {
+    return this.rodaDaVida.set(dto);
+  }
+
+  // ── Revisão mensal ───────────────────────────────────────────
+
+  @Get('revisao-mensal')
+  listRevisaoMensal(@Query('ano') ano: string) {
+    return this.revisaoMensal.list(Number(ano));
+  }
+
+  @Put('revisao-mensal')
+  setRevisaoMensal(@Body() dto: SetRevisaoMensalDto) {
+    return this.revisaoMensal.set(dto);
   }
 }
