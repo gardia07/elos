@@ -26,7 +26,7 @@ import {
 
 const documentoUploadOptions = {
   storage: memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (
     _req: unknown,
     file: Express.Multer.File,
