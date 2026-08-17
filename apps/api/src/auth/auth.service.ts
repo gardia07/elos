@@ -15,6 +15,7 @@ import { UpdateTenantDto } from '../tenant/dto/tenant.dto';
 import { CLT_DOCUMENT_REQUIREMENTS } from '../rh/documents/clt-requirements';
 import { DEFAULT_DOCUMENT_TEMPLATES } from '../rh/document-templates/default-templates';
 import { DEFAULT_AGENDA_CATEGORIAS } from '../agenda/default-categorias';
+import { DEFAULT_ATALHOS_EXTERNOS } from '../ferramentas/default-atalhos-externos';
 import { JwtPayload } from '../common/jwt-payload';
 
 // Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
@@ -147,6 +148,17 @@ export class AuthService {
         corDark: c.corDark,
         icone: c.icone,
         ordem: c.ordem,
+        sistema: true,
+      })),
+    });
+
+    await this.prisma.forTenant(tenantId).atalhoExterno.createMany({
+      data: DEFAULT_ATALHOS_EXTERNOS.map((a) => ({
+        tenantId,
+        nome: a.nome,
+        url: a.url,
+        icone: a.icone,
+        ordem: a.ordem,
         sistema: true,
       })),
     });

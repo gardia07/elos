@@ -108,6 +108,7 @@ model Tenant {
   integrationConnections IntegrationConnection[]
   announcements          Announcement[]
   metricSnapshots        MetricSnapshot[]
+  atalhosExternos        AtalhoExterno[]
 
   @@map("tenants")
 }
@@ -2021,6 +2022,30 @@ model Announcement {
 
   @@index([tenantId])
   @@map("announcements")
+}
+
+enum AtalhoExternoTipo {
+  LINK_SIMPLES
+  WIDGET_VIVO
+}
+
+/** Atalho para ferramenta/site externo na área de Ferramentas — nasce como link_simples (abre em nova aba); pode evoluir para widget_vivo (dado ao vivo via OAuth) numa fase futura sem mudar a estrutura da tabela. */
+model AtalhoExterno {
+  id            String            @id @default(uuid()) @db.Uuid
+  tenantId      String            @db.Uuid
+  nome          String
+  url           String
+  icone         String
+  tipo          AtalhoExternoTipo @default(LINK_SIMPLES)
+  statusConexao String?
+  sistema       Boolean           @default(false)
+  ordem         Int               @default(0)
+  createdAt     DateTime          @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("atalhos_externos")
 }
 
 // ─────────────────────────────────────────────────────────────

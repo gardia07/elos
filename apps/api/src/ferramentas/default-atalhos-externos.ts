@@ -1,0 +1,16 @@
+export const DEFAULT_ATALHOS_EXTERNOS = [
+  { nome: 'eSocial', url: 'https://login.esocial.gov.br', icone: 'FileText', ordem: 0 },
+  { nome: 'gov.br (Meu INSS)', url: 'https://meu.inss.gov.br', icone: 'Landmark', ordem: 1 },
+  { nome: 'Caixa (FGTS/PIS)', url: 'https://www.caixa.gov.br/beneficios-trabalhador', icone: 'Banknote', ordem: 2 },
+  { nome: 'Receita Federal (e-CAC)', url: 'https://cav.receita.fazenda.gov.br', icone: 'Receipt', ordem: 3 },
+  { nome: 'Google Drive/Docs', url: 'https://drive.google.com', icone: 'HardDrive', ordem: 4 },
+  { nome: 'Google Calendar', url: 'https://calendar.google.com', icone: 'CalendarDays', ordem: 5 },
+  { nome: 'Microsoft 365/OneDrive', url: 'https://www.office.com', icone: 'Cloud', ordem: 6 },
+  { nome: 'LinkedIn Recruiter', url: 'https://www.linkedin.com/talent', icone: 'Linkedin', ordem: 7 },
+  { nome: 'Gupy', url: 'https://gupy.io', icone: 'Briefcase', ordem: 8 },
+  { nome: 'Zoom', url: 'https://zoom.us', icone: 'Video', ordem: 9 },
+  { nome: 'Google Meet', url: 'https://meet.google.com', icone: 'Camera', ordem: 10 },
+  { nome: 'Trello', url: 'https://trello.com', icone: 'Kanban', ordem: 11 },
+  { nome: 'Asana', url: 'https://app.asana.com', icone: 'CheckSquare', ordem: 12 },
+  { nome: 'Notion', url: 'https://www.notion.so', icone: 'BookOpen', ordem: 13 },
+] as const;
