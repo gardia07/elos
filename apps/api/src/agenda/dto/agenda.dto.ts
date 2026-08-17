@@ -32,6 +32,7 @@ export class CreateAgendaItemDto {
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
   @IsOptional() @IsUUID() categoriaId?: string;
   @IsOptional() @IsUUID() responsavelId?: string;
+  @IsOptional() @IsUUID() projetoId?: string;
   @IsOptional() @ValidateNested() @Type(() => RecorrenciaInputDto) recorrencia?: RecorrenciaInputDto;
   @IsOptional() @ValidateNested() @Type(() => LembreteInputDto) lembretes?: LembreteInputDto;
 }
@@ -46,6 +47,7 @@ export class UpdateAgendaItemDto {
   @IsOptional() @IsIn(TIPOS) tipo?: AgendaItemTipo;
   @IsOptional() @IsUUID() categoriaId?: string;
   @IsOptional() @IsUUID() responsavelId?: string;
+  @IsOptional() @IsUUID() projetoId?: string;
   @IsOptional() @ValidateNested() @Type(() => LembreteInputDto) lembretes?: LembreteInputDto;
 }
 

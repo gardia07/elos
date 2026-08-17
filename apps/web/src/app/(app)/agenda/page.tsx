@@ -24,7 +24,7 @@ import {
   startOfWeekSunday,
   useIsDarkTheme,
 } from './lib';
-import type { AgendaGeralEvento, AgendaItem, CalendarEvent, Categoria, AgendaView, Usuario } from './types';
+import type { AgendaGeralEvento, AgendaItem, CalendarEvent, Categoria, AgendaView, Projeto, Usuario } from './types';
 
 function useIsMobile(breakpointPx = 640) {
   const [isMobile, setIsMobile] = useState(false);
@@ -51,6 +51,7 @@ function itemToCalendarEvent(item: AgendaItem): CalendarEvent {
     editable: true,
     notas: item.notas,
     tipo: item.tipo,
+    projetoId: item.projetoId,
     raw: item,
   };
 }
@@ -71,6 +72,7 @@ function geralToAgendaItem(e: AgendaGeralEvento): AgendaItem {
     origem: 'MANUAL',
     recorrenciaId: e.recorrenciaId ?? null,
     responsavelId: e.responsavelId ?? null,
+    projetoId: e.projetoId ?? null,
   };
 }
 
@@ -88,6 +90,7 @@ function geralToCalendarEvent(e: AgendaGeralEvento): CalendarEvent {
     notas: e.notas,
     tipo: e.tipo,
     hub: e.hub,
+    projetoId: e.projetoId ?? null,
   };
 }
 
@@ -150,6 +153,11 @@ export default function AgendaPage() {
   const { data: usuarios } = useQuery({
     queryKey: ['agenda', 'usuarios'],
     queryFn: async () => (await api.get<Usuario[]>('/agenda/usuarios')).data,
+  });
+
+  const { data: projetos } = useQuery({
+    queryKey: ['agenda', 'projetos'],
+    queryFn: async () => (await api.get<Projeto[]>('/agenda/projetos')).data,
   });
 
   const { data: items } = useQuery({
@@ -246,6 +254,7 @@ export default function AgendaPage() {
       tipo: values.tipo,
       categoriaId: values.categoriaId || null,
       responsavelId: values.responsavelId || null,
+      projetoId: values.projetoId || null,
       lembretes: lembretesInputFromValues(values),
     };
     if (drawer.item) {
@@ -440,6 +449,7 @@ export default function AgendaPage() {
         onClose={() => setDrawer({ open: false, item: null })}
         categorias={categorias ?? []}
         usuarios={usuarios ?? []}
+        projetos={projetos ?? []}
         isDark={isDark}
         item={drawer.item}
         defaultDate={drawer.defaultDate}

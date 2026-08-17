@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Bell, ChevronLeft, ChevronRight, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
+import { AlertTriangle, Bell, ChevronLeft, ChevronRight, FolderKanban, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, Categoria, Comentario, RecorrenciaInput, Usuario } from './types';
+import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, Categoria, Comentario, Projeto, RecorrenciaInput, Usuario } from './types';
 import { DIA_SEMANA_CODES, DIA_SEMANA_LABEL, DIA_SEMANA_LABEL_LONGO, FREQUENCIA_LABEL, TIPO_LABEL } from './types';
 import { addAnosIso, categoriaCor, localIso, parseIsoLocal } from './lib';
 
@@ -109,6 +110,13 @@ export function AgendaHeader({
           <Moon className="h-4 w-4" /> Revisão do dia
         </button>
 
+        <Link
+          href="/agenda/projetos"
+          className="flex items-center gap-1.5 rounded-[10px] border border-border-strong bg-surface px-3.5 py-2 text-sm font-medium text-text-secondary hover:border-accent hover:text-accent"
+        >
+          <FolderKanban className="h-4 w-4" /> Projetos
+        </Link>
+
         <Button onClick={onNew} className="flex items-center gap-1.5">
           <Plus className="h-4 w-4" /> Novo
         </Button>
@@ -162,6 +170,7 @@ export interface EventFormValues {
   tipo: AgendaItemTipo;
   categoriaId: string;
   responsavelId: string;
+  projetoId: string;
   repetir: boolean;
   frequencia: AgendaRecorrenciaFrequencia;
   intervalo: number;
@@ -205,6 +214,7 @@ export function EventFormDrawer({
   onClose,
   categorias,
   usuarios,
+  projetos,
   isDark,
   item,
   defaultDate,
@@ -218,6 +228,7 @@ export function EventFormDrawer({
   onClose: () => void;
   categorias: Categoria[];
   usuarios: Usuario[];
+  projetos: Projeto[];
   isDark: boolean;
   item?: AgendaItem | null;
   defaultDate?: string;
@@ -245,6 +256,7 @@ export function EventFormDrawer({
       tipo: it?.tipo ?? 'TAREFA',
       categoriaId: it?.categoriaId ?? '',
       responsavelId: it?.responsavelId ?? '',
+      projetoId: it?.projetoId ?? '',
       repetir: false,
       frequencia: 'SEMANAL',
       intervalo: 1,
@@ -547,6 +559,24 @@ export function EventFormDrawer({
             ))}
           </select>
         </label>
+
+        {projetos.length > 0 && (
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-text-secondary">Projeto</span>
+            <select
+              value={values.projetoId}
+              onChange={(e) => setValues((v) => ({ ...v, projetoId: e.target.value }))}
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            >
+              <option value="">Nenhum</option>
+              {projetos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Descrição / anotações</span>

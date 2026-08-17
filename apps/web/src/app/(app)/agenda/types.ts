@@ -32,7 +32,47 @@ export interface AgendaItem {
   origem: string;
   recorrenciaId: string | null;
   responsavelId: string | null;
+  projetoId: string | null;
   lembretes?: { antecedenciaDias: number; notificarEmail: boolean }[];
+}
+
+export type ProjetoStatus = 'PLANEJADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'EM_RISCO' | 'CANCELADO';
+
+export const PROJETO_STATUS_LABEL: Record<ProjetoStatus, string> = {
+  PLANEJADO: 'Planejado',
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDO: 'Concluído',
+  EM_RISCO: 'Em risco',
+  CANCELADO: 'Cancelado',
+};
+
+export const PROJETO_STATUS_TONE: Record<ProjetoStatus, 'grey' | 'blue' | 'green' | 'amber' | 'red'> = {
+  PLANEJADO: 'grey',
+  EM_ANDAMENTO: 'blue',
+  CONCLUIDO: 'green',
+  EM_RISCO: 'amber',
+  CANCELADO: 'red',
+};
+
+export interface ProjetoParticipante {
+  userId: string;
+  nome: string;
+}
+
+export interface Projeto {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  dataInicio: string;
+  dataFim: string | null;
+  status: ProjetoStatus;
+  cor: string;
+  criadoPorId: string;
+  participantes: ProjetoParticipante[];
+  totalTarefas: number;
+  tarefasConcluidas: number;
+  progresso: number;
+  atrasado: boolean;
 }
 
 export interface Usuario {
@@ -113,6 +153,7 @@ export interface AgendaGeralEvento {
   categoriaId?: string | null;
   recorrenciaId?: string | null;
   responsavelId?: string | null;
+  projetoId?: string | null;
 }
 
 export type AgendaView = 'mes' | 'semana' | 'dia' | 'lista';
@@ -131,6 +172,7 @@ export interface CalendarEvent {
   notas?: string | null;
   tipo?: AgendaItemTipo;
   hub?: string;
+  projetoId?: string | null;
   raw?: AgendaItem;
 }
 

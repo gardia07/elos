@@ -3,8 +3,12 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={cn('rounded-[12px] border border-border bg-surface p-5', className)}>{children}</div>;
+export function Card({ children, className = '', onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
+  return (
+    <div className={cn('rounded-[12px] border border-border bg-surface p-5', className)} onClick={onClick}>
+      {children}
+    </div>
+  );
 }
 
 export function KpiCard({ label, value, delta }: { label: string; value: ReactNode; delta?: ReactNode }) {

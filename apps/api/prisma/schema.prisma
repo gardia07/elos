@@ -89,6 +89,8 @@ model Tenant {
   agendaRevisoesDiarias AgendaRevisaoDiaria[]
   agendaLembretes       AgendaLembrete[]
   agendaNotificacoes    AgendaNotificacao[]
+  projetos              Projeto[]
+  projetoParticipantes  ProjetoParticipante[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -1449,6 +1451,7 @@ model AgendaItem {
   tipo          AgendaItemTipo @default(TAREFA)
   categoriaId   String?        @db.Uuid
   recorrenciaId String?        @db.Uuid
+  projetoId     String?        @db.Uuid
   concluida     Boolean        @default(false)
   origem        String         @default("MANUAL")
   createdAt     DateTime       @default(now())
@@ -1457,13 +1460,59 @@ model AgendaItem {
   tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   categoria   AgendaCategoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
   recorrencia AgendaRecorrencia? @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
+  projeto     Projeto?           @relation(fields: [projetoId], references: [id], onDelete: SetNull)
   comentarios AgendaComentario[]
   lembretes   AgendaLembrete[]
 
   @@index([tenantId, userId, data])
   @@index([recorrenciaId])
   @@index([responsavelId])
+  @@index([projetoId])
   @@map("agenda_items")
+}
+
+enum ProjetoStatus {
+  PLANEJADO
+  EM_ANDAMENTO
+  CONCLUIDO
+  EM_RISCO
+  CANCELADO
+}
+
+/** Projeto compartilhado entre participantes (mesma equipe ou de equipes diferentes) — tarefas ficam em AgendaItem.projetoId, visíveis a todo participante. */
+model Projeto {
+  id          String        @id @default(uuid()) @db.Uuid
+  tenantId    String        @db.Uuid
+  nome        String
+  descricao   String?
+  dataInicio  DateTime      @db.Date
+  dataFim     DateTime?     @db.Date
+  status      ProjetoStatus @default(PLANEJADO)
+  cor         String        @default("#3b82f6")
+  criadoPorId String        @db.Uuid
+  createdAt   DateTime      @default(now())
+
+  tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  participantes ProjetoParticipante[]
+  tarefas       AgendaItem[]
+
+  @@index([tenantId])
+  @@map("projetos")
+}
+
+model ProjetoParticipante {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  projetoId String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@unique([projetoId, userId])
+  @@index([tenantId, userId])
+  @@map("projeto_participantes")
 }
 
 /// Comentários simples, append-only (sem edição/exclusão) — mesmo padrão de Ocorrencia (rh/employees): autor gravado como snapshot de nome, sem depender de join.

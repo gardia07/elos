@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { getRequestContext } from '../../common/request-context';
 import { calcularAvisoPrevio, calcularDataPagamento } from '../../rh/terminations/aviso-previo.util';
+import { itemVisivelPara } from '../../agenda/visibility.util';
 
 export type AgendaGeralOrigem =
   | 'AGENDA_ITEM'
@@ -61,6 +62,7 @@ export interface AgendaGeralEvento {
   categoriaId?: string | null;
   recorrenciaId?: string | null;
   responsavelId?: string | null;
+  projetoId?: string | null;
 }
 
 function addMonths(date: Date, months: number): Date {
@@ -123,10 +125,11 @@ export class AgendaGeralService {
     const rangeVacation = diaUnico ? { inicio: diaUnico } : { inicio: { gte: today, lte: janela } };
     const rangeTermination = diaUnico ? { data: diaUnico } : { data: { lte: janela } };
     const rangeDocReq = diaUnico ? { expiraEm: diaUnico } : { expiraEm: { not: null, lte: janela } };
+    const visivel = await itemVisivelPara(db, userId);
 
     const [agendaItems, deadlines, exams, trainings, vacations, terminationsAbertas, terminations, docRequirements, employeesAniversario] = await Promise.all([
       db.agendaItem.findMany({
-        where: { OR: [{ userId }, { responsavelId: userId }], deletedAt: null, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem },
+        where: { ...visivel, deletedAt: null, ...(diaUnico ? {} : { concluida: false }), ...rangeAgendaItem },
       }),
       podeVerOrigensRh
         ? db.laborDeadline.findMany({ where: { ...(diaUnico ? {} : { cumprido: false }), ...rangeDeadline } })
@@ -186,6 +189,7 @@ export class AgendaGeralService {
         categoriaId: a.categoriaId,
         recorrenciaId: a.recorrenciaId,
         responsavelId: a.responsavelId,
+        projetoId: a.projetoId,
       });
     }
     for (const d of deadlines) {
@@ -340,7 +344,8 @@ export class AgendaGeralService {
     }
 
     if (origem === 'AGENDA_ITEM') {
-      const item = await db.agendaItem.findFirst({ where: { id, tenantId, deletedAt: null, OR: [{ userId }, { responsavelId: userId }] } });
+      const visivel = await itemVisivelPara(db, userId);
+      const item = await db.agendaItem.findFirst({ where: { id, tenantId, deletedAt: null, ...visivel } });
       if (item) await db.agendaItem.update({ where: { id }, data: { concluida: true } });
       return { ok: true };
     }

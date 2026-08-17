@@ -5,6 +5,7 @@ import { AuditService } from '../audit/audit.service';
 import { CreateAgendaItemDto, CreateComentarioDto, LembreteInputDto, SaveNotepadDto, SaveRevisaoDto, UpdateAgendaItemDto } from './dto/agenda.dto';
 import { computeOccurrences } from './recurrence.util';
 import { hojeBrasiliaUtc } from './date-utils';
+import { itemVisivelPara } from './visibility.util';
 
 function startOfDayUtc(dateStr: string): Date {
   const d = new Date(dateStr);
@@ -22,11 +23,6 @@ export class AgendaService {
 
   private db() {
     return this.prisma.forCurrentTenant();
-  }
-
-  /** Um item é visível/editável por quem o criou OU por quem foi atribuído como responsável. */
-  private meuOuAtribuido(userId: string) {
-    return { OR: [{ userId }, { responsavelId: userId }] };
   }
 
   /** Cria os lembretes de uma seleção de itens (1 item, ou todas as ocorrências de uma série) — ignora alvos que já passaram. */
@@ -57,10 +53,11 @@ export class AgendaService {
 
   async listItems(date?: string, dataInicio?: string, dataFim?: string) {
     const { userId, tenantId } = getRequestContext();
+    const visivel = await itemVisivelPara(this.db(), userId);
     const where =
       dataInicio && dataFim
-        ? { tenantId, deletedAt: null, ...this.meuOuAtribuido(userId), data: { gte: startOfDayUtc(dataInicio), lte: startOfDayUtc(dataFim) } }
-        : { tenantId, deletedAt: null, ...this.meuOuAtribuido(userId), data: startOfDayUtc(date!) };
+        ? { tenantId, deletedAt: null, ...visivel, data: { gte: startOfDayUtc(dataInicio), lte: startOfDayUtc(dataFim) } }
+        : { tenantId, deletedAt: null, ...visivel, data: startOfDayUtc(date!) };
     return this.db().agendaItem.findMany({
       where,
       include: { categoria: true, lembretes: { where: { enviado: false }, select: { antecedenciaDias: true, notificarEmail: true } } },
@@ -86,6 +83,7 @@ export class AgendaService {
       notas: dto.notas,
       tipo: dto.tipo,
       categoriaId: dto.categoriaId,
+      projetoId: dto.projetoId,
     };
 
     if (!dto.recorrencia) {
@@ -146,7 +144,8 @@ export class AgendaService {
 
   private async mustFind(id: string) {
     const { userId, tenantId } = getRequestContext();
-    const item = await this.db().agendaItem.findFirst({ where: { id, tenantId, deletedAt: null, ...this.meuOuAtribuido(userId) } });
+    const visivel = await itemVisivelPara(this.db(), userId);
+    const item = await this.db().agendaItem.findFirst({ where: { id, tenantId, deletedAt: null, ...visivel } });
     if (!item) throw new NotFoundException('Item de agenda não encontrado.');
     return item;
   }
@@ -167,6 +166,7 @@ export class AgendaService {
         tipo: dto.tipo,
         categoriaId: dto.categoriaId,
         responsavelId: dto.responsavelId,
+        projetoId: dto.projetoId,
       },
       include: { categoria: true },
     });
@@ -191,9 +191,10 @@ export class AgendaService {
   async deleteSeries(recorrenciaId: string) {
     const { userId, tenantId } = getRequestContext();
     const db = this.db();
+    const visivel = await itemVisivelPara(db, userId);
     const hojeUtc = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
     const { count } = await db.agendaItem.updateMany({
-      where: { recorrenciaId, tenantId, deletedAt: null, data: { gte: hojeUtc }, ...this.meuOuAtribuido(userId) },
+      where: { recorrenciaId, tenantId, deletedAt: null, data: { gte: hojeUtc }, ...visivel },
       data: { deletedAt: new Date() },
     });
     await this.audit.log('agenda_recorrencia', recorrenciaId, 'serie_excluida', { ocorrenciasExcluidas: count });
@@ -203,7 +204,8 @@ export class AgendaService {
   async restoreItem(id: string) {
     const { userId, tenantId } = getRequestContext();
     const db = this.db();
-    const item = await db.agendaItem.findFirst({ where: { id, tenantId, ...this.meuOuAtribuido(userId) } });
+    const visivel = await itemVisivelPara(db, userId);
+    const item = await db.agendaItem.findFirst({ where: { id, tenantId, ...visivel } });
     if (!item) throw new NotFoundException('Item de agenda não encontrado.');
     const restored = await db.agendaItem.update({ where: { id }, data: { deletedAt: null }, include: { categoria: true } });
     await this.audit.log('agenda_item', id, 'restaurado');
