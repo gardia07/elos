@@ -452,6 +452,7 @@ export default function EmployeeProfilePage() {
   });
 
   const [uploadingTerminationId, setUploadingTerminationId] = useState<string | null>(null);
+  const [uploadTerminationError, setUploadTerminationError] = useState<{ terminationId: string; message: string } | null>(null);
   const addDesligamentoDocumento = useMutation({
     mutationFn: async (vars: { terminationId: string; file: File }) => {
       const form = new FormData();
@@ -463,8 +464,13 @@ export default function EmployeeProfilePage() {
     onSuccess: () => {
       invalidate();
       setUploadingTerminationId(null);
+      setUploadTerminationError(null);
     },
-    onError: () => setUploadingTerminationId(null),
+    onError: (err: unknown, vars) => {
+      setUploadingTerminationId(null);
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setUploadTerminationError({ terminationId: vars.terminationId, message: Array.isArray(message) ? message.join(' ') : message || 'Não foi possível anexar o arquivo.' });
+    },
   });
 
   const [ocorTipo, setOcorTipo] = useState<(typeof OCORRENCIA_TIPOS)[number]>('Advertência verbal');
@@ -493,6 +499,7 @@ export default function EmployeeProfilePage() {
   });
 
   const [uploadingOcorrenciaId, setUploadingOcorrenciaId] = useState<string | null>(null);
+  const [uploadOcorrenciaError, setUploadOcorrenciaError] = useState<{ ocorrenciaId: string; message: string } | null>(null);
   const addOcorrenciaDocumento = useMutation({
     mutationFn: async (vars: { ocorrenciaId: string; file: File }) => {
       const form = new FormData();
@@ -502,8 +509,13 @@ export default function EmployeeProfilePage() {
     onSuccess: () => {
       invalidate();
       setUploadingOcorrenciaId(null);
+      setUploadOcorrenciaError(null);
     },
-    onError: () => setUploadingOcorrenciaId(null),
+    onError: (err: unknown, vars) => {
+      setUploadingOcorrenciaId(null);
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setUploadOcorrenciaError({ ocorrenciaId: vars.ocorrenciaId, message: Array.isArray(message) ? message.join(' ') : message || 'Não foi possível anexar o arquivo.' });
+    },
   });
 
   const { data: compliance } = useQuery({
@@ -529,6 +541,7 @@ export default function EmployeeProfilePage() {
   });
 
   const [uploadingRequirementId, setUploadingRequirementId] = useState<string | null>(null);
+  const [uploadRequirementError, setUploadRequirementError] = useState<{ requirementId: string; message: string } | null>(null);
   const uploadRequirementFile = useMutation({
     mutationFn: async (vars: { requirementId: string; file: File }) => {
       const form = new FormData();
@@ -539,6 +552,11 @@ export default function EmployeeProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rh', 'documents', id] });
       invalidate();
+      setUploadRequirementError(null);
+    },
+    onError: (err: unknown, vars) => {
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setUploadRequirementError({ requirementId: vars.requirementId, message: Array.isArray(message) ? message.join(' ') : message || 'Não foi possível anexar o arquivo.' });
     },
   });
 
@@ -1330,6 +1348,9 @@ export default function EmployeeProfilePage() {
                       />
                     </label>
                   </div>
+                  {uploadRequirementError?.requirementId === d.requirementId && (
+                    <p className="w-full text-xs text-danger">{uploadRequirementError.message}</p>
+                  )}
                 </li>
               ))}
             </ul>
@@ -1451,6 +1472,7 @@ export default function EmployeeProfilePage() {
                         />
                       </label>
                     </div>
+                    {uploadOcorrenciaError?.ocorrenciaId === o.id && <p className="text-xs text-danger">{uploadOcorrenciaError.message}</p>}
                   </li>
                 );
               })}
@@ -1590,6 +1612,7 @@ export default function EmployeeProfilePage() {
                       />
                     </label>
                   </div>
+                  {uploadTerminationError?.terminationId === t.id && <p className="mb-2 text-xs text-danger">{uploadTerminationError.message}</p>}
                   {docs.length === 0 ? (
                     <p className="text-sm text-text-tertiary">Nenhum documento anexado ainda.</p>
                   ) : (
