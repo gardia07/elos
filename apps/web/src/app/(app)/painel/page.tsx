@@ -12,6 +12,13 @@ import { PriorityAlert, PriorityAlerts } from '@/components/priority-alerts';
 import { categoriaCor, useIsDarkTheme } from '../agenda/lib';
 import type { Categoria } from '../agenda/types';
 import { HUB_FALLBACK_COLOR } from '../agenda/types';
+import { CATALOG_BLOCKS } from '../ferramentas/catalogo/catalog-data';
+import { ExternalIcon, ToolIcon } from '../ferramentas/catalogo/external-icons';
+import type { AtalhoExterno } from '../ferramentas/catalogo/types';
+
+interface License {
+  modulos: string[];
+}
 
 interface Kpis {
   colaboradoresAtivos: number;
@@ -185,6 +192,23 @@ export default function PainelPage() {
     queryKey: ['agenda', 'categorias'],
     queryFn: async () => (await api.get<Categoria[]>('/agenda/categorias')).data,
   });
+
+  const { data: license } = useQuery({
+    queryKey: ['license'],
+    queryFn: async () => (await api.get<License>('/license')).data,
+  });
+
+  const { data: atalhosExternos } = useQuery({
+    queryKey: ['ferramentas', 'atalhos-externos'],
+    queryFn: async () => (await api.get<AtalhoExterno[]>('/ferramentas/atalhos-externos')).data,
+  });
+
+  // Sem dado de uso real ainda — mostra as primeiras ferramentas do catálogo
+  // já disponíveis (com link) dentre os módulos contratados pelo tenant.
+  const modulosContratados = license?.modulos ?? [];
+  const ferramentasAtalho = CATALOG_BLOCKS.filter((b) => b.modulo === null || modulosContratados.includes(b.modulo))
+    .flatMap((b) => b.ferramentas.filter((t): t is { nome: string; href: string } => t.href !== null))
+    .slice(0, 6);
   const isDark = useIsDarkTheme();
   const corDoItem = (item: Pick<Evento, 'categoriaId' | 'hub'>) =>
     item.categoriaId
@@ -461,6 +485,54 @@ export default function PainelPage() {
                   Adicionar
                 </Button>
               </form>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Card>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Ferramentas</h3>
+                <Link href="/ferramentas/catalogo" className="text-xs text-accent hover:underline">
+                  Ver todas →
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {ferramentasAtalho.map((tool) => (
+                  <Link
+                    key={tool.nome}
+                    href={tool.href}
+                    className="flex flex-col items-start gap-2 rounded-[10px] border border-border p-3 transition hover:border-accent"
+                  >
+                    <ToolIcon nome={tool.nome} className="h-4 w-4 text-accent" />
+                    <span className="text-xs font-medium text-text">{tool.nome}</span>
+                  </Link>
+                ))}
+                {ferramentasAtalho.length === 0 && <p className="text-sm text-text-tertiary">Nenhuma ferramenta disponível ainda.</p>}
+              </div>
+            </Card>
+
+            <Card>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Atalhos externos</h3>
+                <Link href="/ferramentas/catalogo" className="text-xs text-accent hover:underline">
+                  Ver todos →
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {atalhosExternos?.slice(0, 6).map((a) => (
+                  <a
+                    key={a.id}
+                    href={a.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-start gap-2 rounded-[10px] border border-border p-3 transition hover:border-accent"
+                  >
+                    <ExternalIcon nome={a.icone} className="h-4 w-4 text-accent" />
+                    <span className="text-xs font-medium text-text">{a.nome}</span>
+                  </a>
+                ))}
+                {atalhosExternos?.length === 0 && <p className="text-sm text-text-tertiary">Nenhum atalho configurado ainda.</p>}
+              </div>
             </Card>
           </div>
         </div>
