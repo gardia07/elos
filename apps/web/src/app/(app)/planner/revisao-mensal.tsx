@@ -10,13 +10,13 @@ import type { SecaoTema } from './theme';
 import { SectionHeader } from './section-header';
 import { MESES } from './lib';
 
+const VAZIO = { desejo: '', resultado: '', obstaculo: '', plano: '', conquistas: '', oQueNaoFuncionou: '', proximoPasso: '' };
+
 export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
   const queryClient = useQueryClient();
   const [mes, setMes] = useState(new Date().getMonth());
-  const [intencoes, setIntencoes] = useState('');
-  const [oQueFuncionou, setOQueFuncionou] = useState('');
-  const [oQueNaoFuncionou, setOQueNaoFuncionou] = useState('');
-  const [oQuePrecisaMudar, setOQuePrecisaMudar] = useState('');
+  const [campos, setCampos] = useState(VAZIO);
+  const [satisfacao, setSatisfacao] = useState(5);
 
   const { data: revisoes } = useQuery({
     queryKey: ['planner', 'revisao-mensal', ano],
@@ -26,18 +26,26 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
   const revisaoDoMes = revisoes?.find((r) => r.mes === mes + 1);
 
   useEffect(() => {
-    setIntencoes(revisaoDoMes?.intencoes ?? '');
-    setOQueFuncionou(revisaoDoMes?.oQueFuncionou ?? '');
-    setOQueNaoFuncionou(revisaoDoMes?.oQueNaoFuncionou ?? '');
-    setOQuePrecisaMudar(revisaoDoMes?.oQuePrecisaMudar ?? '');
+    setCampos({
+      desejo: revisaoDoMes?.desejo ?? '',
+      resultado: revisaoDoMes?.resultado ?? '',
+      obstaculo: revisaoDoMes?.obstaculo ?? '',
+      plano: revisaoDoMes?.plano ?? '',
+      conquistas: revisaoDoMes?.conquistas ?? '',
+      oQueNaoFuncionou: revisaoDoMes?.oQueNaoFuncionou ?? '',
+      proximoPasso: revisaoDoMes?.proximoPasso ?? '',
+    });
+    setSatisfacao(revisaoDoMes?.satisfacao ?? 5);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mes, revisoes]);
 
   const salvar = useMutation({
-    mutationFn: async () =>
-      api.put('/planner/revisao-mensal', { ano, mes: mes + 1, intencoes, oQueFuncionou, oQueNaoFuncionou, oQuePrecisaMudar }),
+    mutationFn: async () => api.put('/planner/revisao-mensal', { ano, mes: mes + 1, ...campos, satisfacao }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['planner', 'revisao-mensal', ano] }),
   });
+
+  const set = (campo: keyof typeof VAZIO) => (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>
+    setCampos((c) => ({ ...c, [campo]: e.target.value }));
 
   return (
     <div className="flex max-w-2xl flex-col gap-5">
@@ -55,48 +63,92 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
         </button>
       </div>
 
-      <Card className="flex flex-col gap-2">
-        <span className="text-sm font-semibold" style={{ color: tema.cor }}>
-          Intenções pra {MESES[mes].toLowerCase()}
-        </span>
-        <p className="text-xs text-text-tertiary">O que você quer priorizar ou conquistar esse mês?</p>
-        <textarea
-          value={intencoes}
-          onChange={(e) => setIntencoes(e.target.value)}
-          rows={4}
-          placeholder="Ex.: focar em terminar o curso, cuidar mais do sono, retomar a academia…"
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
-        />
+      <Card className="flex flex-col gap-3">
+        <div>
+          <span className="text-sm font-semibold" style={{ color: tema.cor }}>
+            Início do mês — método WOOP
+          </span>
+          <p className="text-xs text-text-tertiary">Desejo, resultado, obstáculo e plano. Mais eficaz que só listar intenções.</p>
+        </div>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-text-secondary">Desejo — o que você quer alcançar esse mês?</span>
+          <textarea
+            value={campos.desejo}
+            onChange={set('desejo')}
+            rows={2}
+            placeholder="Um objetivo desafiador, mas alcançável…"
+            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-text-secondary">Resultado — como seria alcançar isso? (imagine com detalhe)</span>
+          <textarea
+            value={campos.resultado}
+            onChange={set('resultado')}
+            rows={2}
+            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-text-secondary">Obstáculo — o que dentro de você mais provavelmente vai atrapalhar?</span>
+          <textarea
+            value={campos.obstaculo}
+            onChange={set('obstaculo')}
+            rows={2}
+            placeholder="Ex.: procrastinação, cansaço no fim do dia, ansiedade…"
+            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-text-secondary">Plano — se esse obstáculo aparecer, o que você vai fazer?</span>
+          <textarea
+            value={campos.plano}
+            onChange={set('plano')}
+            rows={2}
+            placeholder="Se [obstáculo] acontecer, então eu vou…"
+            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          />
+        </label>
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <span className="text-sm font-semibold" style={{ color: tema.cor }}>
-          Reflexão de fim de mês
-        </span>
+        <div>
+          <span className="text-sm font-semibold" style={{ color: tema.cor }}>
+            Fim do mês — reflexão guiada
+          </span>
+          <p className="text-xs text-text-tertiary">Sem autojulgamento — o objetivo é aprender, não se cobrar.</p>
+        </div>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-text-secondary">O que funcionou?</span>
+          <span className="flex items-center justify-between text-text-secondary">
+            Como você avalia esse mês?
+            <span className="font-semibold text-text">{satisfacao}</span>
+          </span>
+          <input type="range" min={1} max={10} value={satisfacao} onChange={(e) => setSatisfacao(Number(e.target.value))} style={{ accentColor: tema.cor }} />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-text-secondary">Conquistas — do que você se orgulha, por menor que seja?</span>
           <textarea
-            value={oQueFuncionou}
-            onChange={(e) => setOQueFuncionou(e.target.value)}
+            value={campos.conquistas}
+            onChange={set('conquistas')}
             rows={2}
             className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-text-secondary">O que não funcionou?</span>
+          <span className="text-text-secondary">O que não funcionou? (é dado, não defeito)</span>
           <textarea
-            value={oQueNaoFuncionou}
-            onChange={(e) => setOQueNaoFuncionou(e.target.value)}
+            value={campos.oQueNaoFuncionou}
+            onChange={set('oQueNaoFuncionou')}
             rows={2}
             className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-text-secondary">O que precisa mudar?</span>
-          <textarea
-            value={oQuePrecisaMudar}
-            onChange={(e) => setOQuePrecisaMudar(e.target.value)}
-            rows={2}
+          <span className="text-text-secondary">Uma única coisa pra levar pro próximo mês</span>
+          <input
+            value={campos.proximoPasso}
+            onChange={set('proximoPasso')}
+            placeholder="Só uma — foco em uma coisa é mais eficaz que uma lista grande…"
             className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>

@@ -2225,16 +2225,27 @@ model RodaDaVidaAvaliacao {
 }
 
 /** Revisão mensal — intenções no início do mês e reflexão guiada no fim (o que funcionou / o que não funcionou / o que precisa mudar). */
+/**
+ * Início do mês segue o método WOOP (Wish/Outcome/Obstacle/Plan — Oettingen &
+ * Gollwitzer): desejo, resultado vívido, obstáculo interno e um plano
+ * "se-então" (implementation intention). Fim do mês é reflexão guiada:
+ * satisfação, conquistas, o que não funcionou (sem autojulgamento) e um
+ * único próximo passo — listas grandes de "o que mudar" reduzem adesão.
+ */
 model RevisaoMensal {
   id               String   @id @default(uuid()) @db.Uuid
   tenantId         String   @db.Uuid
   userId           String   @db.Uuid
   ano              Int
   mes              Int
-  intencoes        String?
-  oQueFuncionou    String?
+  desejo           String?
+  resultado        String?
+  obstaculo        String?
+  plano            String?
+  satisfacao       Int?
+  conquistas       String?
   oQueNaoFuncionou String?
-  oQuePrecisaMudar String?
+  proximoPasso     String?
   updatedAt        DateTime @updatedAt
   createdAt        DateTime @default(now())
 

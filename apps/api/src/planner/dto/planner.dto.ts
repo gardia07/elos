@@ -105,8 +105,14 @@ export class SetRodaDaVidaDto {
 export class SetRevisaoMensalDto {
   @IsInt() ano!: number;
   @IsInt() @Min(1) @Max(12) mes!: number;
-  @IsOptional() @IsString() intencoes?: string;
-  @IsOptional() @IsString() oQueFuncionou?: string;
+  // Início do mês — método WOOP.
+  @IsOptional() @IsString() desejo?: string;
+  @IsOptional() @IsString() resultado?: string;
+  @IsOptional() @IsString() obstaculo?: string;
+  @IsOptional() @IsString() plano?: string;
+  // Fim do mês — reflexão guiada.
+  @IsOptional() @IsInt() @Min(1) @Max(10) satisfacao?: number;
+  @IsOptional() @IsString() conquistas?: string;
   @IsOptional() @IsString() oQueNaoFuncionou?: string;
-  @IsOptional() @IsString() oQuePrecisaMudar?: string;
+  @IsOptional() @IsString() proximoPasso?: string;
 }

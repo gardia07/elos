@@ -19,10 +19,14 @@ export class RevisaoMensalService {
   set(dto: SetRevisaoMensalDto) {
     const { tenantId, userId } = getRequestContext();
     const campos = {
-      intencoes: dto.intencoes,
-      oQueFuncionou: dto.oQueFuncionou,
+      desejo: dto.desejo,
+      resultado: dto.resultado,
+      obstaculo: dto.obstaculo,
+      plano: dto.plano,
+      satisfacao: dto.satisfacao,
+      conquistas: dto.conquistas,
       oQueNaoFuncionou: dto.oQueNaoFuncionou,
-      oQuePrecisaMudar: dto.oQuePrecisaMudar,
+      proximoPasso: dto.proximoPasso,
     };
     return this.db().revisaoMensal.upsert({
       where: { tenantId_userId_ano_mes: { tenantId, userId, ano: dto.ano, mes: dto.mes } },

@@ -70,8 +70,12 @@ export interface RevisaoMensal {
   id: string;
   ano: number;
   mes: number;
-  intencoes: string | null;
-  oQueFuncionou: string | null;
+  desejo: string | null;
+  resultado: string | null;
+  obstaculo: string | null;
+  plano: string | null;
+  satisfacao: number | null;
+  conquistas: string | null;
   oQueNaoFuncionou: string | null;
-  oQuePrecisaMudar: string | null;
+  proximoPasso: string | null;
 }
