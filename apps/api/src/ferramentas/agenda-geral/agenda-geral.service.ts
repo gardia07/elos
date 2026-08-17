@@ -299,9 +299,11 @@ export class AgendaGeralService {
     for (const t of terminationsAbertas) {
       const { fim } = calcularAvisoPrevio(t.employee.dataAdmissao, t.data, t.avisoPrevioInicio);
       const fimDentroDaJanela = diaUnico ? fim.getTime() === diaUnico.getTime() : fim <= janela;
-      if (fimDentroDaJanela && !isDismissed('TERMINATION_AVISO_FIM', t.id)) {
+      // ids com sufixo (não o t.id puro) — duas origens diferentes derivadas da mesma
+      // rescisão precisam de ids distintos, senão colidem como key/dismissal no front.
+      if (fimDentroDaJanela && !isDismissed('TERMINATION_AVISO_FIM', `${t.id}-aviso-fim`)) {
         eventos.push({
-          id: t.id,
+          id: `${t.id}-aviso-fim`,
           origem: 'TERMINATION_AVISO_FIM',
           data: fim.toISOString(),
           titulo: `Fim do aviso prévio — ${t.employee.nome}`,
@@ -313,9 +315,9 @@ export class AgendaGeralService {
 
       const dataPagamento = calcularDataPagamento(t.data);
       const pagamentoDentroDaJanela = diaUnico ? dataPagamento.getTime() === diaUnico.getTime() : dataPagamento <= janela;
-      if (pagamentoDentroDaJanela && !isDismissed('TERMINATION_PAGAMENTO', t.id)) {
+      if (pagamentoDentroDaJanela && !isDismissed('TERMINATION_PAGAMENTO', `${t.id}-pagamento`)) {
         eventos.push({
-          id: t.id,
+          id: `${t.id}-pagamento`,
           origem: 'TERMINATION_PAGAMENTO',
           data: dataPagamento.toISOString(),
           titulo: `Prazo de pagamento da rescisão — ${t.employee.nome}`,

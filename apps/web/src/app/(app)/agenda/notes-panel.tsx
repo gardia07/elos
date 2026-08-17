@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { GripVertical, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { formatDiaLongoIso } from './lib';
@@ -26,10 +26,14 @@ function NoteLine({ id, text }: { id: string; text: string }) {
 }
 
 export function NotesPanel({ date, collapsed, onToggleCollapse }: { date: string; collapsed: boolean; onToggleCollapse: () => void }) {
-  const queryClient = useQueryClient();
   const [conteudo, setConteudo] = useState('');
-  const [dirty, setDirty] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Uma vez que a pessoa edita o campo, ele vira a fonte da verdade pro resto da
+  // sessão nessa data — nunca mais sobrescrito por uma busca em segundo plano
+  // (ex.: reconexão, foco na aba). Some no botão comum: por design, cada data
+  // tem seu próprio bloco de notas, então resetamos ao trocar de dia.
+  const editadoLocalmenteRef = useRef(false);
 
   const { data } = useQuery({
     queryKey: ['agenda', 'notepad', date],
@@ -37,21 +41,24 @@ export function NotesPanel({ date, collapsed, onToggleCollapse }: { date: string
   });
 
   useEffect(() => {
+    editadoLocalmenteRef.current = false;
+    setPendingSave(false);
+  }, [date]);
+
+  useEffect(() => {
+    if (editadoLocalmenteRef.current) return;
     setConteudo(data?.conteudo ?? '');
-    setDirty(false);
-  }, [data, date]);
+  }, [data]);
 
   const save = useMutation({
     mutationFn: async (texto: string) => api.put(`/agenda/notepad/${date}`, { conteudo: texto }),
-    onSuccess: () => {
-      setDirty(false);
-      queryClient.invalidateQueries({ queryKey: ['agenda', 'notepad', date] });
-    },
+    onSuccess: () => setPendingSave(false),
   });
 
   function handleChange(value: string) {
+    editadoLocalmenteRef.current = true;
     setConteudo(value);
-    setDirty(true);
+    setPendingSave(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => save.mutate(value), 800);
   }
@@ -87,7 +94,7 @@ export function NotesPanel({ date, collapsed, onToggleCollapse }: { date: string
         rows={8}
         className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
       />
-      <span className="text-[11px] text-text-tertiary">{save.isPending || dirty ? 'Salvando…' : 'Salvo'}</span>
+      <span className="text-[11px] text-text-tertiary">{save.isPending || pendingSave ? 'Salvando…' : 'Salvo'}</span>
 
       {lines.length > 0 && (
         <div className="flex flex-col gap-1.5">
