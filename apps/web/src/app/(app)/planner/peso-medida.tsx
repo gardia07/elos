@@ -5,9 +5,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Button, Card } from '@/components/ui';
 import type { PesoMedidaRegistro } from './types';
+import type { SecaoTema } from './theme';
+import { SectionHeader } from './section-header';
 import { localIso } from './lib';
 
-export function PesoMedidaSection({ ano }: { ano: number }) {
+export function PesoMedidaSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
   const queryClient = useQueryClient();
   const [data, setData] = useState(localIso(new Date()));
   const [pesoKg, setPesoKg] = useState('');
@@ -38,10 +40,27 @@ export function PesoMedidaSection({ ano }: { ano: number }) {
     },
   });
 
+  const primeiro = registros?.[0];
   const ultimo = registros?.[registros.length - 1];
+  const variacaoPeso = primeiro && ultimo && primeiro.pesoKg && ultimo.pesoKg ? Number(ultimo.pesoKg) - Number(primeiro.pesoKg) : null;
 
   return (
-    <div className="flex max-w-xl flex-col gap-4">
+    <div className="flex max-w-2xl flex-col gap-5">
+      <SectionHeader
+        tema={tema}
+        stat={
+          variacaoPeso !== null && (
+            <>
+              <span className="text-2xl font-semibold" style={{ color: tema.cor }}>
+                {variacaoPeso > 0 ? '+' : ''}
+                {variacaoPeso.toFixed(1)} kg
+              </span>
+              <p className="text-xs text-text-tertiary">desde o primeiro registro de {ano}</p>
+            </>
+          )
+        }
+      />
+
       {ultimo && (
         <div className="grid grid-cols-4 gap-3">
           <Card className="flex flex-col gap-1">
@@ -111,13 +130,13 @@ export function PesoMedidaSection({ ano }: { ano: number }) {
           ?.slice()
           .reverse()
           .map((r) => (
-            <div key={r.id} className="flex items-center gap-4 rounded-[10px] border border-border p-2.5 text-sm">
-              <span className="text-text-tertiary">{new Date(r.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
-              {r.pesoKg && <span className="text-text">{r.pesoKg} kg</span>}
-              {r.cinturaCm && <span className="text-text-secondary">Cintura {r.cinturaCm}cm</span>}
-              {r.quadrilCm && <span className="text-text-secondary">Quadril {r.quadrilCm}cm</span>}
-              {r.bracoCm && <span className="text-text-secondary">Braço {r.bracoCm}cm</span>}
-            </div>
+            <Card key={r.id} className="flex items-center gap-4 py-3">
+              <span className="text-sm text-text-tertiary">{new Date(r.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
+              {r.pesoKg && <span className="text-sm text-text">{r.pesoKg} kg</span>}
+              {r.cinturaCm && <span className="text-sm text-text-secondary">Cintura {r.cinturaCm}cm</span>}
+              {r.quadrilCm && <span className="text-sm text-text-secondary">Quadril {r.quadrilCm}cm</span>}
+              {r.bracoCm && <span className="text-sm text-text-secondary">Braço {r.bracoCm}cm</span>}
+            </Card>
           ))}
         {registros?.length === 0 && <p className="text-sm text-text-tertiary">Nenhum registro ainda.</p>}
       </div>

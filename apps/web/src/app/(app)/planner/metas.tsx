@@ -6,8 +6,10 @@ import { Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Card } from '@/components/ui';
 import type { Meta } from './types';
+import type { SecaoTema } from './theme';
+import { SectionHeader } from './section-header';
 
-export function MetasSection({ ano }: { ano: number }) {
+export function MetasSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
   const queryClient = useQueryClient();
   const [titulo, setTitulo] = useState('');
 
@@ -41,16 +43,24 @@ export function MetasSection({ ano }: { ano: number }) {
   const pct = total > 0 ? Math.round((concluidas / total) * 100) : 0;
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex max-w-3xl flex-col gap-5">
+      <SectionHeader
+        tema={tema}
+        stat={
+          <>
+            <span className="text-2xl font-semibold" style={{ color: tema.cor }}>
+              {pct}%
+            </span>
+            <p className="text-xs text-text-tertiary">
+              {concluidas} de {total} concluídas
+            </p>
+          </>
+        }
+      />
+
       <Card className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-semibold text-text">Metas de {ano}</span>
-          <span className="text-text-tertiary">
-            {concluidas} de {total} concluídas
-          </span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-surface-alt">
-          <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-2.5 overflow-hidden rounded-full bg-surface-alt">
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: tema.cor }} />
         </div>
       </Card>
 
@@ -65,24 +75,25 @@ export function MetasSection({ ano }: { ano: number }) {
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="Ex.: viajar para a praia, terminar o curso de inglês…"
-          className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2.5 text-sm"
         />
         <Button type="submit" disabled={criar.isPending || !titulo.trim()} className="flex items-center gap-1.5">
           <Plus className="h-4 w-4" /> Adicionar
         </Button>
       </form>
 
-      <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {metas?.map((m) => (
-          <Card key={m.id} className="flex items-center gap-3 py-3">
+          <Card key={m.id} className="flex items-center gap-3 py-4">
             <input
               type="checkbox"
               checked={m.concluida}
               onChange={(e) => toggle.mutate({ id: m.id, concluida: e.target.checked })}
-              className="h-4 w-4"
+              className="h-4 w-4 shrink-0"
+              style={{ accentColor: tema.cor }}
             />
             <span className={`flex-1 text-sm ${m.concluida ? 'text-text-tertiary line-through' : 'text-text'}`}>{m.titulo}</span>
-            <button type="button" onClick={() => excluir.mutate(m.id)} className="text-text-tertiary hover:text-danger">
+            <button type="button" onClick={() => excluir.mutate(m.id)} className="shrink-0 text-text-tertiary hover:text-danger">
               <Trash2 className="h-4 w-4" />
             </button>
           </Card>

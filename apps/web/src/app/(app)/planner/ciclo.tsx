@@ -6,9 +6,11 @@ import { Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Card } from '@/components/ui';
 import type { CicloRegistro } from './types';
+import type { SecaoTema } from './theme';
+import { SectionHeader } from './section-header';
 import { localIso } from './lib';
 
-export function CicloSection() {
+export function CicloSection({ tema }: { tema: SecaoTema }) {
   const queryClient = useQueryClient();
   const [dataInicio, setDataInicio] = useState(localIso(new Date()));
   const [duracaoDias, setDuracaoDias] = useState('');
@@ -48,19 +50,20 @@ export function CicloSection() {
   }, [registros]);
 
   return (
-    <div className="flex max-w-xl flex-col gap-4">
-      {previsao && (
-        <Card className="flex items-center justify-between">
-          <div>
-            <span className="text-xs text-text-tertiary">Ciclo médio</span>
-            <p className="text-sm font-medium text-text">{previsao.media} dias</p>
-          </div>
-          <div className="text-right">
-            <span className="text-xs text-text-tertiary">Próximo previsto</span>
-            <p className="text-sm font-medium text-text">{previsao.proxima.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</p>
-          </div>
-        </Card>
-      )}
+    <div className="flex max-w-2xl flex-col gap-5">
+      <SectionHeader
+        tema={tema}
+        stat={
+          previsao && (
+            <>
+              <span className="text-lg font-semibold" style={{ color: tema.cor }}>
+                {previsao.proxima.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+              </span>
+              <p className="text-xs text-text-tertiary">próximo previsto · ciclo de {previsao.media} dias</p>
+            </>
+          )
+        }
+      />
 
       <Card>
         <form
@@ -109,7 +112,7 @@ export function CicloSection() {
 
       <div className="flex flex-col gap-2">
         {registros?.map((r) => (
-          <Card key={r.id} className="flex items-center justify-between py-3">
+          <Card key={r.id} className="flex items-center justify-between py-4">
             <div className="text-sm">
               <span className="font-medium text-text">{new Date(r.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
               {r.duracaoDias && <span className="text-text-tertiary"> · {r.duracaoDias} dia(s)</span>}

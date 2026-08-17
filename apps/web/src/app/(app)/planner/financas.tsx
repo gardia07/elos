@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Card } from '@/components/ui';
 import type { CategoriaFinanceira, FinancaTipo } from './types';
+import type { SecaoTema } from './theme';
+import { SectionHeader } from './section-header';
 import { formatBRL, MESES } from './lib';
 
 function CategoriaLinha({
@@ -22,7 +24,7 @@ function CategoriaLinha({
   const [valor, setValor] = useState(String(categoria.valoresPorMes[mes + 1] ?? ''));
 
   return (
-    <div className="flex items-center gap-3 rounded-[10px] border border-border p-2.5">
+    <div className="flex items-center gap-3 rounded-[10px] border border-border p-3">
       <span className="flex-1 text-sm text-text">{categoria.nome}</span>
       <span className="text-xs text-text-tertiary">R$</span>
       <input
@@ -34,7 +36,7 @@ function CategoriaLinha({
           const n = Number(valor);
           if (!Number.isNaN(n)) onSetValor(n);
         }}
-        className="w-28 rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-right text-sm"
+        className="w-28 rounded-[8px] border border-border-strong bg-surface px-2 py-1.5 text-right text-sm"
       />
       <button type="button" onClick={onExcluir} className="text-text-tertiary hover:text-danger">
         <Trash2 className="h-3.5 w-3.5" />
@@ -43,7 +45,7 @@ function CategoriaLinha({
   );
 }
 
-export function FinancasSection({ ano }: { ano: number }) {
+export function FinancasSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
   const queryClient = useQueryClient();
   const [mes, setMes] = useState(new Date().getMonth());
   const [novoNomeReceita, setNovoNomeReceita] = useState('');
@@ -80,7 +82,19 @@ export function FinancasSection({ ano }: { ano: number }) {
   const saldo = totalReceitas - totalDespesas;
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex max-w-3xl flex-col gap-5">
+      <SectionHeader
+        tema={tema}
+        stat={
+          <>
+            <span className="text-2xl font-semibold" style={{ color: saldo >= 0 ? tema.cor : undefined }}>
+              <span className={saldo < 0 ? 'text-danger' : ''}>{formatBRL(saldo)}</span>
+            </span>
+            <p className="text-xs text-text-tertiary">saldo de {MESES[mes].toLowerCase()}</p>
+          </>
+        }
+      />
+
       <div className="flex items-center justify-center gap-3">
         <button type="button" onClick={() => setMes((m) => Math.max(0, m - 1))} disabled={mes === 0} className="text-text-secondary disabled:opacity-30">
           <ChevronLeft className="h-4 w-4" />
@@ -93,7 +107,7 @@ export function FinancasSection({ ano }: { ano: number }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Card className="flex flex-col gap-1">
           <span className="text-xs text-text-tertiary">Receitas</span>
           <span className="text-lg font-semibold text-success">{formatBRL(totalReceitas)}</span>
@@ -102,13 +116,9 @@ export function FinancasSection({ ano }: { ano: number }) {
           <span className="text-xs text-text-tertiary">Despesas</span>
           <span className="text-lg font-semibold text-danger">{formatBRL(totalDespesas)}</span>
         </Card>
-        <Card className="flex flex-col gap-1">
-          <span className="text-xs text-text-tertiary">Saldo</span>
-          <span className={`text-lg font-semibold ${saldo >= 0 ? 'text-success' : 'text-danger'}`}>{formatBRL(saldo)}</span>
-        </Card>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <Card className="flex flex-col gap-2.5">
         <span className="text-sm font-semibold text-text">Receitas</span>
         {receitas.map((c) => (
           <CategoriaLinha
@@ -139,9 +149,9 @@ export function FinancasSection({ ano }: { ano: number }) {
             <Plus className="h-4 w-4" /> Categoria
           </Button>
         </form>
-      </div>
+      </Card>
 
-      <div className="flex flex-col gap-2">
+      <Card className="flex flex-col gap-2.5">
         <span className="text-sm font-semibold text-text">Despesas</span>
         {despesas.map((c) => (
           <CategoriaLinha
@@ -172,7 +182,7 @@ export function FinancasSection({ ano }: { ano: number }) {
             <Plus className="h-4 w-4" /> Categoria
           </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

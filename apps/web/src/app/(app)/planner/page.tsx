@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Target, Flame, Wallet, Smile, HeartPulse, Ruler } from 'lucide-react';
 import { Header } from '@/components/header';
 import { cn } from '@/lib/cn';
+import { SECOES, type SecaoId } from './theme';
 import { MetasSection } from './metas';
 import { HabitosSection } from './habitos';
 import { FinancasSection } from './financas';
@@ -11,20 +11,10 @@ import { HumorSection } from './humor';
 import { CicloSection } from './ciclo';
 import { PesoMedidaSection } from './peso-medida';
 
-type Secao = 'metas' | 'habitos' | 'financas' | 'humor' | 'ciclo' | 'peso';
-
-const SECOES: { id: Secao; label: string; icon: typeof Target }[] = [
-  { id: 'metas', label: 'Metas', icon: Target },
-  { id: 'habitos', label: 'Hábitos', icon: Flame },
-  { id: 'financas', label: 'Finanças', icon: Wallet },
-  { id: 'humor', label: 'Humor', icon: Smile },
-  { id: 'ciclo', label: 'Ciclo', icon: HeartPulse },
-  { id: 'peso', label: 'Peso e medidas', icon: Ruler },
-];
-
 export default function PlannerPage() {
-  const [secao, setSecao] = useState<Secao>('metas');
+  const [secaoId, setSecaoId] = useState<SecaoId>('metas');
   const ano = new Date().getFullYear();
+  const tema = SECOES.find((s) => s.id === secaoId)!;
 
   return (
     <>
@@ -33,17 +23,16 @@ export default function PlannerPage() {
         <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-divider bg-page-bg px-4 py-3 md:w-56 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:px-3 md:py-4">
           {SECOES.map((s) => {
             const Icon = s.icon;
+            const active = secaoId === s.id;
             return (
               <button
                 key={s.id}
                 type="button"
-                onClick={() => setSecao(s.id)}
-                className={cn(
-                  'flex shrink-0 items-center gap-2 rounded-[10px] px-3 py-2 text-sm transition',
-                  secao === s.id ? 'bg-accent text-on-accent font-medium' : 'text-text-secondary hover:bg-surface-alt',
-                )}
+                onClick={() => setSecaoId(s.id)}
+                className={cn('flex shrink-0 items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-medium transition', !active && 'text-text-secondary hover:bg-surface-alt')}
+                style={active ? { backgroundColor: `${s.cor}25`, color: s.cor } : undefined}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4" style={active ? { color: s.cor } : undefined} />
                 {s.label}
               </button>
             );
@@ -51,12 +40,12 @@ export default function PlannerPage() {
         </nav>
 
         <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
-          {secao === 'metas' && <MetasSection ano={ano} />}
-          {secao === 'habitos' && <HabitosSection ano={ano} />}
-          {secao === 'financas' && <FinancasSection ano={ano} />}
-          {secao === 'humor' && <HumorSection ano={ano} />}
-          {secao === 'ciclo' && <CicloSection />}
-          {secao === 'peso' && <PesoMedidaSection ano={ano} />}
+          {secaoId === 'metas' && <MetasSection ano={ano} tema={tema} />}
+          {secaoId === 'habitos' && <HabitosSection ano={ano} tema={tema} />}
+          {secaoId === 'financas' && <FinancasSection ano={ano} tema={tema} />}
+          {secaoId === 'humor' && <HumorSection ano={ano} tema={tema} />}
+          {secaoId === 'ciclo' && <CicloSection tema={tema} />}
+          {secaoId === 'peso' && <PesoMedidaSection ano={ano} tema={tema} />}
         </main>
       </div>
     </>

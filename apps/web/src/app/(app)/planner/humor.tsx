@@ -6,6 +6,8 @@ import { api } from '@/lib/api-client';
 import { Button, Card } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import type { HumorRegistro } from './types';
+import type { SecaoTema } from './theme';
+import { SectionHeader } from './section-header';
 import { localIso } from './lib';
 
 const NIVEIS = [
@@ -16,7 +18,7 @@ const NIVEIS = [
   { valor: 5, emoji: '😄', label: 'Ótimo' },
 ];
 
-export function HumorSection({ ano }: { ano: number }) {
+export function HumorSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
   const queryClient = useQueryClient();
   const hojeIso = localIso(new Date());
   const [data, setData] = useState(hojeIso);
@@ -28,6 +30,11 @@ export function HumorSection({ ano }: { ano: number }) {
   });
 
   const registroDoDia = registros?.find((r) => r.data.slice(0, 10) === data);
+  const mediaRecente = useMemo(() => {
+    const ultimos = (registros ?? []).slice(-7);
+    if (ultimos.length === 0) return null;
+    return ultimos.reduce((acc, r) => acc + r.nivel, 0) / ultimos.length;
+  }, [registros]);
 
   const salvar = useMutation({
     mutationFn: async (nivel: number) => api.put('/planner/humor', { data, nivel, nota: nota || undefined }),
@@ -37,7 +44,21 @@ export function HumorSection({ ano }: { ano: number }) {
   const recentes = useMemo(() => (registros ?? []).slice().reverse().slice(0, 14), [registros]);
 
   return (
-    <div className="flex max-w-xl flex-col gap-4">
+    <div className="flex max-w-2xl flex-col gap-5">
+      <SectionHeader
+        tema={tema}
+        stat={
+          mediaRecente && (
+            <>
+              <span className="text-2xl font-semibold" style={{ color: tema.cor }}>
+                {mediaRecente.toFixed(1)}
+              </span>
+              <p className="text-xs text-text-tertiary">média dos últimos 7 dias</p>
+            </>
+          )
+        }
+      />
+
       <Card className="flex flex-col gap-3">
         <label className="flex items-center gap-2 text-sm">
           <span className="text-text-secondary">Como você está hoje?</span>
@@ -50,21 +71,22 @@ export function HumorSection({ ano }: { ano: number }) {
           />
         </label>
         <div className="flex justify-between gap-2">
-          {NIVEIS.map((n) => (
-            <button
-              key={n.valor}
-              type="button"
-              onClick={() => salvar.mutate(n.valor)}
-              title={n.label}
-              className={cn(
-                'flex flex-1 flex-col items-center gap-1 rounded-[10px] border py-3 text-2xl transition',
-                registroDoDia?.nivel === n.valor ? 'border-accent bg-tint-blue' : 'border-border-strong bg-surface hover:border-accent',
-              )}
-            >
-              {n.emoji}
-              <span className="text-[10px] text-text-tertiary">{n.label}</span>
-            </button>
-          ))}
+          {NIVEIS.map((n) => {
+            const ativo = registroDoDia?.nivel === n.valor;
+            return (
+              <button
+                key={n.valor}
+                type="button"
+                onClick={() => salvar.mutate(n.valor)}
+                title={n.label}
+                className={cn('flex flex-1 flex-col items-center gap-1 rounded-[10px] border py-3 text-2xl transition', !ativo && 'border-border-strong bg-surface hover:border-accent')}
+                style={ativo ? { borderColor: tema.cor, backgroundColor: `${tema.cor}18` } : undefined}
+              >
+                {n.emoji}
+                <span className="text-[10px] text-text-tertiary">{n.label}</span>
+              </button>
+            );
+          })}
         </div>
         <textarea
           value={nota}
@@ -81,11 +103,11 @@ export function HumorSection({ ano }: { ano: number }) {
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-text">Últimos registros</span>
         {recentes.map((r) => (
-          <div key={r.id} className="flex items-center gap-3 rounded-[10px] border border-border p-2.5 text-sm">
+          <Card key={r.id} className="flex items-center gap-3 py-3">
             <span className="text-xl">{NIVEIS.find((n) => n.valor === r.nivel)?.emoji}</span>
-            <span className="text-text-tertiary">{new Date(r.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
-            {r.nota && <span className="flex-1 truncate text-text-secondary">{r.nota}</span>}
-          </div>
+            <span className="text-sm text-text-tertiary">{new Date(r.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
+            {r.nota && <span className="flex-1 truncate text-sm text-text-secondary">{r.nota}</span>}
+          </Card>
         ))}
         {recentes.length === 0 && <p className="text-sm text-text-tertiary">Nenhum registro ainda.</p>}
       </div>
