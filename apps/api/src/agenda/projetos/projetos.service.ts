@@ -2,10 +2,34 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../../prisma/prisma.service';
 import { getRequestContext } from '../../common/request-context';
 import { CreateProjetoDto, SetParticipantesDto, UpdateProjetoDto } from './dto/projetos.dto';
+import { CreateMarcoDto, UpdateMarcoDto } from './dto/marcos.dto';
+import { SalvarComoModeloDto } from './dto/modelos.dto';
 
 function startOfDayUtc(dateStr: string): Date {
   const d = new Date(dateStr);
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+function addDaysUtc(base: Date, dias: number): Date {
+  return new Date(base.getTime() + dias * 86_400_000);
+}
+
+function diasEntre(base: Date, alvo: Date): number {
+  return Math.round((alvo.getTime() - base.getTime()) / 86_400_000);
+}
+
+interface ModeloItem {
+  titulo: string;
+  diasAposInicio: number;
+}
+
+/** O campo é Json no Prisma (tipagem fraca em tempo de compilação) — os modelos só são escritos por salvarComoModelo, então a forma abaixo é garantida na prática. */
+function parseModeloItens(json: unknown): ModeloItem[] {
+  if (!Array.isArray(json)) return [];
+  return json
+    .filter((i): i is Record<string, unknown> => typeof i === 'object' && i !== null)
+    .map((i) => ({ titulo: String(i.titulo ?? ''), diasAposInicio: Number(i.diasAposInicio ?? 0) }))
+    .filter((i) => i.titulo.length > 0);
 }
 
 @Injectable()
@@ -61,18 +85,53 @@ export class ProjetosService {
     const { tenantId, userId } = getRequestContext();
     const db = this.db();
     const participanteIds = new Set([userId, ...(dto.participanteIds ?? [])]);
-    return db.projeto.create({
+    const dataInicio = startOfDayUtc(dto.dataInicio);
+
+    const modelo = dto.modeloId ? await db.projetoModelo.findFirst({ where: { id: dto.modeloId, tenantId } }) : null;
+    if (dto.modeloId && !modelo) throw new NotFoundException('Modelo não encontrado.');
+
+    const projeto = await db.projeto.create({
       data: {
         tenantId,
         nome: dto.nome,
         descricao: dto.descricao,
-        dataInicio: startOfDayUtc(dto.dataInicio),
+        dataInicio,
         dataFim: dto.dataFim ? startOfDayUtc(dto.dataFim) : undefined,
-        cor: dto.cor,
+        cor: dto.cor ?? modelo?.cor,
         criadoPorId: userId,
         participantes: { createMany: { data: [...participanteIds].map((id) => ({ tenantId, userId: id })) } },
       },
     });
+
+    if (modelo) {
+      const tarefas = parseModeloItens(modelo.tarefas);
+      const marcos = parseModeloItens(modelo.marcos);
+      if (tarefas.length > 0) {
+        await db.agendaItem.createMany({
+          data: tarefas.map((t) => ({
+            tenantId,
+            userId,
+            projetoId: projeto.id,
+            data: addDaysUtc(dataInicio, t.diasAposInicio),
+            descricao: t.titulo,
+            tipo: 'TAREFA',
+          })),
+        });
+      }
+      if (marcos.length > 0) {
+        await db.projetoMarco.createMany({
+          data: marcos.map((m, i) => ({
+            tenantId,
+            projetoId: projeto.id,
+            titulo: m.titulo,
+            data: addDaysUtc(dataInicio, m.diasAposInicio),
+            ordem: i,
+          })),
+        });
+      }
+    }
+
+    return projeto;
   }
 
   private async mustFind(id: string) {
@@ -119,8 +178,75 @@ export class ProjetosService {
     await this.mustFind(id);
     return this.db().agendaItem.findMany({
       where: { projetoId: id, deletedAt: null },
-      include: { categoria: true },
+      include: { categoria: true, lembretes: { where: { enviado: false }, select: { antecedenciaDias: true, notificarEmail: true } } },
       orderBy: [{ data: 'asc' }, { hora: 'asc' }],
     });
+  }
+
+  async listMarcos(id: string) {
+    await this.mustFind(id);
+    return this.db().projetoMarco.findMany({ where: { projetoId: id }, orderBy: [{ data: 'asc' }, { ordem: 'asc' }] });
+  }
+
+  async criarMarco(id: string, dto: CreateMarcoDto) {
+    await this.mustFind(id);
+    const { tenantId } = getRequestContext();
+    const db = this.db();
+    const ultimo = await db.projetoMarco.findFirst({ where: { projetoId: id }, orderBy: { ordem: 'desc' } });
+    return db.projetoMarco.create({
+      data: { tenantId, projetoId: id, titulo: dto.titulo, data: startOfDayUtc(dto.data), ordem: (ultimo?.ordem ?? -1) + 1 },
+    });
+  }
+
+  async atualizarMarco(id: string, marcoId: string, dto: UpdateMarcoDto) {
+    await this.mustFind(id);
+    const db = this.db();
+    const { count } = await db.projetoMarco.updateMany({
+      where: { id: marcoId, projetoId: id },
+      data: { titulo: dto.titulo, data: dto.data ? startOfDayUtc(dto.data) : undefined, concluido: dto.concluido },
+    });
+    if (count === 0) throw new NotFoundException('Marco não encontrado.');
+    return db.projetoMarco.findUniqueOrThrow({ where: { id: marcoId } });
+  }
+
+  async excluirMarco(id: string, marcoId: string) {
+    await this.mustFind(id);
+    const { count } = await this.db().projetoMarco.deleteMany({ where: { id: marcoId, projetoId: id } });
+    if (count === 0) throw new NotFoundException('Marco não encontrado.');
+    return { ok: true };
+  }
+
+  async listModelos() {
+    const { tenantId } = getRequestContext();
+    return this.db().projetoModelo.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async salvarComoModelo(id: string, dto: SalvarComoModeloDto) {
+    const projeto = await this.mustFind(id);
+    const { tenantId, userId } = getRequestContext();
+    const db = this.db();
+    const [tarefas, marcos] = await Promise.all([
+      db.agendaItem.findMany({ where: { projetoId: id, deletedAt: null }, select: { descricao: true, data: true } }),
+      db.projetoMarco.findMany({ where: { projetoId: id }, select: { titulo: true, data: true } }),
+    ]);
+    return db.projetoModelo.create({
+      data: {
+        tenantId,
+        nome: dto.nome,
+        cor: projeto.cor,
+        criadoPorId: userId,
+        tarefas: tarefas.map((t) => ({ titulo: t.descricao, diasAposInicio: diasEntre(projeto.dataInicio, t.data) })),
+        marcos: marcos.map((m) => ({ titulo: m.titulo, diasAposInicio: diasEntre(projeto.dataInicio, m.data) })),
+      },
+    });
+  }
+
+  async excluirModelo(modeloId: string) {
+    const { tenantId, userId } = getRequestContext();
+    const modelo = await this.db().projetoModelo.findFirst({ where: { id: modeloId, tenantId } });
+    if (!modelo) throw new NotFoundException('Modelo não encontrado.');
+    if (modelo.criadoPorId !== userId) throw new ForbiddenException('Só quem criou o modelo pode excluí-lo.');
+    await this.db().projetoModelo.delete({ where: { id: modeloId } });
+    return { ok: true };
   }
 }

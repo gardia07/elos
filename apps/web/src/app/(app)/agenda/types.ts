@@ -18,6 +18,21 @@ export interface Categoria {
   sistema: boolean;
 }
 
+export type TarefaProjetoStatus = 'A_FAZER' | 'EM_ANDAMENTO' | 'CONCLUIDA';
+
+export const TAREFA_PROJETO_STATUS_LABEL: Record<TarefaProjetoStatus, string> = {
+  A_FAZER: 'A fazer',
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDA: 'Concluída',
+};
+
+export interface Subtarefa {
+  id: string;
+  titulo: string;
+  concluida: boolean;
+  ordem: number;
+}
+
 export interface AgendaItem {
   id: string;
   data: string;
@@ -33,6 +48,7 @@ export interface AgendaItem {
   recorrenciaId: string | null;
   responsavelId: string | null;
   projetoId: string | null;
+  statusProjeto?: TarefaProjetoStatus;
   lembretes?: { antecedenciaDias: number; notificarEmail: boolean }[];
 }
 
@@ -73,6 +89,29 @@ export interface Projeto {
   tarefasConcluidas: number;
   progresso: number;
   atrasado: boolean;
+}
+
+export interface ProjetoMarco {
+  id: string;
+  titulo: string;
+  data: string;
+  concluido: boolean;
+  ordem: number;
+}
+
+export interface ProjetoModeloItem {
+  titulo: string;
+  diasAposInicio: number;
+}
+
+export interface ProjetoModelo {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  cor: string;
+  criadoPorId: string;
+  tarefas: ProjetoModeloItem[];
+  marcos: ProjetoModeloItem[];
 }
 
 export interface Usuario {

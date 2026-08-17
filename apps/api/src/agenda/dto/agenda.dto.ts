@@ -4,6 +4,9 @@ import { ArrayMaxSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsOptional
 const TIPOS = ['REUNIAO', 'PRAZO', 'TAREFA', 'PESSOAL', 'LEMBRETE'] as const;
 export type AgendaItemTipo = (typeof TIPOS)[number];
 
+const STATUS_PROJETO = ['A_FAZER', 'EM_ANDAMENTO', 'CONCLUIDA'] as const;
+export type TarefaProjetoStatusDto = (typeof STATUS_PROJETO)[number];
+
 const FREQUENCIAS = ['DIARIA', 'SEMANAL', 'MENSAL', 'ANUAL', 'PERSONALIZADA'] as const;
 export type AgendaRecorrenciaFrequenciaDto = (typeof FREQUENCIAS)[number];
 const DIAS_SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'] as const;
@@ -48,6 +51,7 @@ export class UpdateAgendaItemDto {
   @IsOptional() @IsUUID() categoriaId?: string;
   @IsOptional() @IsUUID() responsavelId?: string;
   @IsOptional() @IsUUID() projetoId?: string;
+  @IsOptional() @IsIn(STATUS_PROJETO) statusProjeto?: TarefaProjetoStatusDto;
   @IsOptional() @ValidateNested() @Type(() => LembreteInputDto) lembretes?: LembreteInputDto;
 }
 

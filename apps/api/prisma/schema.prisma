@@ -91,6 +91,9 @@ model Tenant {
   agendaNotificacoes    AgendaNotificacao[]
   projetos              Projeto[]
   projetoParticipantes  ProjetoParticipante[]
+  projetoMarcos         ProjetoMarco[]
+  projetoModelos        ProjetoModelo[]
+  agendaItemSubtarefas  AgendaItemSubtarefa[]
 
   accidents         Accident[]
   occupationalExams OccupationalExam[]
@@ -112,19 +115,19 @@ model Tenant {
   metricSnapshots        MetricSnapshot[]
   atalhosExternos        AtalhoExterno[]
 
-  metasPessoais             MetaPessoal[]
-  habitosPessoais           HabitoPessoal[]
-  habitoPessoalRegistros    HabitoPessoalRegistro[]
-  financasPessoaisCategorias FinancaPessoalCategoria[]
+  metasPessoais               MetaPessoal[]
+  habitosPessoais             HabitoPessoal[]
+  habitoPessoalRegistros      HabitoPessoalRegistro[]
+  financasPessoaisCategorias  FinancaPessoalCategoria[]
   financasPessoaisLancamentos FinancaPessoalLancamento[]
-  humorRegistros             HumorRegistro[]
-  cicloMenstrualRegistros    CicloMenstrualRegistro[]
-  pesoMedidaRegistros        PesoMedidaRegistro[]
-  rodaDaVidaAvaliacoes       RodaDaVidaAvaliacao[]
-  revisoesMensais            RevisaoMensal[]
-  melhorEuPossivelRegistros  MelhorEuPossivelRegistro[]
-  ikigaiAvaliacoes           IkigaiAvaliacao[]
-  swotPessoalRegistros       SwotPessoalRegistro[]
+  humorRegistros              HumorRegistro[]
+  cicloMenstrualRegistros     CicloMenstrualRegistro[]
+  pesoMedidaRegistros         PesoMedidaRegistro[]
+  rodaDaVidaAvaliacoes        RodaDaVidaAvaliacao[]
+  revisoesMensais             RevisaoMensal[]
+  melhorEuPossivelRegistros   MelhorEuPossivelRegistro[]
+  ikigaiAvaliacoes            IkigaiAvaliacao[]
+  swotPessoalRegistros        SwotPessoalRegistro[]
 
   @@map("tenants")
 }
@@ -1438,37 +1441,64 @@ model AgendaCategoria {
 }
 
 model AgendaItem {
-  id            String         @id @default(uuid()) @db.Uuid
-  tenantId      String         @db.Uuid
-  userId        String         @db.Uuid
+  id            String              @id @default(uuid()) @db.Uuid
+  tenantId      String              @db.Uuid
+  userId        String              @db.Uuid
   /// Coluna solta, sem relação Prisma para User (mesmo padrão de AuditEvent.actorId) — quem vê/edita o item passa a ser userId OU responsavelId, ver AgendaService.meuOuAtribuido.
-  responsavelId String?        @db.Uuid
-  data          DateTime       @db.Date
+  responsavelId String?             @db.Uuid
+  data          DateTime            @db.Date
   hora          String?
   horaFim       String?
   descricao     String
   notas         String?
-  tipo          AgendaItemTipo @default(TAREFA)
-  categoriaId   String?        @db.Uuid
-  recorrenciaId String?        @db.Uuid
-  projetoId     String?        @db.Uuid
-  concluida     Boolean        @default(false)
-  origem        String         @default("MANUAL")
-  createdAt     DateTime       @default(now())
+  tipo          AgendaItemTipo      @default(TAREFA)
+  categoriaId   String?             @db.Uuid
+  recorrenciaId String?             @db.Uuid
+  projetoId     String?             @db.Uuid
+  statusProjeto TarefaProjetoStatus @default(A_FAZER)
+  concluida     Boolean             @default(false)
+  origem        String              @default("MANUAL")
+  createdAt     DateTime            @default(now())
   deletedAt     DateTime?
 
-  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  categoria   AgendaCategoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
-  recorrencia AgendaRecorrencia? @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
-  projeto     Projeto?           @relation(fields: [projetoId], references: [id], onDelete: SetNull)
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoria   AgendaCategoria?      @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  recorrencia AgendaRecorrencia?    @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
+  projeto     Projeto?              @relation(fields: [projetoId], references: [id], onDelete: SetNull)
   comentarios AgendaComentario[]
   lembretes   AgendaLembrete[]
+  subtarefas  AgendaItemSubtarefa[]
 
   @@index([tenantId, userId, data])
   @@index([recorrenciaId])
   @@index([responsavelId])
   @@index([projetoId])
   @@map("agenda_items")
+}
+
+enum TarefaProjetoStatus {
+  A_FAZER
+  EM_ANDAMENTO
+  CONCLUIDA
+}
+
+/**
+ * Checklist simples dentro de uma tarefa (AgendaItem) — ordem só controla exibição, sem drag-and-drop de reordenação por ora.
+ */
+model AgendaItemSubtarefa {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  agendaItemId String   @db.Uuid
+  titulo       String
+  concluida    Boolean  @default(false)
+  ordem        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  agendaItem AgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+
+  @@index([agendaItemId])
+  @@map("agenda_item_subtarefas")
 }
 
 enum ProjetoStatus {
@@ -1479,7 +1509,9 @@ enum ProjetoStatus {
   CANCELADO
 }
 
-/** Projeto compartilhado entre participantes (mesma equipe ou de equipes diferentes) — tarefas ficam em AgendaItem.projetoId, visíveis a todo participante. */
+/**
+ * Projeto compartilhado entre participantes (mesma equipe ou de equipes diferentes) — tarefas ficam em AgendaItem.projetoId, visíveis a todo participante.
+ */
 model Projeto {
   id          String        @id @default(uuid()) @db.Uuid
   tenantId    String        @db.Uuid
@@ -1495,9 +1527,50 @@ model Projeto {
   tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   participantes ProjetoParticipante[]
   tarefas       AgendaItem[]
+  marcos        ProjetoMarco[]
 
   @@index([tenantId])
   @@map("projetos")
+}
+
+/**
+ * Data-chave do projeto (ex.: "entrega da fase 1"), separada das tarefas do dia a dia.
+ */
+model ProjetoMarco {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  projetoId String   @db.Uuid
+  titulo    String
+  data      DateTime @db.Date
+  concluido Boolean  @default(false)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@index([projetoId])
+  @@map("projeto_marcos")
+}
+
+/**
+ * Modelo reutilizável de projeto — tarefas/marcos guardados como offset de dias em relação ao início, para gerar datas ao criar um projeto novo a partir do modelo. Json simples (em vez de tabelas próprias) por serem listas pequenas, só lidas/escritas inteiras.
+ */
+model ProjetoModelo {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  nome        String
+  descricao   String?
+  cor         String   @default("#3b82f6")
+  criadoPorId String   @db.Uuid
+  tarefas     Json     @default("[]")
+  marcos      Json     @default("[]")
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("projeto_modelos")
 }
 
 model ProjetoParticipante {
@@ -2092,7 +2165,9 @@ enum AtalhoExternoTipo {
   WIDGET_VIVO
 }
 
-/** Atalho para ferramenta/site externo na área de Ferramentas — nasce como link_simples (abre em nova aba); pode evoluir para widget_vivo (dado ao vivo via OAuth) numa fase futura sem mudar a estrutura da tabela. */
+/**
+ * Atalho para ferramenta/site externo na área de Ferramentas — nasce como link_simples (abre em nova aba); pode evoluir para widget_vivo (dado ao vivo via OAuth) numa fase futura sem mudar a estrutura da tabela.
+ */
 model AtalhoExterno {
   id            String            @id @default(uuid()) @db.Uuid
   tenantId      String            @db.Uuid
@@ -2194,14 +2269,16 @@ model FinancaPessoalLancamento {
   valor       Decimal  @db.Decimal(10, 2)
   createdAt   DateTime @default(now())
 
-  tenant    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  categoria FinancaPessoalCategoria  @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  tenant    Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoria FinancaPessoalCategoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
 
   @@unique([categoriaId, mes])
   @@map("financas_pessoais_lancamentos")
 }
 
-/** Check-in diário de humor — dado sensível (saúde/bem-estar), visível só para o próprio usuário. */
+/**
+ * Check-in diário de humor — dado sensível (saúde/bem-estar), visível só para o próprio usuário.
+ */
 model HumorRegistro {
   id        String   @id @default(uuid()) @db.Uuid
   tenantId  String   @db.Uuid
@@ -2221,7 +2298,9 @@ model HumorRegistro {
   @@map("humor_registros")
 }
 
-/** Registro de ciclo menstrual — dado sensível de saúde (LGPD art. 5º II), visível só para o próprio usuário. */
+/**
+ * Registro de ciclo menstrual — dado sensível de saúde (LGPD art. 5º II), visível só para o próprio usuário.
+ */
 model CicloMenstrualRegistro {
   id          String   @id @default(uuid()) @db.Uuid
   tenantId    String   @db.Uuid
@@ -2237,7 +2316,9 @@ model CicloMenstrualRegistro {
   @@map("ciclo_menstrual_registros")
 }
 
-/** Peso e medidas corporais — dado sensível de saúde, visível só para o próprio usuário. */
+/**
+ * Peso e medidas corporais — dado sensível de saúde, visível só para o próprio usuário.
+ */
 model PesoMedidaRegistro {
   id        String   @id @default(uuid()) @db.Uuid
   tenantId  String   @db.Uuid
@@ -2258,7 +2339,9 @@ model PesoMedidaRegistro {
   @@map("peso_medida_registros")
 }
 
-/** Roda da vida — autoavaliação de satisfação (1-10) em 8 áreas clássicas da ferramenta de coaching. Refeita quando o usuário quiser, pra comparar evolução ao longo do ano. */
+/**
+ * Roda da vida — autoavaliação de satisfação (1-10) em 8 áreas clássicas da ferramenta de coaching. Refeita quando o usuário quiser, pra comparar evolução ao longo do ano.
+ */
 model RodaDaVidaAvaliacao {
   id                 String   @id @default(uuid()) @db.Uuid
   tenantId           String   @db.Uuid
@@ -2280,7 +2363,9 @@ model RodaDaVidaAvaliacao {
   @@map("roda_da_vida_avaliacoes")
 }
 
-/** Revisão mensal — intenções no início do mês e reflexão guiada no fim (o que funcionou / o que não funcionou / o que precisa mudar). */
+/**
+ * Revisão mensal — intenções no início do mês e reflexão guiada no fim (o que funcionou / o que não funcionou / o que precisa mudar).
+ */
 /**
  * Início do mês segue o método WOOP (Wish/Outcome/Obstacle/Plan — Oettingen &
  * Gollwitzer): desejo, resultado vívido, obstáculo interno e um plano
@@ -2311,7 +2396,9 @@ model RevisaoMensal {
   @@map("revisoes_mensais")
 }
 
-/** Melhor Eu Possível — escrita periódica sobre o futuro ideal (uma das intervenções de psicologia positiva mais validadas). Refeita quando o usuário quiser. */
+/**
+ * Melhor Eu Possível — escrita periódica sobre o futuro ideal (uma das intervenções de psicologia positiva mais validadas). Refeita quando o usuário quiser.
+ */
 model MelhorEuPossivelRegistro {
   id        String   @id @default(uuid()) @db.Uuid
   tenantId  String   @db.Uuid
@@ -2326,18 +2413,20 @@ model MelhorEuPossivelRegistro {
   @@map("melhor_eu_possivel_registros")
 }
 
-/** Ikigai — interseção entre o que ama, no que é bom, do que o mundo precisa e pelo que pode ser pago. */
+/**
+ * Ikigai — interseção entre o que ama, no que é bom, do que o mundo precisa e pelo que pode ser pago.
+ */
 model IkigaiAvaliacao {
-  id                  String   @id @default(uuid()) @db.Uuid
-  tenantId            String   @db.Uuid
-  userId              String   @db.Uuid
-  data                DateTime @db.Date
-  oQueAma             String?
-  noQueEBom           String?
-  oMundoPrecisa       String?
-  peloQuePodeSerPago  String?
-  sintese             String?
-  createdAt           DateTime @default(now())
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @db.Uuid
+  userId             String   @db.Uuid
+  data               DateTime @db.Date
+  oQueAma            String?
+  noQueEBom          String?
+  oMundoPrecisa      String?
+  peloQuePodeSerPago String?
+  sintese            String?
+  createdAt          DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -2345,17 +2434,19 @@ model IkigaiAvaliacao {
   @@map("ikigai_avaliacoes")
 }
 
-/** SWOT pessoal — Forças, Fraquezas, Oportunidades e Ameaças aplicado a si mesmo. */
+/**
+ * SWOT pessoal — Forças, Fraquezas, Oportunidades e Ameaças aplicado a si mesmo.
+ */
 model SwotPessoalRegistro {
-  id             String   @id @default(uuid()) @db.Uuid
-  tenantId       String   @db.Uuid
-  userId         String   @db.Uuid
-  data           DateTime @db.Date
-  forcas         String?
-  fraquezas      String?
-  oportunidades  String?
-  ameacas        String?
-  createdAt      DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  userId        String   @db.Uuid
+  data          DateTime @db.Date
+  forcas        String?
+  fraquezas     String?
+  oportunidades String?
+  ameacas       String?
+  createdAt     DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

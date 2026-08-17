@@ -2,7 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { AuditService } from '../audit/audit.service';
-import { CreateAgendaItemDto, CreateComentarioDto, LembreteInputDto, SaveNotepadDto, SaveRevisaoDto, UpdateAgendaItemDto } from './dto/agenda.dto';
+import { CreateAgendaItemDto, CreateComentarioDto, LembreteInputDto, SaveNotepadDto, SaveRevisaoDto, TarefaProjetoStatusDto, UpdateAgendaItemDto } from './dto/agenda.dto';
+import { CreateSubtarefaDto, UpdateSubtarefaDto } from './dto/subtarefas.dto';
 import { computeOccurrences } from './recurrence.util';
 import { hojeBrasiliaUtc } from './date-utils';
 import { itemVisivelPara } from './visibility.util';
@@ -150,10 +151,26 @@ export class AgendaService {
     return item;
   }
 
+  /** Kanban (statusProjeto) e o checkbox de concluída (usado no resto da Agenda) representam a mesma coisa em telas diferentes — mantém os dois em sincronia sem exigir que quem chama a API saiba da regra. */
+  private sincronizarStatusProjeto(
+    dto: UpdateAgendaItemDto,
+    antes: { statusProjeto: TarefaProjetoStatusDto },
+  ): { statusProjeto: TarefaProjetoStatusDto | undefined; concluida: boolean | undefined } {
+    if (dto.statusProjeto !== undefined) {
+      return { statusProjeto: dto.statusProjeto, concluida: dto.statusProjeto === 'CONCLUIDA' };
+    }
+    if (dto.concluida !== undefined) {
+      const statusProjeto = dto.concluida ? 'CONCLUIDA' : antes.statusProjeto === 'CONCLUIDA' ? 'EM_ANDAMENTO' : undefined;
+      return { statusProjeto, concluida: dto.concluida };
+    }
+    return { statusProjeto: undefined, concluida: undefined };
+  }
+
   async updateItem(id: string, dto: UpdateAgendaItemDto) {
     const { userId, tenantId } = getRequestContext();
     const antes = await this.mustFind(id);
     const db = this.db();
+    const { statusProjeto, concluida } = this.sincronizarStatusProjeto(dto, antes);
     const updated = await db.agendaItem.update({
       where: { id },
       data: {
@@ -161,12 +178,13 @@ export class AgendaService {
         hora: dto.hora,
         horaFim: dto.horaFim,
         descricao: dto.descricao,
-        concluida: dto.concluida,
+        concluida,
         notas: dto.notas,
         tipo: dto.tipo,
         categoriaId: dto.categoriaId,
         responsavelId: dto.responsavelId,
         projetoId: dto.projetoId,
+        statusProjeto,
       },
       include: { categoria: true },
     });
@@ -282,6 +300,39 @@ export class AgendaService {
   async marcarNotificacaoLida(id: string) {
     const { userId, tenantId } = getRequestContext();
     await this.db().agendaNotificacao.updateMany({ where: { id, tenantId, userId }, data: { lida: true } });
+    return { ok: true };
+  }
+
+  async listSubtarefas(agendaItemId: string) {
+    await this.mustFind(agendaItemId);
+    return this.db().agendaItemSubtarefa.findMany({ where: { agendaItemId }, orderBy: { ordem: 'asc' } });
+  }
+
+  async criarSubtarefa(agendaItemId: string, dto: CreateSubtarefaDto) {
+    await this.mustFind(agendaItemId);
+    const { tenantId } = getRequestContext();
+    const db = this.db();
+    const ultima = await db.agendaItemSubtarefa.findFirst({ where: { agendaItemId }, orderBy: { ordem: 'desc' } });
+    return db.agendaItemSubtarefa.create({
+      data: { tenantId, agendaItemId, titulo: dto.titulo, ordem: (ultima?.ordem ?? -1) + 1 },
+    });
+  }
+
+  async atualizarSubtarefa(agendaItemId: string, subtarefaId: string, dto: UpdateSubtarefaDto) {
+    await this.mustFind(agendaItemId);
+    const db = this.db();
+    const { count } = await db.agendaItemSubtarefa.updateMany({
+      where: { id: subtarefaId, agendaItemId },
+      data: { titulo: dto.titulo, concluida: dto.concluida },
+    });
+    if (count === 0) throw new NotFoundException('Subtarefa não encontrada.');
+    return db.agendaItemSubtarefa.findUniqueOrThrow({ where: { id: subtarefaId } });
+  }
+
+  async excluirSubtarefa(agendaItemId: string, subtarefaId: string) {
+    await this.mustFind(agendaItemId);
+    const { count } = await this.db().agendaItemSubtarefa.deleteMany({ where: { id: subtarefaId, agendaItemId } });
+    if (count === 0) throw new NotFoundException('Subtarefa não encontrada.');
     return { ok: true };
   }
 }

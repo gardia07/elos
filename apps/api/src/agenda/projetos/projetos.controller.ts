@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } fro
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { ProjetosService } from './projetos.service';
 import { CreateProjetoDto, SetParticipantesDto, UpdateProjetoDto } from './dto/projetos.dto';
+import { CreateMarcoDto, UpdateMarcoDto } from './dto/marcos.dto';
+import { SalvarComoModeloDto } from './dto/modelos.dto';
 
 @UseGuards(AuthGuard)
 @Controller('agenda/projetos')
@@ -36,5 +38,40 @@ export class ProjetosController {
   @Get(':id/tarefas')
   listTarefas(@Param('id') id: string) {
     return this.service.listTarefas(id);
+  }
+
+  @Get(':id/marcos')
+  listMarcos(@Param('id') id: string) {
+    return this.service.listMarcos(id);
+  }
+
+  @Post(':id/marcos')
+  criarMarco(@Param('id') id: string, @Body() dto: CreateMarcoDto) {
+    return this.service.criarMarco(id, dto);
+  }
+
+  @Patch(':id/marcos/:marcoId')
+  atualizarMarco(@Param('id') id: string, @Param('marcoId') marcoId: string, @Body() dto: UpdateMarcoDto) {
+    return this.service.atualizarMarco(id, marcoId, dto);
+  }
+
+  @Delete(':id/marcos/:marcoId')
+  excluirMarco(@Param('id') id: string, @Param('marcoId') marcoId: string) {
+    return this.service.excluirMarco(id, marcoId);
+  }
+
+  @Get('modelos')
+  listModelos() {
+    return this.service.listModelos();
+  }
+
+  @Post(':id/salvar-como-modelo')
+  salvarComoModelo(@Param('id') id: string, @Body() dto: SalvarComoModeloDto) {
+    return this.service.salvarComoModelo(id, dto);
+  }
+
+  @Delete('modelos/:modeloId')
+  excluirModelo(@Param('modeloId') modeloId: string) {
+    return this.service.excluirModelo(modeloId);
   }
 }

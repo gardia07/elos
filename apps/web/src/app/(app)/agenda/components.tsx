@@ -3,11 +3,11 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Bell, ChevronLeft, ChevronRight, FolderKanban, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
+import { AlertTriangle, Bell, ChevronLeft, ChevronRight, FolderKanban, ListChecks, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, Categoria, Comentario, Projeto, RecorrenciaInput, Usuario } from './types';
+import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, Categoria, Comentario, Projeto, RecorrenciaInput, Subtarefa, Usuario } from './types';
 import { DIA_SEMANA_CODES, DIA_SEMANA_LABEL, DIA_SEMANA_LABEL_LONGO, FREQUENCIA_LABEL, TIPO_LABEL } from './types';
 import { addAnosIso, categoriaCor, localIso, parseIsoLocal } from './lib';
 
@@ -219,6 +219,7 @@ export function EventFormDrawer({
   item,
   defaultDate,
   defaultHora,
+  defaultProjetoId,
   onSave,
   onDelete,
   onDeleteSeries,
@@ -233,6 +234,7 @@ export function EventFormDrawer({
   item?: AgendaItem | null;
   defaultDate?: string;
   defaultHora?: string;
+  defaultProjetoId?: string;
   onSave: (values: EventFormValues) => void;
   onDelete?: () => void;
   onDeleteSeries?: () => void;
@@ -256,7 +258,7 @@ export function EventFormDrawer({
       tipo: it?.tipo ?? 'TAREFA',
       categoriaId: it?.categoriaId ?? '',
       responsavelId: it?.responsavelId ?? '',
-      projetoId: it?.projetoId ?? '',
+      projetoId: it?.projetoId ?? defaultProjetoId ?? '',
       repetir: false,
       frequencia: 'SEMANAL',
       intervalo: 1,
@@ -588,6 +590,8 @@ export function EventFormDrawer({
           />
         </label>
 
+        {item && <SubtarefasSection agendaItemId={item.id} />}
+
         {item && <CommentsSection agendaItemId={item.id} />}
 
         <div className="mt-2 flex items-center justify-between">
@@ -616,6 +620,83 @@ export function EventFormDrawer({
         </div>
       </form>
     </Drawer>
+  );
+}
+
+function SubtarefasSection({ agendaItemId }: { agendaItemId: string }) {
+  const queryClient = useQueryClient();
+  const [titulo, setTitulo] = useState('');
+
+  const { data: subtarefas } = useQuery({
+    queryKey: ['agenda', 'subtarefas', agendaItemId],
+    queryFn: async () => (await api.get<Subtarefa[]>(`/agenda/items/${agendaItemId}/subtarefas`)).data,
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['agenda', 'subtarefas', agendaItemId] });
+
+  const criar = useMutation({
+    mutationFn: async () => api.post(`/agenda/items/${agendaItemId}/subtarefas`, { titulo }),
+    onSuccess: () => {
+      setTitulo('');
+      invalidate();
+    },
+  });
+  const alternar = useMutation({
+    mutationFn: async (vars: { id: string; concluida: boolean }) => api.patch(`/agenda/items/${agendaItemId}/subtarefas/${vars.id}`, { concluida: vars.concluida }),
+    onSuccess: invalidate,
+  });
+  const excluir = useMutation({
+    mutationFn: async (id: string) => api.delete(`/agenda/items/${agendaItemId}/subtarefas/${id}`),
+    onSuccess: invalidate,
+  });
+
+  const total = subtarefas?.length ?? 0;
+  const concluidas = subtarefas?.filter((s) => s.concluida).length ?? 0;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+        <ListChecks className="h-3.5 w-3.5" /> Subtarefas {total > 0 && `(${concluidas}/${total})`}
+      </span>
+      <div className="flex flex-col gap-1">
+        {subtarefas?.map((s) => (
+          <div key={s.id} className="group flex items-center gap-2 rounded-[8px] px-1.5 py-1 hover:bg-surface-alt">
+            <input type="checkbox" checked={s.concluida} onChange={(e) => alternar.mutate({ id: s.id, concluida: e.target.checked })} />
+            <span className={cn('flex-1 text-sm', s.concluida && 'text-text-tertiary line-through')}>{s.titulo}</span>
+            <button
+              type="button"
+              onClick={() => excluir.mutate(s.id)}
+              className="text-text-tertiary opacity-0 hover:text-danger group-hover:opacity-100"
+              aria-label="Excluir subtarefa"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          placeholder="Adicionar subtarefa…"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && titulo.trim()) {
+              e.preventDefault();
+              criar.mutate();
+            }
+          }}
+          className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+        />
+        <button
+          type="button"
+          disabled={!titulo.trim() || criar.isPending}
+          onClick={() => criar.mutate()}
+          className="flex items-center justify-center rounded-[10px] bg-accent px-3 text-on-accent disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
 

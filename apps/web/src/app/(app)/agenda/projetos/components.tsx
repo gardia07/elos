@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ListChecks, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { AgendaItem, Projeto, ProjetoStatus, Usuario } from '../types';
+import type { AgendaItem, Projeto, ProjetoModelo, ProjetoStatus, Usuario } from '../types';
 import { PROJETO_STATUS_LABEL } from '../types';
 import { parseIsoUtc } from '../lib';
 
@@ -21,6 +21,7 @@ export interface ProjetoFormValues {
   cor: string;
   status: ProjetoStatus;
   participanteIds: string[];
+  modeloId: string;
 }
 
 export function ProjetoDrawer({
@@ -59,6 +60,7 @@ export function ProjetoDrawer({
       cor: p?.cor ?? CORES[0],
       status: p?.status ?? 'PLANEJADO',
       participanteIds: p?.participantes.map((pp) => pp.userId) ?? [],
+      modeloId: '',
     };
   }
 
@@ -69,6 +71,26 @@ export function ProjetoDrawer({
     queryFn: async () => (await api.get<AgendaItem[]>(`/agenda/projetos/${projeto!.id}/tarefas`)).data,
     enabled: !!projeto,
   });
+
+  const queryClient = useQueryClient();
+  const { data: modelos } = useQuery({
+    queryKey: ['agenda', 'projetos', 'modelos'],
+    queryFn: async () => (await api.get<ProjetoModelo[]>('/agenda/projetos/modelos')).data,
+    enabled: !projeto && open,
+  });
+  const excluirModelo = useMutation({
+    mutationFn: async (id: string) => api.delete(`/agenda/projetos/modelos/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agenda', 'projetos', 'modelos'] }),
+  });
+
+  function selecionarModelo(modeloId: string) {
+    const modelo = modelos?.find((m) => m.id === modeloId);
+    setValues((v) => ({
+      ...v,
+      modeloId,
+      ...(modelo ? { nome: v.nome || modelo.nome, descricao: v.descricao || (modelo.descricao ?? ''), cor: modelo.cor } : {}),
+    }));
+  }
 
   function toggleParticipante(userId: string) {
     setValues((v) => {
@@ -88,6 +110,43 @@ export function ProjetoDrawer({
           onSave(values);
         }}
       >
+        {!projeto && (modelos?.length ?? 0) > 0 && (
+          <div className="flex flex-col gap-1.5 rounded-[10px] border border-border p-3">
+            <span className="text-sm text-text-secondary">Começar a partir de um modelo (opcional)</span>
+            <select
+              value={values.modeloId}
+              onChange={(e) => selecionarModelo(e.target.value)}
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">Projeto em branco</option>
+              {modelos?.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nome} ({m.tarefas.length} tarefas, {m.marcos.length} marcos)
+                </option>
+              ))}
+            </select>
+            {values.modeloId && (
+              <div className="flex flex-wrap gap-1.5">
+                {modelos
+                  ?.filter((m) => m.id === values.modeloId)
+                  .map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => {
+                        excluirModelo.mutate(m.id);
+                        setValues((v) => ({ ...v, modeloId: '' }));
+                      }}
+                      className="flex items-center gap-1 text-xs text-danger hover:underline"
+                    >
+                      <Trash2 className="h-3 w-3" /> Excluir modelo &quot;{m.nome}&quot;
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Nome do projeto</span>
           <input

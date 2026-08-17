@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, Plus, Users } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import { useAuth } from '@/lib/auth-context';
 import { Badge, Button, Card, EmptyState } from '@/components/ui';
 import { Header } from '@/components/header';
 import { cn } from '@/lib/cn';
@@ -19,9 +19,9 @@ function formatDataCurta(iso: string): string {
 }
 
 export default function ProjetosPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const [drawer, setDrawer] = useState<{ open: boolean; projeto: Projeto | null }>({ open: false, projeto: null });
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: projetos } = useQuery({
     queryKey: ['agenda', 'projetos'],
@@ -33,61 +33,25 @@ export default function ProjetosPage() {
     queryFn: async () => (await api.get<Usuario[]>('/agenda/usuarios')).data,
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['agenda', 'projetos'] });
-
   const createProjeto = useMutation({
     mutationFn: async (values: ProjetoFormValues) =>
-      api.post('/agenda/projetos', {
-        nome: values.nome,
-        descricao: values.descricao || undefined,
-        dataInicio: values.dataInicio,
-        dataFim: values.dataFim || undefined,
-        cor: values.cor,
-        participanteIds: values.participanteIds,
-      }),
-    onSuccess: () => {
-      invalidate();
-      setDrawer({ open: false, projeto: null });
+      (
+        await api.post<{ id: string }>('/agenda/projetos', {
+          nome: values.nome,
+          descricao: values.descricao || undefined,
+          dataInicio: values.dataInicio,
+          dataFim: values.dataFim || undefined,
+          cor: values.cor,
+          participanteIds: values.participanteIds,
+          modeloId: values.modeloId || undefined,
+        })
+      ).data,
+    onSuccess: (novoProjeto) => {
+      queryClient.invalidateQueries({ queryKey: ['agenda', 'projetos'] });
+      setCreateOpen(false);
+      router.push(`/agenda/projetos/${novoProjeto.id}`);
     },
   });
-
-  const updateProjeto = useMutation({
-    mutationFn: async (vars: { id: string; values: ProjetoFormValues }) =>
-      api.patch(`/agenda/projetos/${vars.id}`, {
-        nome: vars.values.nome,
-        descricao: vars.values.descricao || undefined,
-        dataInicio: vars.values.dataInicio,
-        dataFim: vars.values.dataFim || undefined,
-        status: vars.values.status,
-        cor: vars.values.cor,
-      }),
-    onSuccess: () => {
-      invalidate();
-      setDrawer({ open: false, projeto: null });
-    },
-  });
-
-  const deleteProjeto = useMutation({
-    mutationFn: async (id: string) => api.delete(`/agenda/projetos/${id}`),
-    onSuccess: () => {
-      invalidate();
-      setDrawer({ open: false, projeto: null });
-    },
-  });
-
-  const setParticipantes = useMutation({
-    mutationFn: async (vars: { id: string; participanteIds: string[] }) =>
-      api.put(`/agenda/projetos/${vars.id}/participantes`, { participanteIds: vars.participanteIds }),
-    onSuccess: invalidate,
-  });
-
-  function handleSave(values: ProjetoFormValues) {
-    if (drawer.projeto) {
-      updateProjeto.mutate({ id: drawer.projeto.id, values });
-    } else {
-      createProjeto.mutate(values);
-    }
-  }
 
   return (
     <>
@@ -97,7 +61,7 @@ export default function ProjetosPage() {
           <Link href="/agenda" className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent">
             <ArrowLeft className="h-4 w-4" /> Voltar para a Agenda
           </Link>
-          <Button onClick={() => setDrawer({ open: true, projeto: null })} className="flex items-center gap-1.5">
+          <Button onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Novo projeto
           </Button>
         </div>
@@ -113,7 +77,7 @@ export default function ProjetosPage() {
             <Card
               key={p.id}
               className="flex cursor-pointer flex-col gap-3 transition hover:border-accent"
-              onClick={() => setDrawer({ open: true, projeto: p })}
+              onClick={() => router.push(`/agenda/projetos/${p.id}`)}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -155,17 +119,13 @@ export default function ProjetosPage() {
       </div>
 
       <ProjetoDrawer
-        open={drawer.open}
-        onClose={() => setDrawer({ open: false, projeto: null })}
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
         usuarios={usuarios ?? []}
-        currentUserId={user?.id}
-        projeto={drawer.projeto}
-        onSave={handleSave}
-        onDelete={drawer.projeto ? () => deleteProjeto.mutate(drawer.projeto!.id) : undefined}
-        onSetParticipantes={(participanteIds) => {
-          if (drawer.projeto) setParticipantes.mutate({ id: drawer.projeto.id, participanteIds });
-        }}
-        saving={createProjeto.isPending || updateProjeto.isPending}
+        projeto={null}
+        onSave={(values) => createProjeto.mutate(values)}
+        onSetParticipantes={() => {}}
+        saving={createProjeto.isPending}
       />
     </>
   );

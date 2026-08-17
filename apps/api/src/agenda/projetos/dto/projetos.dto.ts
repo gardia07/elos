@@ -10,6 +10,7 @@ export class CreateProjetoDto {
   @IsOptional() @IsDateString() dataFim?: string;
   @IsOptional() @IsString() cor?: string;
   @IsOptional() @IsArray() @IsUUID('4', { each: true }) participanteIds?: string[];
+  @IsOptional() @IsUUID() modeloId?: string;
 }
 
 export class UpdateProjetoDto {

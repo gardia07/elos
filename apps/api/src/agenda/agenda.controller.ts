@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuard
 import { AuthGuard } from '../common/guards/auth.guard';
 import { AgendaService } from './agenda.service';
 import { CreateAgendaItemDto, CreateComentarioDto, SaveNotepadDto, SaveRevisaoDto, UpdateAgendaItemDto } from './dto/agenda.dto';
+import { CreateSubtarefaDto, UpdateSubtarefaDto } from './dto/subtarefas.dto';
 
 @UseGuards(AuthGuard)
 @Controller('agenda')
@@ -76,6 +77,26 @@ export class AgendaController {
   @Put('revisao/:date')
   saveRevisao(@Param('date') date: string, @Body() dto: SaveRevisaoDto) {
     return this.service.saveRevisao(date, dto);
+  }
+
+  @Get('items/:id/subtarefas')
+  listSubtarefas(@Param('id') id: string) {
+    return this.service.listSubtarefas(id);
+  }
+
+  @Post('items/:id/subtarefas')
+  criarSubtarefa(@Param('id') id: string, @Body() dto: CreateSubtarefaDto) {
+    return this.service.criarSubtarefa(id, dto);
+  }
+
+  @Patch('items/:id/subtarefas/:subtarefaId')
+  atualizarSubtarefa(@Param('id') id: string, @Param('subtarefaId') subtarefaId: string, @Body() dto: UpdateSubtarefaDto) {
+    return this.service.atualizarSubtarefa(id, subtarefaId, dto);
+  }
+
+  @Delete('items/:id/subtarefas/:subtarefaId')
+  excluirSubtarefa(@Param('id') id: string, @Param('subtarefaId') subtarefaId: string) {
+    return this.service.excluirSubtarefa(id, subtarefaId);
   }
 
   @Get('notificacoes')
