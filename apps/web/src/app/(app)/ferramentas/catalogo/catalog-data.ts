@@ -19,7 +19,7 @@ export const CATALOG_BLOCKS: CatalogBlock[] = [
       { nome: 'Editor de texto', href: null },
       { nome: 'Planilhas', href: null },
       { nome: 'Criador de artes', href: null },
-      { nome: 'Planner pessoal', href: '/agenda' },
+      { nome: 'Planner pessoal', href: '/planner' },
       { nome: 'Bloco de notas', href: '/agenda?view=dia' },
       { nome: 'Biblioteca de referência', href: null },
     ],

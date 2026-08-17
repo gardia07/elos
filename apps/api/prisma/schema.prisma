@@ -110,6 +110,15 @@ model Tenant {
   metricSnapshots        MetricSnapshot[]
   atalhosExternos        AtalhoExterno[]
 
+  metasPessoais             MetaPessoal[]
+  habitosPessoais           HabitoPessoal[]
+  habitoPessoalRegistros    HabitoPessoalRegistro[]
+  financasPessoaisCategorias FinancaPessoalCategoria[]
+  financasPessoaisLancamentos FinancaPessoalLancamento[]
+  humorRegistros             HumorRegistro[]
+  cicloMenstrualRegistros    CicloMenstrualRegistro[]
+  pesoMedidaRegistros        PesoMedidaRegistro[]
+
   @@map("tenants")
 }
 
@@ -2046,6 +2055,147 @@ model AtalhoExterno {
 
   @@index([tenantId])
   @@map("atalhos_externos")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Planner pessoal — metas, hábitos e finanças pessoais de quem usa o
+// sistema, sempre por ano vigente. Espaço à parte da Agenda (que é
+// focada em trabalho): aqui é vida pessoal, um bônus para o colaborador.
+// ─────────────────────────────────────────────────────────────
+
+model MetaPessoal {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  ano       Int
+  titulo    String
+  concluida Boolean  @default(false)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, ano])
+  @@map("metas_pessoais")
+}
+
+model HabitoPessoal {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  ano       Int
+  nome      String
+  cor       String   @default("#3b82f6")
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  tenant    Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  registros HabitoPessoalRegistro[]
+
+  @@index([tenantId, userId, ano])
+  @@map("habitos_pessoais")
+}
+
+model HabitoPessoalRegistro {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  habitoId  String   @db.Uuid
+  data      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  habito HabitoPessoal @relation(fields: [habitoId], references: [id], onDelete: Cascade)
+
+  @@unique([habitoId, data])
+  @@map("habito_pessoal_registros")
+}
+
+enum FinancaPessoalTipo {
+  RECEITA
+  DESPESA
+}
+
+model FinancaPessoalCategoria {
+  id        String             @id @default(uuid()) @db.Uuid
+  tenantId  String             @db.Uuid
+  userId    String             @db.Uuid
+  ano       Int
+  nome      String
+  tipo      FinancaPessoalTipo
+  ordem     Int                @default(0)
+  createdAt DateTime           @default(now())
+
+  tenant      Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lancamentos FinancaPessoalLancamento[]
+
+  @@index([tenantId, userId, ano])
+  @@map("financas_pessoais_categorias")
+}
+
+model FinancaPessoalLancamento {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  categoriaId String   @db.Uuid
+  mes         Int
+  valor       Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoria FinancaPessoalCategoria  @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@unique([categoriaId, mes])
+  @@map("financas_pessoais_lancamentos")
+}
+
+/** Check-in diário de humor — dado sensível (saúde/bem-estar), visível só para o próprio usuário. */
+model HumorRegistro {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  data      DateTime @db.Date
+  nivel     Int
+  nota      String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("humor_registros")
+}
+
+/** Registro de ciclo menstrual — dado sensível de saúde (LGPD art. 5º II), visível só para o próprio usuário. */
+model CicloMenstrualRegistro {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  userId      String   @db.Uuid
+  dataInicio  DateTime @db.Date
+  duracaoDias Int?
+  sintomas    String?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId])
+  @@map("ciclo_menstrual_registros")
+}
+
+/** Peso e medidas corporais — dado sensível de saúde, visível só para o próprio usuário. */
+model PesoMedidaRegistro {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  data      DateTime @db.Date
+  pesoKg    Decimal? @db.Decimal(5, 2)
+  cinturaCm Decimal? @db.Decimal(5, 2)
+  quadrilCm Decimal? @db.Decimal(5, 2)
+  bracoCm   Decimal? @db.Decimal(5, 2)
+  notas     String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("peso_medida_registros")
 }
 
 // ─────────────────────────────────────────────────────────────

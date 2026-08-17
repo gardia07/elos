@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth-context';
 const NAV_ITEMS = [
   { label: 'Área de trabalho', href: '/painel', enabled: true },
   { label: 'Agenda', href: '/agenda', enabled: true },
+  { label: 'Planner', href: '/planner', enabled: true },
   { label: 'Gestão de Pessoas', href: '/gestao-de-pessoas', enabled: true },
   { label: 'Departamento Pessoal', href: '/dp', enabled: true },
   { label: 'Saúde e Segurança do Trabalho', href: '/sst', enabled: true },

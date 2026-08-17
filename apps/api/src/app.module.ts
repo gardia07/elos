@@ -39,6 +39,7 @@ import { IndicadoresModule } from './indicadores/indicadores.module';
 import { AprovacoesModule } from './aprovacoes/aprovacoes.module';
 import { EloModule } from './elo/elo.module';
 import { FerramentasModule } from './ferramentas/ferramentas.module';
+import { PlannerModule } from './planner/planner.module';
 import { TenantModule } from './tenant/tenant.module';
 import { PortalModule } from './portal/portal.module';
 import { SearchModule } from './search/search.module';
@@ -81,6 +82,7 @@ import { SearchModule } from './search/search.module';
     AprovacoesModule,
     EloModule,
     FerramentasModule,
+    PlannerModule,
     TenantModule,
     PortalModule,
     SearchModule,
