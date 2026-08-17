@@ -8,9 +8,24 @@ import { CicloService } from './ciclo.service';
 import { PesoMedidaService } from './peso-medida.service';
 import { RodaDaVidaService } from './roda-da-vida.service';
 import { RevisaoMensalService } from './revisao-mensal.service';
+import { MelhorEuPossivelService } from './melhor-eu-possivel.service';
+import { IkigaiService } from './ikigai.service';
+import { SwotPessoalService } from './swot-pessoal.service';
 
 @Module({
   controllers: [PlannerController],
-  providers: [MetasService, HabitosService, FinancasService, HumorService, CicloService, PesoMedidaService, RodaDaVidaService, RevisaoMensalService],
+  providers: [
+    MetasService,
+    HabitosService,
+    FinancasService,
+    HumorService,
+    CicloService,
+    PesoMedidaService,
+    RodaDaVidaService,
+    RevisaoMensalService,
+    MelhorEuPossivelService,
+    IkigaiService,
+    SwotPessoalService,
+  ],
 })
 export class PlannerModule {}

@@ -1,30 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
-import { SetHumorDto } from './dto/planner.dto';
+import { SetSwotPessoalDto } from './dto/planner.dto';
 import { startOfDayUtc } from './date-utils';
 
 @Injectable()
-export class HumorService {
+export class SwotPessoalService {
   constructor(private readonly prisma: PrismaService) {}
 
   private db() {
     return this.prisma.forCurrentTenant();
   }
 
-  list(ano: number) {
+  list() {
     const { userId } = getRequestContext();
-    return this.db().humorRegistro.findMany({
-      where: { userId, data: { gte: new Date(Date.UTC(ano, 0, 1)), lt: new Date(Date.UTC(ano + 1, 0, 1)) } },
-      orderBy: { data: 'asc' },
-    });
+    return this.db().swotPessoalRegistro.findMany({ where: { userId }, orderBy: { data: 'desc' }, take: 12 });
   }
 
-  set(dto: SetHumorDto) {
+  set(dto: SetSwotPessoalDto) {
     const { tenantId, userId } = getRequestContext();
     const data = startOfDayUtc(dto.data);
-    const campos = { nivel: dto.nivel, nota: dto.nota, gratidao1: dto.gratidao1, gratidao2: dto.gratidao2, gratidao3: dto.gratidao3 };
-    return this.db().humorRegistro.upsert({
+    const campos = { forcas: dto.forcas, fraquezas: dto.fraquezas, oportunidades: dto.oportunidades, ameacas: dto.ameacas };
+    return this.db().swotPessoalRegistro.upsert({
       where: { tenantId_userId_data: { tenantId, userId, data } },
       create: { tenantId, userId, data, ...campos },
       update: campos,

@@ -68,7 +68,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
           <span className="text-sm font-semibold" style={{ color: tema.cor }}>
             Início do mês — método WOOP
           </span>
-          <p className="text-xs text-text-tertiary">Desejo, resultado, obstáculo e plano. Mais eficaz que só listar intenções.</p>
+          <p className="text-xs text-text-tertiary">Desejo, resultado, obstáculo e plano.</p>
         </div>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Desejo — o que você quer alcançar esse mês?</span>

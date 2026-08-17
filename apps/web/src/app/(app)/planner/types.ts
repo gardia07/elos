@@ -32,6 +32,9 @@ export interface HumorRegistro {
   data: string;
   nivel: number;
   nota: string | null;
+  gratidao1: string | null;
+  gratidao2: string | null;
+  gratidao3: string | null;
 }
 
 export interface CicloRegistro {
@@ -78,4 +81,29 @@ export interface RevisaoMensal {
   conquistas: string | null;
   oQueNaoFuncionou: string | null;
   proximoPasso: string | null;
+}
+
+export interface MelhorEuPossivelRegistro {
+  id: string;
+  data: string;
+  texto: string;
+}
+
+export interface IkigaiAvaliacao {
+  id: string;
+  data: string;
+  oQueAma: string | null;
+  noQueEBom: string | null;
+  oMundoPrecisa: string | null;
+  peloQuePodeSerPago: string | null;
+  sintese: string | null;
+}
+
+export interface SwotPessoalRegistro {
+  id: string;
+  data: string;
+  forcas: string | null;
+  fraquezas: string | null;
+  oportunidades: string | null;
+  ameacas: string | null;
 }

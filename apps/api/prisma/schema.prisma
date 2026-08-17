@@ -120,6 +120,9 @@ model Tenant {
   pesoMedidaRegistros        PesoMedidaRegistro[]
   rodaDaVidaAvaliacoes       RodaDaVidaAvaliacao[]
   revisoesMensais            RevisaoMensal[]
+  melhorEuPossivelRegistros  MelhorEuPossivelRegistro[]
+  ikigaiAvaliacoes           IkigaiAvaliacao[]
+  swotPessoalRegistros       SwotPessoalRegistro[]
 
   @@map("tenants")
 }
@@ -2157,6 +2160,10 @@ model HumorRegistro {
   data      DateTime @db.Date
   nivel     Int
   nota      String?
+  // "Três Coisas Boas" (Seligman) — gratidão diária, a intervenção de psicologia positiva mais validada.
+  gratidao1 String?
+  gratidao2 String?
+  gratidao3 String?
   createdAt DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -2253,6 +2260,58 @@ model RevisaoMensal {
 
   @@unique([tenantId, userId, ano, mes])
   @@map("revisoes_mensais")
+}
+
+/** Melhor Eu Possível — escrita periódica sobre o futuro ideal (uma das intervenções de psicologia positiva mais validadas). Refeita quando o usuário quiser. */
+model MelhorEuPossivelRegistro {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  data      DateTime @db.Date
+  texto     String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("melhor_eu_possivel_registros")
+}
+
+/** Ikigai — interseção entre o que ama, no que é bom, do que o mundo precisa e pelo que pode ser pago. */
+model IkigaiAvaliacao {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  userId              String   @db.Uuid
+  data                DateTime @db.Date
+  oQueAma             String?
+  noQueEBom           String?
+  oMundoPrecisa       String?
+  peloQuePodeSerPago  String?
+  sintese             String?
+  createdAt           DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("ikigai_avaliacoes")
+}
+
+/** SWOT pessoal — Forças, Fraquezas, Oportunidades e Ameaças aplicado a si mesmo. */
+model SwotPessoalRegistro {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  userId         String   @db.Uuid
+  data           DateTime @db.Date
+  forcas         String?
+  fraquezas      String?
+  oportunidades  String?
+  ameacas        String?
+  createdAt      DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, data])
+  @@map("swot_pessoal_registros")
 }
 
 // ─────────────────────────────────────────────────────────────

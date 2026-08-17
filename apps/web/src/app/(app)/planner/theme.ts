@@ -1,6 +1,18 @@
-import { ClipboardList, Compass, Flame, HeartPulse, LayoutDashboard, Ruler, Smile, Target, Wallet } from 'lucide-react';
+import { ClipboardList, Compass, Flame, Gem, Grid2x2, HeartPulse, LayoutDashboard, Ruler, Smile, Sparkles, Target, Wallet } from 'lucide-react';
 
-export type SecaoId = 'dashboard' | 'metas' | 'habitos' | 'financas' | 'humor' | 'ciclo' | 'peso' | 'roda' | 'revisao';
+export type SecaoId =
+  | 'dashboard'
+  | 'metas'
+  | 'habitos'
+  | 'financas'
+  | 'humor'
+  | 'ciclo'
+  | 'peso'
+  | 'roda'
+  | 'revisao'
+  | 'melhorEu'
+  | 'ikigai'
+  | 'swot';
 
 export interface SecaoTema {
   id: SecaoId;
@@ -20,4 +32,7 @@ export const SECOES: SecaoTema[] = [
   { id: 'peso', label: 'Peso e medidas', descricao: 'Evolução do seu corpo ao longo do ano.', icon: Ruler, cor: '#8A7FB0' },
   { id: 'roda', label: 'Roda da vida', descricao: 'Sua satisfação em 8 áreas da vida, num relance.', icon: Compass, cor: '#4a9b8e' },
   { id: 'revisao', label: 'Revisão mensal', descricao: 'Intenção no início do mês, reflexão no fim.', icon: ClipboardList, cor: '#d4914a' },
+  { id: 'melhorEu', label: 'Melhor eu possível', descricao: 'Escreva como seria seu futuro ideal.', icon: Sparkles, cor: '#d98c4a' },
+  { id: 'ikigai', label: 'Ikigai', descricao: 'O que você ama, no que é bom, o que o mundo precisa e pelo que pode ser pago.', icon: Gem, cor: '#8a6b9e' },
+  { id: 'swot', label: 'SWOT pessoal', descricao: 'Forças, fraquezas, oportunidades e ameaças, aplicado a você.', icon: Grid2x2, cor: '#5e8a9e' },
 ];

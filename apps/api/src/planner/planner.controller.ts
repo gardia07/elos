@@ -8,16 +8,22 @@ import { CicloService } from './ciclo.service';
 import { PesoMedidaService } from './peso-medida.service';
 import { RodaDaVidaService } from './roda-da-vida.service';
 import { RevisaoMensalService } from './revisao-mensal.service';
+import { MelhorEuPossivelService } from './melhor-eu-possivel.service';
+import { IkigaiService } from './ikigai.service';
+import { SwotPessoalService } from './swot-pessoal.service';
 import {
   CreateCategoriaFinanceiraDto,
   CreateCicloDto,
   CreateHabitoDto,
   CreateMetaDto,
   SetHumorDto,
+  SetIkigaiDto,
   SetLancamentoDto,
+  SetMelhorEuPossivelDto,
   SetPesoMedidaDto,
   SetRevisaoMensalDto,
   SetRodaDaVidaDto,
+  SetSwotPessoalDto,
   ToggleHabitoDto,
   UpdateCategoriaFinanceiraDto,
   UpdateCicloDto,
@@ -38,6 +44,9 @@ export class PlannerController {
     private readonly pesoMedida: PesoMedidaService,
     private readonly rodaDaVida: RodaDaVidaService,
     private readonly revisaoMensal: RevisaoMensalService,
+    private readonly melhorEuPossivel: MelhorEuPossivelService,
+    private readonly ikigai: IkigaiService,
+    private readonly swotPessoal: SwotPessoalService,
   ) {}
 
   // ── Metas ────────────────────────────────────────────────────
@@ -184,5 +193,41 @@ export class PlannerController {
   @Put('revisao-mensal')
   setRevisaoMensal(@Body() dto: SetRevisaoMensalDto) {
     return this.revisaoMensal.set(dto);
+  }
+
+  // ── Melhor eu possível ───────────────────────────────────────
+
+  @Get('melhor-eu-possivel')
+  listMelhorEuPossivel() {
+    return this.melhorEuPossivel.list();
+  }
+
+  @Put('melhor-eu-possivel')
+  setMelhorEuPossivel(@Body() dto: SetMelhorEuPossivelDto) {
+    return this.melhorEuPossivel.set(dto);
+  }
+
+  // ── Ikigai ────────────────────────────────────────────────────
+
+  @Get('ikigai')
+  listIkigai() {
+    return this.ikigai.list();
+  }
+
+  @Put('ikigai')
+  setIkigai(@Body() dto: SetIkigaiDto) {
+    return this.ikigai.set(dto);
+  }
+
+  // ── SWOT pessoal ──────────────────────────────────────────────
+
+  @Get('swot-pessoal')
+  listSwotPessoal() {
+    return this.swotPessoal.list();
+  }
+
+  @Put('swot-pessoal')
+  setSwotPessoal(@Body() dto: SetSwotPessoalDto) {
+    return this.swotPessoal.set(dto);
   }
 }

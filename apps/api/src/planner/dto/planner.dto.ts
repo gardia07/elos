@@ -57,6 +57,9 @@ export class SetHumorDto {
   @IsDateString() data!: string;
   @IsInt() @Min(1) @Max(5) nivel!: number;
   @IsOptional() @IsString() nota?: string;
+  @IsOptional() @IsString() gratidao1?: string;
+  @IsOptional() @IsString() gratidao2?: string;
+  @IsOptional() @IsString() gratidao3?: string;
 }
 
 // ── Ciclo menstrual ────────────────────────────────────────────
@@ -115,4 +118,32 @@ export class SetRevisaoMensalDto {
   @IsOptional() @IsString() conquistas?: string;
   @IsOptional() @IsString() oQueNaoFuncionou?: string;
   @IsOptional() @IsString() proximoPasso?: string;
+}
+
+// ── Melhor eu possível ─────────────────────────────────────────
+
+export class SetMelhorEuPossivelDto {
+  @IsDateString() data!: string;
+  @IsString() @MinLength(1) texto!: string;
+}
+
+// ── Ikigai ─────────────────────────────────────────────────────
+
+export class SetIkigaiDto {
+  @IsDateString() data!: string;
+  @IsOptional() @IsString() oQueAma?: string;
+  @IsOptional() @IsString() noQueEBom?: string;
+  @IsOptional() @IsString() oMundoPrecisa?: string;
+  @IsOptional() @IsString() peloQuePodeSerPago?: string;
+  @IsOptional() @IsString() sintese?: string;
+}
+
+// ── SWOT pessoal ───────────────────────────────────────────────
+
+export class SetSwotPessoalDto {
+  @IsDateString() data!: string;
+  @IsOptional() @IsString() forcas?: string;
+  @IsOptional() @IsString() fraquezas?: string;
+  @IsOptional() @IsString() oportunidades?: string;
+  @IsOptional() @IsString() ameacas?: string;
 }

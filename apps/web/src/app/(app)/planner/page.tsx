@@ -13,6 +13,9 @@ import { CicloSection } from './ciclo';
 import { PesoMedidaSection } from './peso-medida';
 import { RodaDaVidaSection } from './roda-da-vida';
 import { RevisaoMensalSection } from './revisao-mensal';
+import { MelhorEuPossivelSection } from './melhor-eu-possivel';
+import { IkigaiSection } from './ikigai';
+import { SwotPessoalSection } from './swot-pessoal';
 
 export default function PlannerPage() {
   const [secaoId, setSecaoId] = useState<SecaoId>('dashboard');
@@ -52,6 +55,9 @@ export default function PlannerPage() {
           {secaoId === 'peso' && <PesoMedidaSection ano={ano} tema={tema} />}
           {secaoId === 'roda' && <RodaDaVidaSection tema={tema} />}
           {secaoId === 'revisao' && <RevisaoMensalSection ano={ano} tema={tema} />}
+          {secaoId === 'melhorEu' && <MelhorEuPossivelSection tema={tema} />}
+          {secaoId === 'ikigai' && <IkigaiSection tema={tema} />}
+          {secaoId === 'swot' && <SwotPessoalSection tema={tema} />}
         </main>
       </div>
     </>
