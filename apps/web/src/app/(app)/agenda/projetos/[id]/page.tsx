@@ -14,7 +14,7 @@ import { auditActionLabel, EventFormDrawer, type EventFormValues, lembretesInput
 import { parseIsoUtc, useIsDarkTheme } from '../../lib';
 import type { AgendaItem, AuditEvento, Categoria, Projeto, ProjetoMarco, ProjetoMetricas, Usuario } from '../../types';
 import { PROJETO_STATUS_LABEL, PROJETO_STATUS_TONE } from '../../types';
-import { AREAS, areaDaTarefa, ProjetoDrawer, type ProjetoFormValues } from '../components';
+import { AREAS, areaDaTarefa, FiltroDropdown, ProjetoDrawer, type ProjetoFormValues } from '../components';
 import { ProjetoKanban } from './kanban';
 import { ProjetoMarcos } from './marcos';
 
@@ -30,8 +30,8 @@ export default function ProjetoDetalhePage() {
   const [modeloOpen, setModeloOpen] = useState(false);
   const [modeloNome, setModeloNome] = useState('');
   const [auditoriaOpen, setAuditoriaOpen] = useState(false);
-  const [marcoFiltroId, setMarcoFiltroId] = useState<string | null>(null);
-  const [areaFiltro, setAreaFiltro] = useState<string | null>(null);
+  const [marcoFiltroSel, setMarcoFiltroSel] = useState<string[]>([]);
+  const [areaFiltroSel, setAreaFiltroSel] = useState<string[]>([]);
 
   const { data: projetos } = useQuery({
     queryKey: ['agenda', 'projetos'],
@@ -165,6 +165,7 @@ export default function ProjetoDetalhePage() {
   }
 
   const marcosOrdenados = [...(marcos ?? [])].sort((a, b) => a.data.localeCompare(b.data));
+  const marcoFiltroId = marcoFiltroSel[0] ?? null;
   const marcoFiltroIndex = marcosOrdenados.findIndex((m) => m.id === marcoFiltroId);
   const marcoAnterior = marcoFiltroIndex > 0 ? marcosOrdenados[marcoFiltroIndex - 1] : null;
   const marcoFiltro = marcoFiltroIndex >= 0 ? marcosOrdenados[marcoFiltroIndex] : null;
@@ -177,7 +178,8 @@ export default function ProjetoDetalhePage() {
         });
 
   const areasPresentes = [...new Set((tarefas ?? []).map((t) => areaDaTarefa(t.descricao)?.codigo).filter((c): c is string => !!c))];
-  const tarefasExibidas = !areaFiltro ? tarefasFiltradasPorFase : tarefasFiltradasPorFase.filter((t) => areaDaTarefa(t.descricao)?.codigo === areaFiltro);
+  const tarefasExibidas =
+    areaFiltroSel.length === 0 ? tarefasFiltradasPorFase : tarefasFiltradasPorFase.filter((t) => areaFiltroSel.includes(areaDaTarefa(t.descricao)?.codigo ?? ''));
 
   return (
     <>
@@ -225,62 +227,44 @@ export default function ProjetoDetalhePage() {
         <div className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-text">
           <LayoutGrid className="h-4 w-4" /> Quadro
         </div>
-        {areasPresentes.length > 1 && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => setAreaFiltro(null)}
-              className={cn(
-                'rounded-full border px-2.5 py-1 text-xs',
-                areaFiltro === null ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong',
-              )}
-            >
-              Todas as áreas
-            </button>
-            {areasPresentes.map((codigo) => {
-              const area = AREAS[codigo];
-              const ativo = areaFiltro === codigo;
-              return (
-                <button
-                  key={codigo}
-                  type="button"
-                  title={area.label}
-                  onClick={() => setAreaFiltro(codigo)}
-                  className={cn('flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs', ativo ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong')}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: isDark ? area.corDark : area.cor }} />
-                  {codigo}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {marcosOrdenados.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => setMarcoFiltroId(null)}
-              className={cn(
-                'rounded-full border px-2.5 py-1 text-xs',
-                marcoFiltroId === null ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong',
-              )}
-            >
-              Tudo
-            </button>
-            {marcosOrdenados.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                title={m.titulo}
-                onClick={() => setMarcoFiltroId(m.id)}
-                className={cn(
-                  'max-w-[220px] truncate rounded-full border px-2.5 py-1 text-xs',
-                  marcoFiltroId === m.id ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong',
-                )}
-              >
-                {parseIsoUtc(m.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} · {m.titulo}
-              </button>
-            ))}
+        {(areasPresentes.length > 1 || marcosOrdenados.length > 0) && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {areasPresentes.length > 1 && (
+              <FiltroDropdown
+                label="Área"
+                placeholder="Todas"
+                selected={areaFiltroSel}
+                multi
+                onChange={setAreaFiltroSel}
+                formatSelected={(codigo) => codigo}
+                options={areasPresentes.map((codigo) => {
+                  const area = AREAS[codigo];
+                  return {
+                    value: codigo,
+                    searchText: `${codigo} ${area.label}`,
+                    render: (
+                      <span className="flex items-center gap-2">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: isDark ? area.corDark : area.cor }} />
+                        {area.label}
+                      </span>
+                    ),
+                  };
+                })}
+              />
+            )}
+            {marcosOrdenados.length > 0 && (
+              <FiltroDropdown
+                label="Marco"
+                placeholder="Tudo"
+                selected={marcoFiltroSel}
+                onChange={setMarcoFiltroSel}
+                formatSelected={(id) => marcosOrdenados.find((m) => m.id === id)?.titulo ?? ''}
+                options={marcosOrdenados.map((m) => {
+                  const dataFmt = parseIsoUtc(m.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                  return { value: m.id, searchText: `${dataFmt} ${m.titulo}`, render: `${dataFmt} · ${m.titulo}` };
+                })}
+              />
+            )}
           </div>
         )}
         <ProjetoKanban

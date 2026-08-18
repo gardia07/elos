@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ListChecks, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, ListChecks, Search, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -38,6 +38,188 @@ export function areaDaTarefa(descricao: string): { codigo: string; label: string
   if (!match) return null;
   const area = AREAS[match[1]];
   return area ? { codigo: match[1], ...area } : null;
+}
+
+export interface FiltroDropdownOption {
+  value: string;
+  /** Texto usado para casar com a busca — sem formatação, sem acento exigido. */
+  searchText: string;
+  render: ReactNode;
+}
+
+/**
+ * Botão de filtro que abre um popover com busca + lista de opções — usado por Área
+ * (multi-seleção) e Marco (seleção única) no Kanban de projeto. Fecha ao clicar fora
+ * ou Esc; navegável por teclado (setas + Enter na lista).
+ */
+export function FiltroDropdown({
+  label,
+  placeholder,
+  options,
+  selected,
+  multi = false,
+  onChange,
+  formatSelected,
+}: {
+  label: string;
+  placeholder: string;
+  options: FiltroDropdownOption[];
+  selected: string[];
+  multi?: boolean;
+  onChange: (next: string[]) => void;
+  formatSelected: (value: string) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [busca, setBusca] = useState('');
+  const [highlight, setHighlight] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onDocKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocMouseDown);
+    document.addEventListener('keydown', onDocKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocMouseDown);
+      document.removeEventListener('keydown', onDocKeyDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => searchRef.current?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  function abrirOuFechar() {
+    setOpen((v) => {
+      const next = !v;
+      if (next) {
+        setBusca('');
+        setHighlight(0);
+      }
+      return next;
+    });
+  }
+
+  const buscaNormalizada = busca.trim().toLowerCase();
+  const filtradas = buscaNormalizada ? options.filter((o) => o.searchText.toLowerCase().includes(buscaNormalizada)) : options;
+
+  function toggle(value: string) {
+    if (multi) {
+      onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
+    } else {
+      onChange([value]);
+      setOpen(false);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight((h) => Math.min(h + 1, filtradas.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const opt = filtradas[highlight];
+      if (opt) toggle(opt.value);
+    }
+  }
+
+  const chipTexto =
+    selected.length === 0
+      ? `${label}: ${placeholder}`
+      : selected.length === 1
+        ? `${label}: ${formatSelected(selected[0])}`
+        : `${label}: ${formatSelected(selected[0])} +${selected.length - 1}`;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={abrirOuFechar}
+        className={cn(
+          'flex items-center gap-1.5 rounded-[10px] border px-3 py-1.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+          selected.length > 0 ? 'border-accent bg-tint-blue text-accent' : 'border-border-strong text-text-secondary hover:border-text-tertiary',
+        )}
+      >
+        {chipTexto}
+        {selected.length > 0 ? (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange([]);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange([]);
+              }
+            }}
+            aria-label={`Limpar filtro de ${label}`}
+            className="rounded-full p-0.5 hover:bg-accent/20"
+          >
+            <X className="h-3 w-3" />
+          </span>
+        ) : (
+          <ChevronDown className="h-3 w-3" />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-30 mt-1.5 w-72 rounded-[10px] border border-border bg-surface p-2 shadow-lg">
+          <div className="relative mb-2">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
+            <input
+              ref={searchRef}
+              value={busca}
+              onChange={(e) => {
+                setBusca(e.target.value);
+                setHighlight(0);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="Buscar…"
+              className="w-full rounded-[10px] border border-border-strong bg-page-bg py-1.5 pl-8 pr-2.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            />
+          </div>
+          <div role="listbox" aria-multiselectable={multi} className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
+            {filtradas.length === 0 && <p className="px-2 py-1.5 text-xs text-text-tertiary">Nada encontrado.</p>}
+            {filtradas.map((o, i) => {
+              const ativo = selected.includes(o.value);
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="option"
+                  aria-selected={ativo}
+                  onClick={() => toggle(o.value)}
+                  onMouseEnter={() => setHighlight(i)}
+                  className={cn(
+                    'flex items-center justify-between gap-2 rounded-[10px] px-2 py-1.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+                    ativo ? 'bg-tint-blue text-accent' : i === highlight ? 'bg-surface-alt text-text' : 'text-text',
+                  )}
+                >
+                  <span className="min-w-0 flex-1 truncate">{o.render}</span>
+                  {ativo && <Check className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export interface ProjetoFormValues {
