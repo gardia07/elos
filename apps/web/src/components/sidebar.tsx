@@ -8,22 +8,67 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 
-const NAV_ITEMS = [
-  { label: 'Área de trabalho', href: '/painel', enabled: true },
-  { label: 'Agenda', href: '/agenda', enabled: true },
-  { label: 'Planner', href: '/planner', enabled: true },
-  { label: 'Gestão de Pessoas', href: '/gestao-de-pessoas', enabled: true },
-  { label: 'Departamento Pessoal', href: '/dp', enabled: true },
-  { label: 'Saúde e Segurança do Trabalho', href: '/sst', enabled: true },
-  { label: 'Compliance', href: '/compliance', enabled: true },
-  { label: 'Psicologia', href: '/psicologia', enabled: false },
-  { label: 'Indicadores', href: '/indicadores', enabled: true },
-  { label: 'Aprovações', href: '/aprovacoes', enabled: true },
-  { label: 'Ferramentas', href: '/ferramentas', enabled: true },
-  { label: 'Configurações', href: '/configuracoes', enabled: true },
-  { label: 'Elô', href: '/elo', enabled: true },
-  { label: 'Portal do Colaborador', href: '/portal', enabled: true },
+interface NavItemDef {
+  label: string;
+  href: string;
+  enabled: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItemDef[];
+}
+
+/**
+ * Agrupado por natureza de uso, não por ordem alfabética/histórica: "Pessoal" é sobre
+ * o usuário logado (não dado da empresa), "Gestão" é RH/organização, "Sistema" é
+ * utilitário, "Colaborador" é outra persona (autoatendimento, não-RH).
+ */
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Pessoal',
+    items: [
+      { label: 'Área de trabalho', href: '/painel', enabled: true },
+      { label: 'Agenda', href: '/agenda', enabled: true },
+      { label: 'Projetos', href: '/agenda/projetos', enabled: true },
+      { label: 'Planner', href: '/planner', enabled: true },
+      { label: 'Elô', href: '/elo', enabled: true },
+    ],
+  },
+  {
+    label: 'Gestão',
+    items: [
+      { label: 'Gestão de Pessoas', href: '/gestao-de-pessoas', enabled: true },
+      { label: 'Departamento Pessoal', href: '/dp', enabled: true },
+      { label: 'Saúde e Segurança do Trabalho', href: '/sst', enabled: true },
+      { label: 'Compliance', href: '/compliance', enabled: true },
+      { label: 'Psicologia', href: '/psicologia', enabled: false },
+      { label: 'Indicadores', href: '/indicadores', enabled: true },
+      { label: 'Aprovações', href: '/aprovacoes', enabled: true },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { label: 'Ferramentas', href: '/ferramentas', enabled: true },
+      { label: 'Configurações', href: '/configuracoes', enabled: true },
+    ],
+  },
+  {
+    label: 'Colaborador',
+    items: [{ label: 'Portal do Colaborador', href: '/portal', enabled: true }],
+  },
 ];
+
+const TODOS_OS_HREFS = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
+
+/** Marca ativo pelo href mais específico que casa com a rota atual — evita que "Agenda" (/agenda) e "Projetos" (/agenda/projetos) fiquem ativos ao mesmo tempo numa página de projeto. */
+function isNavItemActive(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  if (pathname === href) return true;
+  if (!pathname.startsWith(href + '/')) return false;
+  return !TODOS_OS_HREFS.some((other) => other !== href && other.length > href.length && (pathname === other || pathname.startsWith(other + '/')));
+}
 
 interface Company {
   id: string;
@@ -67,9 +112,14 @@ export function Sidebar() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4">
-        <nav className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
-            <NavItem key={item.href} {...item} active={pathname === item.href || pathname?.startsWith(item.href + '/')} />
+        <nav className="flex flex-col gap-4">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="flex flex-col gap-1">
+              <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-on-accent/50">{group.label}</span>
+              {group.items.map((item) => (
+                <NavItem key={item.href} {...item} active={isNavItemActive(pathname, item.href)} />
+              ))}
+            </div>
           ))}
         </nav>
       </div>
