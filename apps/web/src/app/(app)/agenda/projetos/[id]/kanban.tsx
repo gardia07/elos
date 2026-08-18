@@ -41,11 +41,11 @@ function Coluna({ status, tarefas, onCardClick }: { status: TarefaProjetoStatus;
       ref={setNodeRef}
       className={cn('flex min-h-[220px] flex-1 flex-col gap-2 rounded-[12px] border border-border bg-page-bg p-3 transition', isOver && 'border-accent bg-tint-blue')}
     >
-      <div className="flex items-center justify-between px-0.5">
+      <div className="flex shrink-0 items-center justify-between px-0.5">
         <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{TAREFA_PROJETO_STATUS_LABEL[status]}</span>
         <span className="text-xs text-text-tertiary">{tarefas.length}</span>
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex max-h-[65vh] flex-col gap-2 overflow-y-auto pr-0.5">
         {tarefas.map((t) => (
           <TaskCard key={t.id} tarefa={t} onClick={() => onCardClick(t)} />
         ))}

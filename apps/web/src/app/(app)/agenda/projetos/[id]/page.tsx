@@ -4,14 +4,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookmarkPlus, Flag, LayoutGrid, Pencil, Plus, Users } from 'lucide-react';
+import { ArrowLeft, BookmarkPlus, ChevronDown, Flag, LayoutGrid, Pencil, Plus, Users } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { cn } from '@/lib/cn';
 import { Badge, Button, Drawer } from '@/components/ui';
 import { Header } from '@/components/header';
 import { auditActionLabel, EventFormDrawer, type EventFormValues, lembretesInputFromValues, recorrenciaFromValues } from '../../components';
-import { useIsDarkTheme } from '../../lib';
-import type { AgendaItem, AuditEvento, Categoria, Projeto, Usuario } from '../../types';
+import { parseIsoUtc, useIsDarkTheme } from '../../lib';
+import type { AgendaItem, AuditEvento, Categoria, Projeto, ProjetoMarco, Usuario } from '../../types';
 import { PROJETO_STATUS_LABEL, PROJETO_STATUS_TONE } from '../../types';
 import { ProjetoDrawer, type ProjetoFormValues } from '../components';
 import { ProjetoKanban } from './kanban';
@@ -28,6 +29,8 @@ export default function ProjetoDetalhePage() {
   const [editOpen, setEditOpen] = useState(false);
   const [modeloOpen, setModeloOpen] = useState(false);
   const [modeloNome, setModeloNome] = useState('');
+  const [auditoriaOpen, setAuditoriaOpen] = useState(false);
+  const [marcoFiltroId, setMarcoFiltroId] = useState<string | null>(null);
 
   const { data: projetos } = useQuery({
     queryKey: ['agenda', 'projetos'],
@@ -38,6 +41,11 @@ export default function ProjetoDetalhePage() {
   const { data: tarefas } = useQuery({
     queryKey: ['agenda', 'projetos', id, 'tarefas'],
     queryFn: async () => (await api.get<AgendaItem[]>(`/agenda/projetos/${id}/tarefas`)).data,
+  });
+
+  const { data: marcos } = useQuery({
+    queryKey: ['agenda', 'projetos', id, 'marcos'],
+    queryFn: async () => (await api.get<ProjetoMarco[]>(`/agenda/projetos/${id}/marcos`)).data,
   });
 
   const { data: categorias } = useQuery({
@@ -147,6 +155,18 @@ export default function ProjetoDetalhePage() {
     );
   }
 
+  const marcosOrdenados = [...(marcos ?? [])].sort((a, b) => a.data.localeCompare(b.data));
+  const marcoFiltroIndex = marcosOrdenados.findIndex((m) => m.id === marcoFiltroId);
+  const marcoAnterior = marcoFiltroIndex > 0 ? marcosOrdenados[marcoFiltroIndex - 1] : null;
+  const marcoFiltro = marcoFiltroIndex >= 0 ? marcosOrdenados[marcoFiltroIndex] : null;
+  const tarefasFiltradas =
+    !marcoFiltro || !tarefas
+      ? (tarefas ?? [])
+      : tarefas.filter((t) => {
+          const d = t.data.slice(0, 10);
+          return (!marcoAnterior || d > marcoAnterior.data.slice(0, 10)) && d <= marcoFiltro.data.slice(0, 10);
+        });
+
   return (
     <>
       <Header eyebrow="Agenda" title={projeto.nome} />
@@ -180,7 +200,35 @@ export default function ProjetoDetalhePage() {
         <div className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-text">
           <LayoutGrid className="h-4 w-4" /> Quadro
         </div>
-        <ProjetoKanban projetoId={id} tarefas={tarefas ?? []} onCardClick={(t) => setTaskDrawer({ open: true, item: t })} />
+        {marcosOrdenados.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setMarcoFiltroId(null)}
+              className={cn(
+                'rounded-full border px-2.5 py-1 text-xs',
+                marcoFiltroId === null ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong',
+              )}
+            >
+              Tudo
+            </button>
+            {marcosOrdenados.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                title={m.titulo}
+                onClick={() => setMarcoFiltroId(m.id)}
+                className={cn(
+                  'max-w-[220px] truncate rounded-full border px-2.5 py-1 text-xs',
+                  marcoFiltroId === m.id ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong',
+                )}
+              >
+                {parseIsoUtc(m.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} · {m.titulo}
+              </button>
+            ))}
+          </div>
+        )}
+        <ProjetoKanban projetoId={id} tarefas={tarefasFiltradas} onCardClick={(t) => setTaskDrawer({ open: true, item: t })} />
 
         <div className="mb-3 mt-8 flex items-center gap-1.5 text-sm font-semibold text-text">
           <Flag className="h-4 w-4" /> Marcos
@@ -189,14 +237,24 @@ export default function ProjetoDetalhePage() {
 
         {auditoria && auditoria.length > 0 && (
           <div className="mt-8">
-            <h3 className="mb-2 text-sm font-semibold text-text-secondary">Trilha de auditoria</h3>
-            <ul className="flex flex-col gap-1 text-xs text-text-tertiary">
-              {auditoria.map((e) => (
-                <li key={e.id}>
-                  {new Date(e.createdAt).toLocaleString('pt-BR')} — {auditActionLabel(e.action)} — {e.actorName}
-                </li>
-              ))}
-            </ul>
+            <button
+              type="button"
+              onClick={() => setAuditoriaOpen((v) => !v)}
+              className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-text-secondary hover:text-text"
+            >
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !auditoriaOpen && '-rotate-90')} />
+              Trilha de auditoria
+              <span className="text-xs font-normal text-text-tertiary">({auditoria.length})</span>
+            </button>
+            {auditoriaOpen && (
+              <ul className="flex flex-col gap-1 text-xs text-text-tertiary">
+                {auditoria.map((e) => (
+                  <li key={e.id}>
+                    {new Date(e.createdAt).toLocaleString('pt-BR')} — {auditActionLabel(e.action)} — {e.actorName}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

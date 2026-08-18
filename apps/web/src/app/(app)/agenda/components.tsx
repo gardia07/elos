@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Bell, ChevronLeft, ChevronRight, FolderKanban, ListChecks, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
+import { AlertTriangle, Bell, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, ListChecks, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -784,6 +784,7 @@ export function auditActionLabel(action: string): string {
 }
 
 export function AuditSection({ agendaItemId }: { agendaItemId: string }) {
+  const [open, setOpen] = useState(false);
   const { data: eventos } = useQuery({
     queryKey: ['agenda', 'auditoria', agendaItemId],
     queryFn: async () => (await api.get<AuditEvento[]>(`/agenda/items/${agendaItemId}/auditoria`)).data,
@@ -793,14 +794,24 @@ export function AuditSection({ agendaItemId }: { agendaItemId: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm text-text-secondary">Trilha de auditoria</span>
-      <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto text-xs text-text-tertiary">
-        {eventos.map((e) => (
-          <li key={e.id}>
-            {new Date(e.createdAt).toLocaleString('pt-BR')} — {auditActionLabel(e.action)} — {e.actorName}
-          </li>
-        ))}
-      </ul>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text"
+      >
+        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !open && '-rotate-90')} />
+        Trilha de auditoria
+        <span className="text-xs text-text-tertiary">({eventos.length})</span>
+      </button>
+      {open && (
+        <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto text-xs text-text-tertiary">
+          {eventos.map((e) => (
+            <li key={e.id}>
+              {new Date(e.createdAt).toLocaleString('pt-BR')} — {auditActionLabel(e.action)} — {e.actorName}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
