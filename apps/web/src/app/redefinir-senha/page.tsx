@@ -31,7 +31,7 @@ function RedefinirSenhaForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-accent px-4">
-      <div className="w-full max-w-sm rounded-[20px] border border-border bg-surface p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-[10px] border border-border bg-surface p-8 shadow-lg">
         <div className="mb-8 flex justify-center">
           <Image src="/logo-elos.png" alt="elos" width={966} height={562} priority className="h-12 w-auto" />
         </div>

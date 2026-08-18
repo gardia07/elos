@@ -319,7 +319,7 @@ export default function PayrollRunPage() {
                             <select
                               value={m.alvo}
                               onChange={(e) => updateMapping(m.indice, { alvo: e.target.value as ColumnAlvo })}
-                              className="rounded-[8px] border border-border-strong bg-surface px-2 py-1"
+                              className="rounded-[10px] border border-border-strong bg-surface px-2 py-1"
                             >
                               <option value="IGNORAR">Ignorar</option>
                               <option value="MATRICULA">Matrícula (identificação)</option>
@@ -333,7 +333,7 @@ export default function PayrollRunPage() {
                               <select
                                 value={m.rubricaTipo ?? 'PROVENTO'}
                                 onChange={(e) => updateMapping(m.indice, { rubricaTipo: e.target.value as RubricaTipo })}
-                                className="rounded-[8px] border border-border-strong bg-surface px-2 py-1"
+                                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1"
                               >
                                 <option value="PROVENTO">Provento</option>
                                 <option value="DESCONTO">Desconto</option>
@@ -346,7 +346,7 @@ export default function PayrollRunPage() {
                               <input
                                 value={m.descricao ?? ''}
                                 onChange={(e) => updateMapping(m.indice, { descricao: e.target.value })}
-                                className="w-full rounded-[8px] border border-border-strong bg-surface px-2 py-1"
+                                className="w-full rounded-[10px] border border-border-strong bg-surface px-2 py-1"
                               />
                             )}
                           </td>

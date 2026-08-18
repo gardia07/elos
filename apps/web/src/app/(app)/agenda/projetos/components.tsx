@@ -288,7 +288,7 @@ export function ProjetoDrawer({
               onChange={(e) => setValues((v) => ({ ...v, cor: e.target.value }))}
               placeholder="#3b82f6"
               spellCheck={false}
-              className="w-24 rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs uppercase text-text"
+              className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs uppercase text-text"
             />
           </div>
         </div>
@@ -300,7 +300,7 @@ export function ProjetoDrawer({
               const checked = values.participanteIds.includes(u.id);
               const souEu = u.id === currentUserId;
               return (
-                <label key={u.id} className="flex items-center gap-2 rounded-[8px] px-1.5 py-1 text-sm hover:bg-surface-alt">
+                <label key={u.id} className="flex items-center gap-2 rounded-[10px] px-1.5 py-1 text-sm hover:bg-surface-alt">
                   <input
                     type="checkbox"
                     checked={checked || souEu}
@@ -323,7 +323,7 @@ export function ProjetoDrawer({
             <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
               {(tarefas ?? []).length === 0 && <p className="text-xs text-text-tertiary">Nenhuma tarefa vinculada ainda. Vincule ao criar/editar um item na Agenda.</p>}
               {(tarefas ?? []).map((t) => (
-                <div key={t.id} className="flex items-center gap-2 rounded-[8px] bg-surface-alt px-2.5 py-1.5 text-sm">
+                <div key={t.id} className="flex items-center gap-2 rounded-[10px] bg-surface-alt px-2.5 py-1.5 text-sm">
                   <span className={cn('h-2 w-2 shrink-0 rounded-full', t.concluida ? 'bg-success' : 'bg-border-strong')} />
                   <span className={cn('flex-1', t.concluida && 'text-text-tertiary line-through')}>{t.descricao}</span>
                   <span className="text-xs text-text-tertiary">{parseIsoUtc(t.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>

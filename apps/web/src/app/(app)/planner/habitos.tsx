@@ -148,7 +148,7 @@ export function HabitosSection({ ano, tema }: { ano: number; tema: SecaoTema }) 
                       type="button"
                       onClick={() => toggle.mutate({ id: h.id, data: iso })}
                       className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-[8px] border text-xs transition',
+                        'flex h-8 w-8 items-center justify-center rounded-[10px] border text-xs transition',
                         marcado ? 'border-transparent text-on-accent' : 'border-border-strong bg-surface text-text-tertiary hover:border-accent',
                       )}
                       style={marcado ? { backgroundColor: h.cor } : undefined}

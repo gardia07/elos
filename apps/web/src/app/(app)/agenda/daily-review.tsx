@@ -87,7 +87,7 @@ export function DailyReviewDrawer({ open, onClose, date }: { open: boolean; onCl
           ) : (
             <ul className="flex flex-col gap-1.5">
               {pendentes.map((i) => (
-                <li key={i.id} className="flex items-center gap-2 rounded-[8px] border border-border p-2 text-sm">
+                <li key={i.id} className="flex items-center gap-2 rounded-[10px] border border-border p-2 text-sm">
                   <Circle className="h-4 w-4 shrink-0 text-text-tertiary" />
                   <span className="flex-1 text-text">{i.descricao}</span>
                   <button

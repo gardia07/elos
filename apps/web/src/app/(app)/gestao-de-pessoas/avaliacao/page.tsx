@@ -158,7 +158,7 @@ export default function AvaliacaoPage() {
                       const v = Number(e.target.value);
                       if (!Number.isNaN(v)) upsertRecord.mutate({ employeeId: r.employeeId, gestorNota: v });
                     }}
-                    className="w-16 rounded-[8px] border border-border-strong bg-surface px-2 py-1"
+                    className="w-16 rounded-[10px] border border-border-strong bg-surface px-2 py-1"
                   />
                 </td>
                 <td className="py-2">

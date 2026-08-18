@@ -14,7 +14,7 @@ function NoteLine({ id, text }: { id: string; text: string }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`flex cursor-grab items-start gap-1.5 rounded-[8px] border border-border bg-surface-alt px-2 py-1.5 text-xs text-text active:cursor-grabbing ${
+      className={`flex cursor-grab items-start gap-1.5 rounded-[10px] border border-border bg-surface-alt px-2 py-1.5 text-xs text-text active:cursor-grabbing ${
         isDragging ? 'opacity-40' : ''
       }`}
       title="Arraste para um horário do calendário para transformar em item de agenda"

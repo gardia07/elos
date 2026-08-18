@@ -84,7 +84,7 @@ function Coluna({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex min-h-[220px] flex-1 flex-col gap-2 rounded-[12px] border border-border bg-page-bg p-3 transition',
+        'flex min-h-[220px] flex-1 flex-col gap-2 rounded-[10px] border border-border bg-page-bg p-3 transition',
         isOver && 'border-accent bg-tint-blue',
         excedeWip && 'border-warning',
       )}

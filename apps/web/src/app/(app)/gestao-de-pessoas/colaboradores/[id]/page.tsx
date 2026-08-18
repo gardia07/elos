@@ -1312,7 +1312,7 @@ export default function EmployeeProfilePage() {
                     <select
                       value={d.status}
                       onChange={(ev) => setDocStatus.mutate({ requirementId: d.requirementId, status: ev.target.value as DocumentRequirementStatus['status'] })}
-                      className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                      className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
                     >
                       <option value="MISSING">Faltante</option>
                       <option value="PENDING">Em análise</option>
@@ -1325,12 +1325,12 @@ export default function EmployeeProfilePage() {
                         href={`${apiBaseUrl}/rh/documents/employees/${id}/requirements/${d.requirementId}/arquivo`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent"
+                        className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent"
                       >
                         Visualizar
                       </a>
                     )}
-                    <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                    <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                       {uploadingRequirementId === d.requirementId ? 'Enviando…' : 'Anexar'}
                       <input
                         type="file"
@@ -1454,7 +1454,7 @@ export default function EmployeeProfilePage() {
                           {d.nome}
                         </a>
                       ))}
-                      <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                      <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                         {uploadingOcorrenciaId === o.id ? 'Enviando…' : 'Anexar arquivo'}
                         <input
                           type="file"
@@ -1594,7 +1594,7 @@ export default function EmployeeProfilePage() {
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Documentos do desligamento</h4>
-                    <label className="cursor-pointer rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                    <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                       {uploadingTerminationId === t.id ? 'Enviando…' : 'Anexar documento'}
                       <input
                         type="file"

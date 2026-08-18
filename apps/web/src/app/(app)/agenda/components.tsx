@@ -55,18 +55,18 @@ export function AgendaHeader({
           <button
             type="button"
             onClick={onPrev}
-            className="rounded-[8px] p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
+            className="rounded-[10px] p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
             aria-label="Período anterior"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button type="button" onClick={onToday} className="rounded-[8px] px-2.5 py-1 text-xs font-medium text-text hover:bg-surface-alt">
+          <button type="button" onClick={onToday} className="rounded-[10px] px-2.5 py-1 text-xs font-medium text-text hover:bg-surface-alt">
             Hoje
           </button>
           <button
             type="button"
             onClick={onNext}
-            className="rounded-[8px] p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
+            className="rounded-[10px] p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
             aria-label="Próximo período"
           >
             <ChevronRight className="h-4 w-4" />
@@ -83,7 +83,7 @@ export function AgendaHeader({
               type="button"
               onClick={() => onViewChange(v)}
               className={cn(
-                'rounded-[8px] px-3 py-1.5 text-xs font-medium transition',
+                'rounded-[10px] px-3 py-1.5 text-xs font-medium transition',
                 view === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:bg-surface-alt',
               )}
             >
@@ -137,7 +137,7 @@ export function CategoryLegend({
   onToggle: (id: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 border-b border-divider bg-page-bg px-4 pb-4 sm:px-8">
+    <div className="flex flex-wrap gap-2 border-b border-divider bg-page-bg px-4 pb-4 pt-3 sm:px-8">
       {categorias.map((c) => {
         const cor = categoriaCor(c, isDark);
         const active = activeIds.size === 0 || activeIds.has(c.id);
@@ -704,7 +704,7 @@ function SubtarefasSection({ agendaItemId }: { agendaItemId: string }) {
       </span>
       <div className="flex flex-col gap-1">
         {subtarefas?.map((s) => (
-          <div key={s.id} className="group flex items-center gap-2 rounded-[8px] px-1.5 py-1 hover:bg-surface-alt">
+          <div key={s.id} className="group flex items-center gap-2 rounded-[10px] px-1.5 py-1 hover:bg-surface-alt">
             <input type="checkbox" checked={s.concluida} onChange={(e) => alternar.mutate({ id: s.id, concluida: e.target.checked })} />
             <span className={cn('flex-1 text-sm', s.concluida && 'text-text-tertiary line-through')}>{s.titulo}</span>
             <button

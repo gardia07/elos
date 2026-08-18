@@ -100,10 +100,10 @@ export default function EloPage() {
               )}
               {exibida && (
                 <div className="flex flex-col gap-4">
-                  <div className="self-end rounded-[14px] rounded-br-none bg-accent px-4 py-2.5 text-sm text-on-accent">
+                  <div className="self-end rounded-[10px] rounded-br-none bg-accent px-4 py-2.5 text-sm text-on-accent">
                     {exibida.pergunta}
                   </div>
-                  <div className="flex flex-col gap-2 self-start rounded-[14px] rounded-bl-none bg-surface-alt px-4 py-2.5 text-sm">
+                  <div className="flex flex-col gap-2 self-start rounded-[10px] rounded-bl-none bg-surface-alt px-4 py-2.5 text-sm">
                     <span className="whitespace-pre-wrap">{exibida.resposta}</span>
                     {exibida.acaoExecutada && <Badge tone="green">Ação executada: {exibida.acaoExecutada}</Badge>}
                   </div>

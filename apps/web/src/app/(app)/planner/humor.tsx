@@ -92,7 +92,7 @@ export function HumorSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
             value={data}
             onChange={(e) => setData(e.target.value)}
             max={hojeIso}
-            className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-sm"
+            className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-sm"
           />
         </label>
         <div className="flex justify-between gap-2">

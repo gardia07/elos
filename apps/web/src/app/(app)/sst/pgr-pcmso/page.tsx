@@ -94,7 +94,7 @@ export default function PgrPcmsoPage() {
               <select
                 value={a.status}
                 onChange={(e) => updateStatus.mutate({ id: a.id, status: e.target.value as PgrAction['status'] })}
-                className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
               >
                 <option value="PLANEJADA">Planejada</option>
                 <option value="EM_ANDAMENTO">Em andamento</option>

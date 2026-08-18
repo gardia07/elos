@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 
 export function Card({ children, className = '', onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <div className={cn('rounded-[12px] border border-border bg-surface p-5', className)} onClick={onClick}>
+    <div className={cn('rounded-[10px] border border-border bg-surface p-5', className)} onClick={onClick}>
       {children}
     </div>
   );

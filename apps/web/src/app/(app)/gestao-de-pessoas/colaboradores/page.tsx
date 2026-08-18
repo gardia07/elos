@@ -528,7 +528,7 @@ export default function ColaboradoresPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-[8px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
+                className="rounded-[10px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
               >
                 Anterior
               </button>
@@ -538,7 +538,7 @@ export default function ColaboradoresPage() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-[8px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
+                className="rounded-[10px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
               >
                 Próxima
               </button>

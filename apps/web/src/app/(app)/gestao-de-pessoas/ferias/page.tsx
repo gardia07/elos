@@ -163,9 +163,9 @@ export default function FeriasPage() {
             {calendar?.map((row) => (
               <div key={row.employeeId} className="flex items-center gap-3">
                 <span className="w-32 shrink-0 text-sm">{row.nome}</span>
-                <div className="relative h-5 flex-1 rounded-[6px] bg-surface-alt">
+                <div className="relative h-5 flex-1 rounded-[10px] bg-surface-alt">
                   <div
-                    className="absolute top-[2px] bottom-[2px] rounded-[5px] bg-accent"
+                    className="absolute top-[2px] bottom-[2px] rounded-[10px] bg-accent"
                     style={{ left: `${row.leftPct}%`, width: `${row.widthPct}%` }}
                   />
                 </div>

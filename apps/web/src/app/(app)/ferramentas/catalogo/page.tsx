@@ -67,13 +67,13 @@ export default function CatalogoFerramentasPage() {
                 <Link
                   key={tool.nome}
                   href={tool.href}
-                  className="flex flex-col gap-2 rounded-[12px] border border-border bg-surface p-4 transition hover:border-accent"
+                  className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-4 transition hover:border-accent"
                 >
                   <ToolIcon nome={tool.nome} className="h-5 w-5 text-accent" />
                   <span className="text-sm font-medium text-text">{tool.nome}</span>
                 </Link>
               ) : (
-                <div key={tool.nome} className="flex flex-col gap-2 rounded-[12px] border border-border bg-surface-alt p-4 opacity-60">
+                <div key={tool.nome} className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface-alt p-4 opacity-60">
                   <ToolIcon nome={tool.nome} className="h-5 w-5 text-text-tertiary" />
                   <span className="text-sm font-medium text-text-secondary">{tool.nome}</span>
                   <span className="text-xs text-text-tertiary">Em breve</span>
@@ -93,7 +93,7 @@ export default function CatalogoFerramentasPage() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {atalhos?.map((a) => (
-            <div key={a.id} className="group relative flex flex-col gap-2 rounded-[12px] border border-border bg-surface p-4 transition hover:border-accent">
+            <div key={a.id} className="group relative flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-4 transition hover:border-accent">
               <a href={a.url} target="_blank" rel="noreferrer" className="flex flex-col gap-2">
                 <ExternalIcon nome={a.icone} className="h-5 w-5 text-accent" />
                 <span className="text-sm font-medium text-text">{a.nome}</span>

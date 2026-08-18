@@ -122,7 +122,7 @@ function ModelosDeDocumentos() {
             </span>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {VARIAVEIS_DISPONIVEIS.map((v) => (
-                <code key={v} className="rounded-[6px] bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
+                <code key={v} className="rounded-[10px] bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
                   {`{{${v}}}`}
                 </code>
               ))}
@@ -219,7 +219,7 @@ export default function ChecklistDesligamentoPage() {
                   onChange={(e) =>
                     update(current.map((c, j) => (j === i ? { ...c, categoria: e.target.value as ChecklistItem['categoria'] } : c)))
                   }
-                  className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                  className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
                 >
                   <option value="PROCESSO">Processo</option>
                   <option value="COMPLIANCE">Compliance</option>
@@ -234,7 +234,7 @@ export default function ChecklistDesligamentoPage() {
                       ),
                     )
                   }
-                  className="h-16 w-40 rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                  className="h-16 w-40 rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
                   title="Vazio = aplica a todos os tipos"
                 >
                   {Object.entries(TERMINATION_TIPO_LABEL).map(([value, label]) => (

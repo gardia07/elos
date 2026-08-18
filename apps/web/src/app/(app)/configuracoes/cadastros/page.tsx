@@ -235,7 +235,7 @@ export default function ConfiguracoesCadastrosPage() {
                   <select
                     value={u.role}
                     onChange={(e) => updateRole.mutate({ id: u.id, role: e.target.value })}
-                    className="rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                    className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
                   >
                     {ROLES.map((r) => (
                       <option key={r} value={r}>{ROLE_LABEL[r]}</option>

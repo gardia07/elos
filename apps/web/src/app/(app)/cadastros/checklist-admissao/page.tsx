@@ -88,7 +88,7 @@ function ModeloDeContrato() {
             </span>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {VARIAVEIS_DISPONIVEIS.map((v) => (
-                <code key={v} className="rounded-[6px] bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
+                <code key={v} className="rounded-[10px] bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
                   {`{{${v}}}`}
                 </code>
               ))}

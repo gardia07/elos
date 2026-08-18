@@ -36,7 +36,7 @@ function CategoriaLinha({
           const n = Number(valor);
           if (!Number.isNaN(n)) onSetValor(n);
         }}
-        className="w-28 rounded-[8px] border border-border-strong bg-surface px-2 py-1.5 text-right text-sm"
+        className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-right text-sm"
       />
       <button type="button" onClick={onExcluir} className="text-text-tertiary hover:text-danger">
         <Trash2 className="h-3.5 w-3.5" />
