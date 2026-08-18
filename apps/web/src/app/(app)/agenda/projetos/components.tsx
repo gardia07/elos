@@ -178,7 +178,7 @@ export function FiltroDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-1.5 w-72 rounded-[10px] border border-border bg-surface p-2 shadow-lg">
+        <div className="absolute left-0 top-full z-30 mt-1.5 w-80 rounded-[10px] border border-border bg-surface p-2 shadow-lg">
           <div className="relative mb-2">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
             <input
@@ -210,7 +210,7 @@ export function FiltroDropdown({
                     ativo ? 'bg-tint-blue text-accent' : i === highlight ? 'bg-surface-alt text-text' : 'text-text',
                   )}
                 >
-                  <span className="min-w-0 flex-1 truncate">{o.render}</span>
+                  <span className="min-w-0 flex-1 break-words">{o.render}</span>
                   {ativo && <Check className="h-3.5 w-3.5 shrink-0" />}
                 </button>
               );
