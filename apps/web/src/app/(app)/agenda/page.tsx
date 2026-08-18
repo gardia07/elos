@@ -10,7 +10,6 @@ import { AgendaHeader, CategoryLegend, EventFormDrawer, EventFormValues, lembret
 import { MonthView } from './month-view';
 import { TimelineView } from './timeline-view';
 import { ListView } from './list-view';
-import { NotesPanel } from './notes-panel';
 import { DailyReviewDrawer } from './daily-review';
 import {
   addDaysLocal,
@@ -109,7 +108,6 @@ export default function AgendaPage() {
   });
   const [search, setSearch] = useState('');
   const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
-  const [notesCollapsed, setNotesCollapsed] = useState(false);
   const [drawer, setDrawer] = useState<{ open: boolean; item: AgendaItem | null; defaultDate?: string; defaultHora?: string }>({
     open: false,
     item: null,
@@ -325,9 +323,6 @@ export default function AgendaPage() {
           ? `${weekDays[0].getDate()} — ${weekDays[6].getDate()} de ${formatMonthYear(weekDays[6])}`
           : 'Próximos eventos';
 
-  const notesDateIso = view === 'dia' ? localIso(anchorDate) : todayIso;
-  const showNotesPanel = view === 'dia' || view === 'semana';
-
   return (
     <>
       <Header eyebrow="Seu dia a dia" title="Agenda" />
@@ -349,96 +344,90 @@ export default function AgendaPage() {
             <CategoryLegend categorias={categorias ?? []} isDark={isDark} activeIds={activeCategoryIds} onToggle={toggleCategory} />
           )}
 
-          <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-            <div className="flex min-h-0 flex-1 flex-col">
-              {view === 'mes' &&
-                (isMobile ? (
-                  <div className="flex flex-col gap-2 overflow-y-auto p-4">
-                    {weeks.flat().map((d) => {
-                      const iso = localIso(d);
-                      const dayEvents = eventsByDay.get(iso) ?? [];
-                      if (d.getMonth() !== anchorDate.getMonth() && dayEvents.length === 0) return null;
-                      return (
-                        <div key={iso} className="rounded-[10px] border border-border p-2.5">
-                          <div className="mb-1 text-xs font-semibold text-text-tertiary">{formatDiaLongo(d)}</div>
-                          {dayEvents.length === 0 ? (
-                            <p className="text-xs text-text-tertiary">Sem itens.</p>
-                          ) : (
-                            dayEvents.map((e) => (
-                              <div key={e.id} className="py-0.5 text-sm text-text">
-                                {e.hora && <span className="mr-1.5 text-text-tertiary">{e.hora}</span>}
-                                {e.titulo}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <MonthView
-                    weeks={weeks}
-                    eventsByDay={eventsByDay}
-                    categorias={categorias ?? []}
-                    isDark={isDark}
-                    todayIso={todayIso}
-                    currentMonth={anchorDate.getMonth()}
-                    onDayClick={(iso) => {
-                      setAnchorDate(parseIsoLocal(iso));
-                      setView('dia');
-                    }}
-                    onEventClick={openEdit}
-                    onToggleConcluida={toggleConcluida}
-                  />
-                ))}
-
-              {view === 'semana' && (
-                <TimelineView
-                  days={isMobile ? [anchorDate] : weekDays}
-                  eventsByDay={eventsByDay}
-                  categorias={categorias ?? []}
-                  isDark={isDark}
-                  todayIso={todayIso}
-                  onEventClick={openEdit}
-                  onResizeCommit={(e, novaHoraFim) => updateItem.mutate({ id: e.id, payload: { horaFim: novaHoraFim } })}
-                  onSlotClick={(iso, hora) => openCreate(iso, hora)}
-                />
-              )}
-
-              {view === 'dia' && (
-                <TimelineView
-                  days={[anchorDate]}
-                  eventsByDay={eventsByDay}
-                  categorias={categorias ?? []}
-                  isDark={isDark}
-                  todayIso={todayIso}
-                  onEventClick={openEdit}
-                  onResizeCommit={(e, novaHoraFim) => updateItem.mutate({ id: e.id, payload: { horaFim: novaHoraFim } })}
-                  onSlotClick={(iso, hora) => openCreate(iso, hora)}
-                />
-              )}
-
-              {view === 'lista' && (
-                <ListView
-                  eventos={(geral ?? []).filter((e) => {
-                    const term = search.trim().toLowerCase();
-                    if (activeCategoryIds.size > 0 && (!e.categoriaId || !activeCategoryIds.has(e.categoriaId))) return false;
-                    if (term && !e.titulo.toLowerCase().includes(term)) return false;
-                    return true;
+          <div className="flex min-h-0 flex-1 flex-col">
+            {view === 'mes' &&
+              (isMobile ? (
+                <div className="flex flex-col gap-2 overflow-y-auto p-4">
+                  {weeks.flat().map((d) => {
+                    const iso = localIso(d);
+                    const dayEvents = eventsByDay.get(iso) ?? [];
+                    if (d.getMonth() !== anchorDate.getMonth() && dayEvents.length === 0) return null;
+                    return (
+                      <div key={iso} className="rounded-[10px] border border-border p-2.5">
+                        <div className="mb-1 text-xs font-semibold text-text-tertiary">{formatDiaLongo(d)}</div>
+                        {dayEvents.length === 0 ? (
+                          <p className="text-xs text-text-tertiary">Sem itens.</p>
+                        ) : (
+                          dayEvents.map((e) => (
+                            <div key={e.id} className="py-0.5 text-sm text-text">
+                              {e.hora && <span className="mr-1.5 text-text-tertiary">{e.hora}</span>}
+                              {e.titulo}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    );
                   })}
+                </div>
+              ) : (
+                <MonthView
+                  weeks={weeks}
+                  eventsByDay={eventsByDay}
                   categorias={categorias ?? []}
                   isDark={isDark}
-                  onEventClick={(e) => {
-                    if (e.origem !== 'AGENDA_ITEM') return;
-                    setDrawer({ open: true, item: geralToAgendaItem(e) });
+                  todayIso={todayIso}
+                  currentMonth={anchorDate.getMonth()}
+                  onDayClick={(iso) => {
+                    setAnchorDate(parseIsoLocal(iso));
+                    setView('dia');
                   }}
-                  onToggleConcluida={(e) => toggleConcluida(geralToCalendarEvent(e))}
+                  onEventClick={openEdit}
+                  onToggleConcluida={toggleConcluida}
                 />
-              )}
-            </div>
+              ))}
 
-            {showNotesPanel && !isMobile && (
-              <NotesPanel date={notesDateIso} collapsed={notesCollapsed} onToggleCollapse={() => setNotesCollapsed((c) => !c)} />
+            {view === 'semana' && (
+              <TimelineView
+                days={isMobile ? [anchorDate] : weekDays}
+                eventsByDay={eventsByDay}
+                categorias={categorias ?? []}
+                isDark={isDark}
+                todayIso={todayIso}
+                onEventClick={openEdit}
+                onResizeCommit={(e, novaHoraFim) => updateItem.mutate({ id: e.id, payload: { horaFim: novaHoraFim } })}
+                onSlotClick={(iso, hora) => openCreate(iso, hora)}
+              />
+            )}
+
+            {view === 'dia' && (
+              <TimelineView
+                days={[anchorDate]}
+                eventsByDay={eventsByDay}
+                categorias={categorias ?? []}
+                isDark={isDark}
+                todayIso={todayIso}
+                onEventClick={openEdit}
+                onResizeCommit={(e, novaHoraFim) => updateItem.mutate({ id: e.id, payload: { horaFim: novaHoraFim } })}
+                onSlotClick={(iso, hora) => openCreate(iso, hora)}
+              />
+            )}
+
+            {view === 'lista' && (
+              <ListView
+                eventos={(geral ?? []).filter((e) => {
+                  const term = search.trim().toLowerCase();
+                  if (activeCategoryIds.size > 0 && (!e.categoriaId || !activeCategoryIds.has(e.categoriaId))) return false;
+                  if (term && !e.titulo.toLowerCase().includes(term)) return false;
+                  return true;
+                })}
+                categorias={categorias ?? []}
+                isDark={isDark}
+                onEventClick={(e) => {
+                  if (e.origem !== 'AGENDA_ITEM') return;
+                  setDrawer({ open: true, item: geralToAgendaItem(e) });
+                }}
+                onToggleConcluida={(e) => toggleConcluida(geralToCalendarEvent(e))}
+              />
             )}
           </div>
         </div>
