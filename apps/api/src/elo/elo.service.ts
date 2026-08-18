@@ -131,7 +131,7 @@ export class EloService {
 
     for (let turn = 0; turn < 4; turn++) {
       const response = await client.messages.create({
-        model: 'claude-opus-4-8',
+        model: 'claude-opus-5',
         max_tokens: 1024,
         system: SYSTEM_PROMPT,
         messages,
