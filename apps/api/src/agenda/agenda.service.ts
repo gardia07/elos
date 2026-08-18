@@ -85,6 +85,8 @@ export class AgendaService {
       tipo: dto.tipo,
       categoriaId: dto.categoriaId,
       projetoId: dto.projetoId,
+      prioridade: dto.prioridade,
+      bloqueadoPorId: dto.bloqueadoPorId,
     };
 
     if (!dto.recorrencia) {
@@ -185,6 +187,8 @@ export class AgendaService {
         responsavelId: dto.responsavelId,
         projetoId: dto.projetoId,
         statusProjeto,
+        prioridade: dto.prioridade,
+        bloqueadoPorId: dto.bloqueadoPorId,
       },
       include: { categoria: true },
     });

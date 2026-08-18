@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
 
 const STATUS = ['PLANEJADO', 'EM_ANDAMENTO', 'CONCLUIDO', 'EM_RISCO', 'CANCELADO'] as const;
 export type ProjetoStatusDto = (typeof STATUS)[number];
@@ -20,6 +20,7 @@ export class UpdateProjetoDto {
   @IsOptional() @IsDateString() dataFim?: string;
   @IsOptional() @IsIn(STATUS) status?: ProjetoStatusDto;
   @IsOptional() @IsString() cor?: string;
+  @IsOptional() @IsInt() @Min(1) wipLimiteEmAndamento?: number | null;
 }
 
 export class SetParticipantesDto {

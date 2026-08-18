@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookmarkPlus, ChevronDown, Flag, LayoutGrid, Pencil, Plus, Users } from 'lucide-react';
+import { ActivitySquare, ArrowLeft, BookmarkPlus, ChevronDown, Flag, LayoutGrid, Pencil, Plus, Users } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/cn';
@@ -12,9 +12,9 @@ import { Badge, Button, Drawer } from '@/components/ui';
 import { Header } from '@/components/header';
 import { auditActionLabel, EventFormDrawer, type EventFormValues, lembretesInputFromValues, recorrenciaFromValues } from '../../components';
 import { parseIsoUtc, useIsDarkTheme } from '../../lib';
-import type { AgendaItem, AuditEvento, Categoria, Projeto, ProjetoMarco, Usuario } from '../../types';
+import type { AgendaItem, AuditEvento, Categoria, Projeto, ProjetoMarco, ProjetoMetricas, Usuario } from '../../types';
 import { PROJETO_STATUS_LABEL, PROJETO_STATUS_TONE } from '../../types';
-import { ProjetoDrawer, type ProjetoFormValues } from '../components';
+import { AREAS, areaDaTarefa, ProjetoDrawer, type ProjetoFormValues } from '../components';
 import { ProjetoKanban } from './kanban';
 import { ProjetoMarcos } from './marcos';
 
@@ -31,6 +31,7 @@ export default function ProjetoDetalhePage() {
   const [modeloNome, setModeloNome] = useState('');
   const [auditoriaOpen, setAuditoriaOpen] = useState(false);
   const [marcoFiltroId, setMarcoFiltroId] = useState<string | null>(null);
+  const [areaFiltro, setAreaFiltro] = useState<string | null>(null);
 
   const { data: projetos } = useQuery({
     queryKey: ['agenda', 'projetos'],
@@ -60,6 +61,11 @@ export default function ProjetoDetalhePage() {
   const { data: auditoria } = useQuery({
     queryKey: ['agenda', 'projetos', id, 'auditoria'],
     queryFn: async () => (await api.get<AuditEvento[]>(`/agenda/projetos/${id}/auditoria`)).data,
+  });
+
+  const { data: metricas } = useQuery({
+    queryKey: ['agenda', 'projetos', id, 'metricas'],
+    queryFn: async () => (await api.get<ProjetoMetricas>(`/agenda/projetos/${id}/metricas`)).data,
   });
 
   const invalidateTudo = () => {
@@ -98,6 +104,7 @@ export default function ProjetoDetalhePage() {
         dataFim: values.dataFim || undefined,
         status: values.status,
         cor: values.cor,
+        wipLimiteEmAndamento: values.wipLimiteEmAndamento === '' ? null : Number(values.wipLimiteEmAndamento),
       }),
     onSuccess: () => {
       invalidateTudo();
@@ -135,6 +142,8 @@ export default function ProjetoDetalhePage() {
       categoriaId: values.categoriaId || null,
       responsavelId: values.responsavelId || null,
       projetoId: values.projetoId || null,
+      prioridade: values.prioridade || null,
+      bloqueadoPorId: values.bloqueadoPorId || null,
       lembretes: lembretesInputFromValues(values),
     };
     if (taskDrawer.item) {
@@ -159,13 +168,16 @@ export default function ProjetoDetalhePage() {
   const marcoFiltroIndex = marcosOrdenados.findIndex((m) => m.id === marcoFiltroId);
   const marcoAnterior = marcoFiltroIndex > 0 ? marcosOrdenados[marcoFiltroIndex - 1] : null;
   const marcoFiltro = marcoFiltroIndex >= 0 ? marcosOrdenados[marcoFiltroIndex] : null;
-  const tarefasFiltradas =
+  const tarefasFiltradasPorFase =
     !marcoFiltro || !tarefas
       ? (tarefas ?? [])
       : tarefas.filter((t) => {
           const d = t.data.slice(0, 10);
           return (!marcoAnterior || d > marcoAnterior.data.slice(0, 10)) && d <= marcoFiltro.data.slice(0, 10);
         });
+
+  const areasPresentes = [...new Set((tarefas ?? []).map((t) => areaDaTarefa(t.descricao)?.codigo).filter((c): c is string => !!c))];
+  const tarefasExibidas = !areaFiltro ? tarefasFiltradasPorFase : tarefasFiltradasPorFase.filter((t) => areaDaTarefa(t.descricao)?.codigo === areaFiltro);
 
   return (
     <>
@@ -197,9 +209,52 @@ export default function ProjetoDetalhePage() {
           </span>
         </div>
 
+        {metricas && metricas.total > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-4 rounded-[10px] border border-border bg-surface-alt px-3 py-2 text-xs text-text-secondary">
+            <span className="flex items-center gap-1.5 font-medium text-text">
+              <ActivitySquare className="h-3.5 w-3.5" /> Fluxo
+            </span>
+            <span>
+              {metricas.concluidas}/{metricas.total} concluídas
+            </span>
+            <span>Lead time médio: {metricas.leadTimeMedioDias !== null ? `${metricas.leadTimeMedioDias} dias` : '—'}</span>
+            <span>Throughput (7 dias): {metricas.throughputUltimos7Dias} concluídas</span>
+          </div>
+        )}
+
         <div className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-text">
           <LayoutGrid className="h-4 w-4" /> Quadro
         </div>
+        {areasPresentes.length > 1 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setAreaFiltro(null)}
+              className={cn(
+                'rounded-full border px-2.5 py-1 text-xs',
+                areaFiltro === null ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong',
+              )}
+            >
+              Todas as áreas
+            </button>
+            {areasPresentes.map((codigo) => {
+              const area = AREAS[codigo];
+              const ativo = areaFiltro === codigo;
+              return (
+                <button
+                  key={codigo}
+                  type="button"
+                  title={area.label}
+                  onClick={() => setAreaFiltro(codigo)}
+                  className={cn('flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs', ativo ? 'border-accent bg-tint-blue text-accent' : 'border-border text-text-secondary hover:border-border-strong')}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: isDark ? area.corDark : area.cor }} />
+                  {codigo}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {marcosOrdenados.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5">
             <button
@@ -228,7 +283,14 @@ export default function ProjetoDetalhePage() {
             ))}
           </div>
         )}
-        <ProjetoKanban projetoId={id} tarefas={tarefasFiltradas} onCardClick={(t) => setTaskDrawer({ open: true, item: t })} />
+        <ProjetoKanban
+          projetoId={id}
+          tarefas={tarefasExibidas}
+          todasTarefas={tarefas ?? []}
+          wipLimite={projeto.wipLimiteEmAndamento}
+          isDark={isDark}
+          onCardClick={(t) => setTaskDrawer({ open: true, item: t })}
+        />
 
         <div className="mb-3 mt-8 flex items-center gap-1.5 text-sm font-semibold text-text">
           <Flag className="h-4 w-4" /> Marcos
@@ -265,6 +327,7 @@ export default function ProjetoDetalhePage() {
         categorias={categorias ?? []}
         usuarios={usuarios ?? []}
         projetos={projetos ?? []}
+        tarefasDoProjeto={tarefas ?? []}
         isDark={isDark}
         item={taskDrawer.item}
         defaultProjetoId={id}

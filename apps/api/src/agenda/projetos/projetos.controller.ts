@@ -45,6 +45,11 @@ export class ProjetosController {
     return this.service.listAuditoria(id);
   }
 
+  @Get(':id/metricas')
+  metricas(@Param('id') id: string) {
+    return this.service.metricas(id);
+  }
+
   @Get(':id/marcos')
   listMarcos(@Param('id') id: string) {
     return this.service.listMarcos(id);

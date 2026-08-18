@@ -26,6 +26,22 @@ export const TAREFA_PROJETO_STATUS_LABEL: Record<TarefaProjetoStatus, string> = 
   CONCLUIDA: 'Concluída',
 };
 
+export type AgendaItemPrioridade = 'P0' | 'P1' | 'P2' | 'P3';
+
+export const PRIORIDADE_LABEL: Record<AgendaItemPrioridade, string> = {
+  P0: 'P0 — Crítica',
+  P1: 'P1 — Alta',
+  P2: 'P2 — Média',
+  P3: 'P3 — Baixa',
+};
+
+export const PRIORIDADE_COR: Record<AgendaItemPrioridade, string> = {
+  P0: '#c0392b',
+  P1: '#c9a227',
+  P2: '#3b82f6',
+  P3: '#8a97a6',
+};
+
 export interface Subtarefa {
   id: string;
   titulo: string;
@@ -49,6 +65,8 @@ export interface AgendaItem {
   responsavelId: string | null;
   projetoId: string | null;
   statusProjeto?: TarefaProjetoStatus;
+  prioridade?: AgendaItemPrioridade | null;
+  bloqueadoPorId?: string | null;
   lembretes?: { antecedenciaDias: number; notificarEmail: boolean }[];
 }
 
@@ -83,12 +101,20 @@ export interface Projeto {
   dataFim: string | null;
   status: ProjetoStatus;
   cor: string;
+  wipLimiteEmAndamento: number | null;
   criadoPorId: string;
   participantes: ProjetoParticipante[];
   totalTarefas: number;
   tarefasConcluidas: number;
   progresso: number;
   atrasado: boolean;
+}
+
+export interface ProjetoMetricas {
+  total: number;
+  concluidas: number;
+  leadTimeMedioDias: number | null;
+  throughputUltimos7Dias: number;
 }
 
 export interface ProjetoMarco {

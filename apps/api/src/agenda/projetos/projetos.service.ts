@@ -75,6 +75,7 @@ export class ProjetosService {
         dataFim: p.dataFim,
         status: p.status,
         cor: p.cor,
+        wipLimiteEmAndamento: p.wipLimiteEmAndamento,
         criadoPorId: p.criadoPorId,
         participantes: p.participantes.map((pp) => ({ userId: pp.userId, nome: nomePorId.get(pp.userId) ?? '—' })),
         totalTarefas: total,
@@ -157,6 +158,7 @@ export class ProjetosService {
         dataFim: dto.dataFim ? startOfDayUtc(dto.dataFim) : undefined,
         status: dto.status,
         cor: dto.cor,
+        wipLimiteEmAndamento: dto.wipLimiteEmAndamento,
       },
     });
     await this.audit.log('projeto', id, 'editado', { ...dto });
@@ -195,6 +197,42 @@ export class ProjetosService {
   async listAuditoria(id: string) {
     await this.mustFind(id);
     return this.audit.listForEntity('projeto', id);
+  }
+
+  /** Lead time / throughput calculados a partir da trilha de auditoria (criado→concluido) — sem campo novo no schema. */
+  async metricas(id: string) {
+    await this.mustFind(id);
+    const db = this.db();
+    const tarefas = await db.agendaItem.findMany({ where: { projetoId: id, deletedAt: null }, select: { id: true, concluida: true } });
+    const ids = tarefas.map((t) => t.id);
+    const total = tarefas.length;
+    const concluidas = tarefas.filter((t) => t.concluida).length;
+    if (ids.length === 0) return { total: 0, concluidas: 0, leadTimeMedioDias: null, throughputUltimos7Dias: 0 };
+
+    const eventos = await db.auditEvent.findMany({
+      where: { entityType: 'agenda_item', entityId: { in: ids }, action: { in: ['criado', 'concluido'] } },
+      select: { entityId: true, action: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const criadoPorId = new Map<string, Date>();
+    const concluidoPorId = new Map<string, Date>();
+    for (const e of eventos) {
+      if (e.action === 'criado' && !criadoPorId.has(e.entityId)) criadoPorId.set(e.entityId, e.createdAt);
+      if (e.action === 'concluido') concluidoPorId.set(e.entityId, e.createdAt);
+    }
+
+    const leadTimesDias: number[] = [];
+    for (const [itemId, dataConcluido] of concluidoPorId) {
+      const dataCriado = criadoPorId.get(itemId);
+      if (dataCriado) leadTimesDias.push((dataConcluido.getTime() - dataCriado.getTime()) / 86_400_000);
+    }
+    const leadTimeMedioDias = leadTimesDias.length > 0 ? Math.round((leadTimesDias.reduce((a, b) => a + b, 0) / leadTimesDias.length) * 10) / 10 : null;
+
+    const seteDiasAtras = Date.now() - 7 * 86_400_000;
+    const throughputUltimos7Dias = [...concluidoPorId.values()].filter((d) => d.getTime() >= seteDiasAtras).length;
+
+    return { total, concluidas, leadTimeMedioDias, throughputUltimos7Dias };
   }
 
   async listMarcos(id: string) {

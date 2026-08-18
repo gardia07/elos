@@ -7,8 +7,8 @@ import { AlertTriangle, Bell, ChevronDown, ChevronLeft, ChevronRight, FolderKanb
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, AuditEvento, Categoria, Comentario, Projeto, RecorrenciaInput, Subtarefa, Usuario } from './types';
-import { DIA_SEMANA_CODES, DIA_SEMANA_LABEL, DIA_SEMANA_LABEL_LONGO, FREQUENCIA_LABEL, TIPO_LABEL } from './types';
+import type { AgendaItem, AgendaItemPrioridade, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, AuditEvento, Categoria, Comentario, Projeto, RecorrenciaInput, Subtarefa, Usuario } from './types';
+import { DIA_SEMANA_CODES, DIA_SEMANA_LABEL, DIA_SEMANA_LABEL_LONGO, FREQUENCIA_LABEL, PRIORIDADE_LABEL, TIPO_LABEL } from './types';
 import { addAnosIso, categoriaCor, localIso, parseIsoLocal } from './lib';
 
 export const ICON_MAP: Record<string, typeof AlertTriangle> = {
@@ -171,6 +171,8 @@ export interface EventFormValues {
   categoriaId: string;
   responsavelId: string;
   projetoId: string;
+  prioridade: AgendaItemPrioridade | '';
+  bloqueadoPorId: string;
   repetir: boolean;
   frequencia: AgendaRecorrenciaFrequencia;
   intervalo: number;
@@ -215,6 +217,7 @@ export function EventFormDrawer({
   categorias,
   usuarios,
   projetos,
+  tarefasDoProjeto,
   isDark,
   item,
   defaultDate,
@@ -230,6 +233,7 @@ export function EventFormDrawer({
   categorias: Categoria[];
   usuarios: Usuario[];
   projetos: Projeto[];
+  tarefasDoProjeto?: AgendaItem[];
   isDark: boolean;
   item?: AgendaItem | null;
   defaultDate?: string;
@@ -259,6 +263,8 @@ export function EventFormDrawer({
       categoriaId: it?.categoriaId ?? '',
       responsavelId: it?.responsavelId ?? '',
       projetoId: it?.projetoId ?? defaultProjetoId ?? '',
+      prioridade: it?.prioridade ?? '',
+      bloqueadoPorId: it?.bloqueadoPorId ?? '',
       repetir: false,
       frequencia: 'SEMANAL',
       intervalo: 1,
@@ -576,6 +582,42 @@ export function EventFormDrawer({
                   {p.nome}
                 </option>
               ))}
+            </select>
+          </label>
+        )}
+
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-text-secondary">Prioridade</span>
+          <select
+            value={values.prioridade}
+            onChange={(e) => setValues((v) => ({ ...v, prioridade: e.target.value as AgendaItemPrioridade | '' }))}
+            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+          >
+            <option value="">Sem prioridade</option>
+            {(['P0', 'P1', 'P2', 'P3'] as const).map((p) => (
+              <option key={p} value={p}>
+                {PRIORIDADE_LABEL[p]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {tarefasDoProjeto && tarefasDoProjeto.length > 0 && (
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-text-secondary">Bloqueada por</span>
+            <select
+              value={values.bloqueadoPorId}
+              onChange={(e) => setValues((v) => ({ ...v, bloqueadoPorId: e.target.value }))}
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            >
+              <option value="">Nenhuma</option>
+              {tarefasDoProjeto
+                .filter((t) => t.id !== item?.id)
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.descricao}
+                  </option>
+                ))}
             </select>
           </label>
         )}

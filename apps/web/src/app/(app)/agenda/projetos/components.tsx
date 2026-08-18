@@ -13,6 +13,33 @@ import { parseIsoUtc } from '../lib';
 const STATUS_OPCOES: ProjetoStatus[] = ['PLANEJADO', 'EM_ANDAMENTO', 'EM_RISCO', 'CONCLUIDO', 'CANCELADO'];
 const CORES = ['#3b82f6', '#8A7FB0', '#c9a227', '#b06a5e', '#2f9e6e', '#5e6ad2'];
 
+/**
+ * Área da tarefa, lida do prefixo "[GP] descrição" no título — não é campo novo no
+ * schema, é convenção adotada ao popular o backlog do Sistema Elos. Cor própria por
+ * área (dot + chip), mesmo princípio de "cor com significado único" já usado nas
+ * categorias da Agenda.
+ */
+export const AREAS: Record<string, { label: string; cor: string; corDark: string }> = {
+  GP: { label: 'Gestão de Pessoas', cor: '#3b82f6', corDark: '#6fa8fa' },
+  DP: { label: 'Departamento Pessoal', cor: '#8A7FB0', corDark: '#ab9fd0' },
+  SST: { label: 'Saúde e Segurança do Trabalho', cor: '#b06a5e', corDark: '#d98b7e' },
+  CMP: { label: 'Compliance', cor: '#c9a227', corDark: '#e6c358' },
+  IND: { label: 'Indicadores', cor: '#2f9e6e', corDark: '#5cc79a' },
+  APR: { label: 'Aprovações', cor: '#5e6ad2', corDark: '#8891e6' },
+  FER: { label: 'Ferramentas', cor: '#6d8a3d', corDark: '#92b563' },
+  POR: { label: 'Portal do Colaborador', cor: '#4f8a99', corDark: '#7ab3c2' },
+  ELO: { label: 'Elô', cor: '#c2578a', corDark: '#e08bb0' },
+  CFG: { label: 'Configurações', cor: '#7a7a7a', corDark: '#a3a3a3' },
+  INFRA: { label: 'Infraestrutura', cor: '#b5533c', corDark: '#d98a72' },
+};
+
+export function areaDaTarefa(descricao: string): { codigo: string; label: string; cor: string; corDark: string } | null {
+  const match = descricao.match(/^\[(\w+)\]/);
+  if (!match) return null;
+  const area = AREAS[match[1]];
+  return area ? { codigo: match[1], ...area } : null;
+}
+
 export interface ProjetoFormValues {
   nome: string;
   descricao: string;
@@ -20,6 +47,7 @@ export interface ProjetoFormValues {
   dataFim: string;
   cor: string;
   status: ProjetoStatus;
+  wipLimiteEmAndamento: string;
   participanteIds: string[];
   modeloId: string;
 }
@@ -59,6 +87,7 @@ export function ProjetoDrawer({
       dataFim: p?.dataFim?.slice(0, 10) ?? '',
       cor: p?.cor ?? CORES[0],
       status: p?.status ?? 'PLANEJADO',
+      wipLimiteEmAndamento: p?.wipLimiteEmAndamento ? String(p.wipLimiteEmAndamento) : '',
       participanteIds: p?.participantes.map((pp) => pp.userId) ?? [],
       modeloId: '',
     };
@@ -204,6 +233,23 @@ export function ProjetoDrawer({
                 </option>
               ))}
             </select>
+          </label>
+        )}
+
+        {projeto && (
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-text-secondary">Limite de WIP em &quot;Em andamento&quot;</span>
+            <input
+              type="number"
+              min={1}
+              value={values.wipLimiteEmAndamento}
+              onChange={(e) => setValues((v) => ({ ...v, wipLimiteEmAndamento: e.target.value }))}
+              placeholder="Sem limite"
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            />
+            <span className="text-xs text-text-tertiary">
+              Aviso visual (não trava o quadro) quando a coluna &quot;Em andamento&quot; passar desse número — ajuda a evitar começar tarefa demais ao mesmo tempo.
+            </span>
           </label>
         )}
 

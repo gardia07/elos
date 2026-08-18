@@ -7,6 +7,9 @@ export type AgendaItemTipo = (typeof TIPOS)[number];
 const STATUS_PROJETO = ['A_FAZER', 'EM_ANDAMENTO', 'CONCLUIDA'] as const;
 export type TarefaProjetoStatusDto = (typeof STATUS_PROJETO)[number];
 
+const PRIORIDADES = ['P0', 'P1', 'P2', 'P3'] as const;
+export type AgendaItemPrioridadeDto = (typeof PRIORIDADES)[number];
+
 const FREQUENCIAS = ['DIARIA', 'SEMANAL', 'MENSAL', 'ANUAL', 'PERSONALIZADA'] as const;
 export type AgendaRecorrenciaFrequenciaDto = (typeof FREQUENCIAS)[number];
 const DIAS_SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'] as const;
@@ -36,6 +39,8 @@ export class CreateAgendaItemDto {
   @IsOptional() @IsUUID() categoriaId?: string;
   @IsOptional() @IsUUID() responsavelId?: string;
   @IsOptional() @IsUUID() projetoId?: string;
+  @IsOptional() @IsIn(PRIORIDADES) prioridade?: AgendaItemPrioridadeDto;
+  @IsOptional() @IsUUID() bloqueadoPorId?: string;
   @IsOptional() @ValidateNested() @Type(() => RecorrenciaInputDto) recorrencia?: RecorrenciaInputDto;
   @IsOptional() @ValidateNested() @Type(() => LembreteInputDto) lembretes?: LembreteInputDto;
 }
@@ -52,6 +57,8 @@ export class UpdateAgendaItemDto {
   @IsOptional() @IsUUID() responsavelId?: string;
   @IsOptional() @IsUUID() projetoId?: string;
   @IsOptional() @IsIn(STATUS_PROJETO) statusProjeto?: TarefaProjetoStatusDto;
+  @IsOptional() @IsIn(PRIORIDADES) prioridade?: AgendaItemPrioridadeDto;
+  @IsOptional() @IsUUID() bloqueadoPorId?: string;
   @IsOptional() @ValidateNested() @Type(() => LembreteInputDto) lembretes?: LembreteInputDto;
 }
 
