@@ -209,7 +209,7 @@ export function ProjetoDrawer({
 
         <div>
           <span className="mb-1.5 block text-sm text-text-secondary">Cor</span>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {CORES.map((cor) => (
               <button
                 key={cor}
@@ -220,6 +220,30 @@ export function ProjetoDrawer({
                 aria-label={`Cor ${cor}`}
               />
             ))}
+            <label
+              className={cn(
+                'relative h-7 w-7 shrink-0 cursor-pointer rounded-full border-2',
+                !CORES.includes(values.cor) ? 'border-text' : 'border-dashed border-border-strong',
+              )}
+              style={!CORES.includes(values.cor) ? { backgroundColor: values.cor } : undefined}
+              aria-label="Escolher outra cor"
+              title="Escolher outra cor"
+            >
+              <input
+                type="color"
+                value={values.cor}
+                onChange={(e) => setValues((v) => ({ ...v, cor: e.target.value }))}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
+            <input
+              type="text"
+              value={values.cor}
+              onChange={(e) => setValues((v) => ({ ...v, cor: e.target.value }))}
+              placeholder="#3b82f6"
+              spellCheck={false}
+              className="w-24 rounded-[8px] border border-border-strong bg-surface px-2 py-1 text-xs uppercase text-text"
+            />
           </div>
         </div>
 

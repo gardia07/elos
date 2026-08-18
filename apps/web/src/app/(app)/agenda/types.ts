@@ -127,6 +127,13 @@ export interface Comentario {
   createdAt: string;
 }
 
+export interface AuditEvento {
+  id: string;
+  action: string;
+  actorName: string;
+  createdAt: string;
+}
+
 export type AgendaRecorrenciaFrequencia = 'DIARIA' | 'SEMANAL' | 'MENSAL' | 'ANUAL' | 'PERSONALIZADA';
 
 export const FREQUENCIA_LABEL: Record<AgendaRecorrenciaFrequencia, string> = {

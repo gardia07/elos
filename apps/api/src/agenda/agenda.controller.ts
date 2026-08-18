@@ -49,6 +49,11 @@ export class AgendaController {
     return this.service.restoreItem(id);
   }
 
+  @Get('items/:id/auditoria')
+  listAuditoria(@Param('id') id: string) {
+    return this.service.listAuditoria(id);
+  }
+
   @Get('items/:id/comentarios')
   listComentarios(@Param('id') id: string) {
     return this.service.listComentarios(id);

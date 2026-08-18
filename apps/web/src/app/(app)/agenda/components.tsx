@@ -7,7 +7,7 @@ import { AlertTriangle, Bell, ChevronLeft, ChevronRight, FolderKanban, ListCheck
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, Categoria, Comentario, Projeto, RecorrenciaInput, Subtarefa, Usuario } from './types';
+import type { AgendaItem, AgendaItemTipo, AgendaRecorrenciaFrequencia, AgendaView, AuditEvento, Categoria, Comentario, Projeto, RecorrenciaInput, Subtarefa, Usuario } from './types';
 import { DIA_SEMANA_CODES, DIA_SEMANA_LABEL, DIA_SEMANA_LABEL_LONGO, FREQUENCIA_LABEL, TIPO_LABEL } from './types';
 import { addAnosIso, categoriaCor, localIso, parseIsoLocal } from './lib';
 
@@ -594,6 +594,8 @@ export function EventFormDrawer({
 
         {item && <CommentsSection agendaItemId={item.id} />}
 
+        {item && <AuditSection agendaItemId={item.id} />}
+
         <div className="mt-2 flex items-center justify-between">
           {onDelete ? (
             <div className="flex items-center gap-3">
@@ -755,6 +757,50 @@ function CommentsSection({ agendaItemId }: { agendaItemId: string }) {
           <Send className="h-4 w-4" />
         </button>
       </div>
+    </div>
+  );
+}
+
+const AUDIT_ACTION_LABEL: Record<string, string> = {
+  criado: 'Criado',
+  editado: 'Editado',
+  concluido: 'Marcado como concluído',
+  reaberto: 'Reaberto',
+  atribuido: 'Responsável alterado',
+  excluido: 'Excluído',
+  restaurado: 'Restaurado',
+  comentario_adicionado: 'Comentário adicionado',
+  subtarefa_criada: 'Subtarefa adicionada',
+  subtarefa_atualizada: 'Subtarefa atualizada',
+  subtarefa_excluida: 'Subtarefa removida',
+  participantes_atualizados: 'Participantes atualizados',
+  marco_criado: 'Marco adicionado',
+  marco_atualizado: 'Marco atualizado',
+  marco_excluido: 'Marco removido',
+};
+
+export function auditActionLabel(action: string): string {
+  return AUDIT_ACTION_LABEL[action] ?? action.replace(/_/g, ' ');
+}
+
+export function AuditSection({ agendaItemId }: { agendaItemId: string }) {
+  const { data: eventos } = useQuery({
+    queryKey: ['agenda', 'auditoria', agendaItemId],
+    queryFn: async () => (await api.get<AuditEvento[]>(`/agenda/items/${agendaItemId}/auditoria`)).data,
+  });
+
+  if (!eventos || eventos.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm text-text-secondary">Trilha de auditoria</span>
+      <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto text-xs text-text-tertiary">
+        {eventos.map((e) => (
+          <li key={e.id}>
+            {new Date(e.createdAt).toLocaleString('pt-BR')} — {auditActionLabel(e.action)} — {e.actorName}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

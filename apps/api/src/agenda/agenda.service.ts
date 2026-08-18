@@ -240,6 +240,11 @@ export class AgendaService {
     });
   }
 
+  async listAuditoria(agendaItemId: string) {
+    await this.mustFind(agendaItemId);
+    return this.audit.listForEntity('agenda_item', agendaItemId);
+  }
+
   async listComentarios(agendaItemId: string) {
     await this.mustFind(agendaItemId);
     const { tenantId } = getRequestContext();
@@ -313,9 +318,11 @@ export class AgendaService {
     const { tenantId } = getRequestContext();
     const db = this.db();
     const ultima = await db.agendaItemSubtarefa.findFirst({ where: { agendaItemId }, orderBy: { ordem: 'desc' } });
-    return db.agendaItemSubtarefa.create({
+    const subtarefa = await db.agendaItemSubtarefa.create({
       data: { tenantId, agendaItemId, titulo: dto.titulo, ordem: (ultima?.ordem ?? -1) + 1 },
     });
+    await this.audit.log('agenda_item', agendaItemId, 'subtarefa_criada', { subtarefaId: subtarefa.id, titulo: subtarefa.titulo });
+    return subtarefa;
   }
 
   async atualizarSubtarefa(agendaItemId: string, subtarefaId: string, dto: UpdateSubtarefaDto) {
@@ -326,6 +333,7 @@ export class AgendaService {
       data: { titulo: dto.titulo, concluida: dto.concluida },
     });
     if (count === 0) throw new NotFoundException('Subtarefa não encontrada.');
+    await this.audit.log('agenda_item', agendaItemId, 'subtarefa_atualizada', { subtarefaId, ...dto });
     return db.agendaItemSubtarefa.findUniqueOrThrow({ where: { id: subtarefaId } });
   }
 
@@ -333,6 +341,7 @@ export class AgendaService {
     await this.mustFind(agendaItemId);
     const { count } = await this.db().agendaItemSubtarefa.deleteMany({ where: { id: subtarefaId, agendaItemId } });
     if (count === 0) throw new NotFoundException('Subtarefa não encontrada.');
+    await this.audit.log('agenda_item', agendaItemId, 'subtarefa_excluida', { subtarefaId });
     return { ok: true };
   }
 }

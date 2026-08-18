@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { getRequestContext } from '../../common/request-context';
+import { AuditService } from '../../audit/audit.service';
 import { CreateProjetoDto, SetParticipantesDto, UpdateProjetoDto } from './dto/projetos.dto';
 import { CreateMarcoDto, UpdateMarcoDto } from './dto/marcos.dto';
 import { SalvarComoModeloDto } from './dto/modelos.dto';
@@ -34,7 +35,10 @@ function parseModeloItens(json: unknown): ModeloItem[] {
 
 @Injectable()
 export class ProjetosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   private db() {
     return this.prisma.forCurrentTenant();
@@ -131,6 +135,7 @@ export class ProjetosService {
       }
     }
 
+    await this.audit.log('projeto', projeto.id, 'criado', { nome: projeto.nome, modeloId: dto.modeloId });
     return projeto;
   }
 
@@ -143,7 +148,7 @@ export class ProjetosService {
 
   async update(id: string, dto: UpdateProjetoDto) {
     await this.mustFind(id);
-    return this.db().projeto.update({
+    const updated = await this.db().projeto.update({
       where: { id },
       data: {
         nome: dto.nome,
@@ -154,6 +159,8 @@ export class ProjetosService {
         cor: dto.cor,
       },
     });
+    await this.audit.log('projeto', id, 'editado', { ...dto });
+    return updated;
   }
 
   async delete(id: string) {
@@ -161,6 +168,7 @@ export class ProjetosService {
     const projeto = await this.mustFind(id);
     if (projeto.criadoPorId !== userId) throw new ForbiddenException('Só quem criou o projeto pode excluí-lo.');
     await this.db().projeto.delete({ where: { id } });
+    await this.audit.log('projeto', id, 'excluido', { nome: projeto.nome });
     return { ok: true };
   }
 
@@ -171,6 +179,7 @@ export class ProjetosService {
     const idsFinais = [...new Set([projeto.criadoPorId, ...dto.participanteIds])];
     await db.projetoParticipante.deleteMany({ where: { projetoId: id } });
     await db.projetoParticipante.createMany({ data: idsFinais.map((uid) => ({ tenantId, projetoId: id, userId: uid })) });
+    await this.audit.log('projeto', id, 'participantes_atualizados', { participanteIds: idsFinais });
     return { ok: true };
   }
 
@@ -183,6 +192,11 @@ export class ProjetosService {
     });
   }
 
+  async listAuditoria(id: string) {
+    await this.mustFind(id);
+    return this.audit.listForEntity('projeto', id);
+  }
+
   async listMarcos(id: string) {
     await this.mustFind(id);
     return this.db().projetoMarco.findMany({ where: { projetoId: id }, orderBy: [{ data: 'asc' }, { ordem: 'asc' }] });
@@ -193,9 +207,11 @@ export class ProjetosService {
     const { tenantId } = getRequestContext();
     const db = this.db();
     const ultimo = await db.projetoMarco.findFirst({ where: { projetoId: id }, orderBy: { ordem: 'desc' } });
-    return db.projetoMarco.create({
+    const marco = await db.projetoMarco.create({
       data: { tenantId, projetoId: id, titulo: dto.titulo, data: startOfDayUtc(dto.data), ordem: (ultimo?.ordem ?? -1) + 1 },
     });
+    await this.audit.log('projeto', id, 'marco_criado', { marcoId: marco.id, titulo: marco.titulo });
+    return marco;
   }
 
   async atualizarMarco(id: string, marcoId: string, dto: UpdateMarcoDto) {
@@ -206,6 +222,7 @@ export class ProjetosService {
       data: { titulo: dto.titulo, data: dto.data ? startOfDayUtc(dto.data) : undefined, concluido: dto.concluido },
     });
     if (count === 0) throw new NotFoundException('Marco não encontrado.');
+    await this.audit.log('projeto', id, 'marco_atualizado', { marcoId, ...dto });
     return db.projetoMarco.findUniqueOrThrow({ where: { id: marcoId } });
   }
 
@@ -213,6 +230,7 @@ export class ProjetosService {
     await this.mustFind(id);
     const { count } = await this.db().projetoMarco.deleteMany({ where: { id: marcoId, projetoId: id } });
     if (count === 0) throw new NotFoundException('Marco não encontrado.');
+    await this.audit.log('projeto', id, 'marco_excluido', { marcoId });
     return { ok: true };
   }
 
@@ -229,7 +247,7 @@ export class ProjetosService {
       db.agendaItem.findMany({ where: { projetoId: id, deletedAt: null }, select: { descricao: true, data: true } }),
       db.projetoMarco.findMany({ where: { projetoId: id }, select: { titulo: true, data: true } }),
     ]);
-    return db.projetoModelo.create({
+    const salvo = await db.projetoModelo.create({
       data: {
         tenantId,
         nome: dto.nome,
@@ -239,6 +257,8 @@ export class ProjetosService {
         marcos: marcos.map((m) => ({ titulo: m.titulo, diasAposInicio: diasEntre(projeto.dataInicio, m.data) })),
       },
     });
+    await this.audit.log('projeto_modelo', salvo.id, 'criado', { nome: salvo.nome, projetoOrigemId: id });
+    return salvo;
   }
 
   async excluirModelo(modeloId: string) {
@@ -247,6 +267,7 @@ export class ProjetosService {
     if (!modelo) throw new NotFoundException('Modelo não encontrado.');
     if (modelo.criadoPorId !== userId) throw new ForbiddenException('Só quem criou o modelo pode excluí-lo.');
     await this.db().projetoModelo.delete({ where: { id: modeloId } });
+    await this.audit.log('projeto_modelo', modeloId, 'excluido', { nome: modelo.nome });
     return { ok: true };
   }
 }

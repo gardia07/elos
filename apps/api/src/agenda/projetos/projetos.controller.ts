@@ -40,6 +40,11 @@ export class ProjetosController {
     return this.service.listTarefas(id);
   }
 
+  @Get(':id/auditoria')
+  listAuditoria(@Param('id') id: string) {
+    return this.service.listAuditoria(id);
+  }
+
   @Get(':id/marcos')
   listMarcos(@Param('id') id: string) {
     return this.service.listMarcos(id);

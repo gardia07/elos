@@ -9,9 +9,9 @@ import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { Badge, Button, Drawer } from '@/components/ui';
 import { Header } from '@/components/header';
-import { EventFormDrawer, type EventFormValues, lembretesInputFromValues, recorrenciaFromValues } from '../../components';
+import { auditActionLabel, EventFormDrawer, type EventFormValues, lembretesInputFromValues, recorrenciaFromValues } from '../../components';
 import { useIsDarkTheme } from '../../lib';
-import type { AgendaItem, Categoria, Projeto, Usuario } from '../../types';
+import type { AgendaItem, AuditEvento, Categoria, Projeto, Usuario } from '../../types';
 import { PROJETO_STATUS_LABEL, PROJETO_STATUS_TONE } from '../../types';
 import { ProjetoDrawer, type ProjetoFormValues } from '../components';
 import { ProjetoKanban } from './kanban';
@@ -47,6 +47,11 @@ export default function ProjetoDetalhePage() {
   const { data: usuarios } = useQuery({
     queryKey: ['agenda', 'usuarios'],
     queryFn: async () => (await api.get<Usuario[]>('/agenda/usuarios')).data,
+  });
+
+  const { data: auditoria } = useQuery({
+    queryKey: ['agenda', 'projetos', id, 'auditoria'],
+    queryFn: async () => (await api.get<AuditEvento[]>(`/agenda/projetos/${id}/auditoria`)).data,
   });
 
   const invalidateTudo = () => {
@@ -181,6 +186,19 @@ export default function ProjetoDetalhePage() {
           <Flag className="h-4 w-4" /> Marcos
         </div>
         <ProjetoMarcos projetoId={id} />
+
+        {auditoria && auditoria.length > 0 && (
+          <div className="mt-8">
+            <h3 className="mb-2 text-sm font-semibold text-text-secondary">Trilha de auditoria</h3>
+            <ul className="flex flex-col gap-1 text-xs text-text-tertiary">
+              {auditoria.map((e) => (
+                <li key={e.id}>
+                  {new Date(e.createdAt).toLocaleString('pt-BR')} — {auditActionLabel(e.action)} — {e.actorName}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <EventFormDrawer
