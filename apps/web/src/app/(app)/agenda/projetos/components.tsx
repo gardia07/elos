@@ -31,6 +31,7 @@ export const AREAS: Record<string, { label: string; cor: string; corDark: string
   ELO: { label: 'Elô', cor: '#c2578a', corDark: '#e08bb0' },
   CFG: { label: 'Configurações', cor: '#7a7a7a', corDark: '#a3a3a3' },
   INFRA: { label: 'Infraestrutura', cor: '#b5533c', corDark: '#d98a72' },
+  PAINEL: { label: 'Área de trabalho', cor: '#a8763e', corDark: '#d1a373' },
 };
 
 export function areaDaTarefa(descricao: string): { codigo: string; label: string; cor: string; corDark: string } | null {
