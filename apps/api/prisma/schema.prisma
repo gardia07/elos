@@ -631,25 +631,31 @@ model HistoricoEvento {
 }
 
 model EmployeeDocumento {
-  id            String    @id @default(uuid()) @db.Uuid
-  employeeId    String    @db.Uuid
-  terminationId String?   @db.Uuid
-  ocorrenciaId  String?   @db.Uuid
-  nome          String
-  tipo          String
-  tamanho       String
-  blobPathname  String?
-  contentType   String?
-  uploadEm      DateTime  @default(now())
-  deletedAt     DateTime?
+  id                String    @id @default(uuid()) @db.Uuid
+  employeeId        String    @db.Uuid
+  terminationId     String?   @db.Uuid
+  ocorrenciaId      String?   @db.Uuid
+  vacationRequestId String?   @db.Uuid
+  leaveRecordId     String?   @db.Uuid
+  nome              String
+  tipo              String
+  tamanho           String
+  blobPathname      String?
+  contentType       String?
+  uploadEm          DateTime  @default(now())
+  deletedAt         DateTime?
 
-  employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  termination Termination? @relation(fields: [terminationId], references: [id], onDelete: SetNull)
-  ocorrencia  Ocorrencia?  @relation(fields: [ocorrenciaId], references: [id], onDelete: SetNull)
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  termination     Termination?     @relation(fields: [terminationId], references: [id], onDelete: SetNull)
+  ocorrencia      Ocorrencia?      @relation(fields: [ocorrenciaId], references: [id], onDelete: SetNull)
+  vacationRequest VacationRequest? @relation(fields: [vacationRequestId], references: [id], onDelete: SetNull)
+  leaveRecord     LeaveRecord?     @relation(fields: [leaveRecordId], references: [id], onDelete: SetNull)
 
   @@index([employeeId])
   @@index([terminationId])
   @@index([ocorrenciaId])
+  @@index([vacationRequestId])
+  @@index([leaveRecordId])
   @@map("employee_documentos")
 }
 
@@ -810,8 +816,9 @@ model VacationRequest {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee   Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  documentos EmployeeDocumento[]
 
   @@index([tenantId, employeeId])
   @@map("vacation_requests")
@@ -827,8 +834,9 @@ model LeaveRecord {
   esocialSent Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee   Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  documentos EmployeeDocumento[]
 
   @@index([tenantId, employeeId])
   @@map("leave_records")

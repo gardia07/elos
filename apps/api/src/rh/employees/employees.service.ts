@@ -387,6 +387,8 @@ export class EmployeesService {
     tipo: string,
     nomeOverride?: string,
     terminationId?: string,
+    vacationRequestId?: string,
+    leaveRecordId?: string,
   ) {
     const { tenantId } = getRequestContext();
     await this.mustFind(id);
@@ -398,6 +400,22 @@ export class EmployeesService {
         throw new NotFoundException('Processo de desligamento não encontrado.');
       }
     }
+    if (vacationRequestId) {
+      const vacation = await this.db().vacationRequest.findUnique({
+        where: { id: vacationRequestId },
+      });
+      if (!vacation || vacation.employeeId !== id) {
+        throw new NotFoundException('Solicitação de férias não encontrada.');
+      }
+    }
+    if (leaveRecordId) {
+      const leave = await this.db().leaveRecord.findUnique({
+        where: { id: leaveRecordId },
+      });
+      if (!leave || leave.employeeId !== id) {
+        throw new NotFoundException('Afastamento não encontrado.');
+      }
+    }
     const uploaded = await uploadDocumento(
       `colaboradores/${tenantId}/${id}/documentos`,
       file,
@@ -406,6 +424,8 @@ export class EmployeesService {
       data: {
         employeeId: id,
         terminationId: terminationId || null,
+        vacationRequestId: vacationRequestId || null,
+        leaveRecordId: leaveRecordId || null,
         nome: nomeOverride || uploaded.nomeOriginal,
         tipo,
         tamanho: uploaded.tamanho,

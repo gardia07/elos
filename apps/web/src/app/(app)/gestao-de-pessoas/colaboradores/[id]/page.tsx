@@ -154,7 +154,17 @@ interface EmployeeDetail {
     registradoEm: string;
     registradoPor: string;
   }[];
-  documentos: { id: string; nome: string; tipo: string; tamanho: string; uploadEm: string; terminationId: string | null; ocorrenciaId: string | null }[];
+  documentos: {
+    id: string;
+    nome: string;
+    tipo: string;
+    tamanho: string;
+    uploadEm: string;
+    terminationId: string | null;
+    ocorrenciaId: string | null;
+    vacationRequestId: string | null;
+    leaveRecordId: string | null;
+  }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
   periodosAquisitivos: { inicio: string; fim: string }[];
   vacationRequests: {
@@ -219,7 +229,7 @@ type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
   cargoSalario: 'Cargo e Salário',
-  ferias: 'Férias',
+  ferias: 'Férias e Afastamentos',
   beneficios: 'Benefícios',
   avaliacoes: 'Avaliações',
   documentos: 'Documentos',
@@ -460,6 +470,50 @@ export default function EmployeeProfilePage() {
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       setLeaveError(Array.isArray(message) ? message.join(' ') : message || 'Não foi possível registrar o afastamento.');
+    },
+  });
+
+  const [uploadingVacationId, setUploadingVacationId] = useState<string | null>(null);
+  const [uploadVacationError, setUploadVacationError] = useState<{ vacationRequestId: string; message: string } | null>(null);
+  const addVacationDocumento = useMutation({
+    mutationFn: async (vars: { vacationRequestId: string; file: File }) => {
+      const form = new FormData();
+      form.append('arquivo', vars.file);
+      form.append('tipo', 'Aviso/Recibo de férias');
+      form.append('vacationRequestId', vars.vacationRequestId);
+      return api.post(`/rh/employees/${id}/documentos`, form);
+    },
+    onSuccess: () => {
+      invalidate();
+      setUploadingVacationId(null);
+      setUploadVacationError(null);
+    },
+    onError: (err: unknown, vars) => {
+      setUploadingVacationId(null);
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setUploadVacationError({ vacationRequestId: vars.vacationRequestId, message: Array.isArray(message) ? message.join(' ') : message || 'Não foi possível anexar o arquivo.' });
+    },
+  });
+
+  const [uploadingLeaveId, setUploadingLeaveId] = useState<string | null>(null);
+  const [uploadLeaveError, setUploadLeaveError] = useState<{ leaveRecordId: string; message: string } | null>(null);
+  const addLeaveDocumento = useMutation({
+    mutationFn: async (vars: { leaveRecordId: string; file: File }) => {
+      const form = new FormData();
+      form.append('arquivo', vars.file);
+      form.append('tipo', 'Atestado/Afastamento');
+      form.append('leaveRecordId', vars.leaveRecordId);
+      return api.post(`/rh/employees/${id}/documentos`, form);
+    },
+    onSuccess: () => {
+      invalidate();
+      setUploadingLeaveId(null);
+      setUploadLeaveError(null);
+    },
+    onError: (err: unknown, vars) => {
+      setUploadingLeaveId(null);
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setUploadLeaveError({ leaveRecordId: vars.leaveRecordId, message: Array.isArray(message) ? message.join(' ') : message || 'Não foi possível anexar o arquivo.' });
     },
   });
 
@@ -1269,13 +1323,50 @@ export default function EmployeeProfilePage() {
             </Section>
 
             <Section title="Histórico de férias gozadas">
-              {e.feriasHistorico.length === 0 && <p className="text-sm text-text-tertiary">Sem registros.</p>}
-              <ul className="flex flex-col gap-1 text-sm text-text-secondary">
-                {e.feriasHistorico.map((f) => (
-                  <li key={f.id}>
-                    {f.periodo} — {f.dias} dias
-                  </li>
-                ))}
+              {e.vacationRequests.length === 0 && <p className="text-sm text-text-tertiary">Sem registros.</p>}
+              <ul className="flex flex-col gap-2 text-sm">
+                {e.vacationRequests.map((v) => {
+                  const docs = e.documentos.filter((d) => d.vacationRequestId === v.id);
+                  return (
+                    <li key={v.id} className="flex flex-col gap-1.5 rounded-[10px] border border-border p-2.5">
+                      <span className="text-text-secondary">
+                        {formatDate(v.inicio)} a {formatDate(v.fim)}
+                        {v.diasAbono > 0 ? ` · ${v.diasAbono}d de abono` : ''}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-3">
+                        {docs.map((d) => (
+                          <a
+                            key={d.id}
+                            href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-accent hover:underline"
+                          >
+                            {d.nome}
+                          </a>
+                        ))}
+                        <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                          {uploadingVacationId === v.id ? 'Enviando…' : 'Anexar aviso/recibo'}
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            className="hidden"
+                            disabled={uploadingVacationId === v.id}
+                            onChange={(ev) => {
+                              const file = ev.target.files?.[0];
+                              if (file) {
+                                setUploadingVacationId(v.id);
+                                addVacationDocumento.mutate({ vacationRequestId: v.id, file });
+                              }
+                              ev.target.value = '';
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {uploadVacationError?.vacationRequestId === v.id && <p className="text-xs text-danger">{uploadVacationError.message}</p>}
+                    </li>
+                  );
+                })}
               </ul>
             </Section>
 
@@ -1338,12 +1429,48 @@ export default function EmployeeProfilePage() {
               </form>
 
               {e.leaveRecords.length === 0 && <p className="text-sm text-text-tertiary">Nenhum afastamento registrado.</p>}
-              <ul className="flex flex-col gap-1 text-sm text-text-secondary">
-                {e.leaveRecords.map((l) => (
-                  <li key={l.id}>
-                    {l.tipo} — {formatDate(l.inicio)} {l.retorno ? `a ${formatDate(l.retorno)}` : '(em andamento)'}
-                  </li>
-                ))}
+              <ul className="flex flex-col gap-2 text-sm">
+                {e.leaveRecords.map((l) => {
+                  const docs = e.documentos.filter((d) => d.leaveRecordId === l.id);
+                  return (
+                    <li key={l.id} className="flex flex-col gap-1.5 rounded-[10px] border border-border p-2.5">
+                      <span className="text-text-secondary">
+                        {l.tipo} — {formatDate(l.inicio)} {l.retorno ? `a ${formatDate(l.retorno)}` : '(em andamento)'}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-3">
+                        {docs.map((d) => (
+                          <a
+                            key={d.id}
+                            href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-accent hover:underline"
+                          >
+                            {d.nome}
+                          </a>
+                        ))}
+                        <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                          {uploadingLeaveId === l.id ? 'Enviando…' : 'Anexar atestado'}
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            className="hidden"
+                            disabled={uploadingLeaveId === l.id}
+                            onChange={(ev) => {
+                              const file = ev.target.files?.[0];
+                              if (file) {
+                                setUploadingLeaveId(l.id);
+                                addLeaveDocumento.mutate({ leaveRecordId: l.id, file });
+                              }
+                              ev.target.value = '';
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {uploadLeaveError?.leaveRecordId === l.id && <p className="text-xs text-danger">{uploadLeaveError.message}</p>}
+                    </li>
+                  );
+                })}
               </ul>
             </Section>
           </div>

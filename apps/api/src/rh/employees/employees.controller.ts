@@ -144,11 +144,13 @@ export class EmployeesController {
     @Body('tipo') tipo: string,
     @Body('nome') nome?: string,
     @Body('terminationId') terminationId?: string,
+    @Body('vacationRequestId') vacationRequestId?: string,
+    @Body('leaveRecordId') leaveRecordId?: string,
   ) {
     if (!file)
       throw new BadRequestException('Envie o arquivo no campo "arquivo".');
     if (!tipo) throw new BadRequestException('Informe o tipo do documento.');
-    return this.service.addDocumento(id, file, tipo, nome, terminationId);
+    return this.service.addDocumento(id, file, tipo, nome, terminationId, vacationRequestId, leaveRecordId);
   }
 
   @Get(':id/documentos/:documentoId/arquivo')
