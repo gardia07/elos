@@ -26,6 +26,7 @@ const ESTADO_CIVIL_OPTIONS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viú
 const GENERO_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 const CNH_CATEGORIA_OPTIONS = ['A', 'B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
 const RACA_COR_OPTIONS = ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Não informado'];
+const TIPOS_AFASTAMENTO = ['INSS (auxílio-doença)', 'Licença maternidade', 'Licença paternidade', 'Atestado médico', 'Outro'];
 
 const ACCIDENT_TIPO_LABEL: Record<'TIPICO' | 'TRAJETO' | 'DOENCA_OCUPACIONAL', string> = {
   TIPICO: 'Acidente típico',
@@ -267,6 +268,12 @@ export default function EmployeeProfilePage() {
   const [vacInicio, setVacInicio] = useState('');
   const [vacFim, setVacFim] = useState('');
   const [vacDiasAbono, setVacDiasAbono] = useState('');
+  const [vacationError, setVacationError] = useState('');
+  const [leaveTipo, setLeaveTipo] = useState(TIPOS_AFASTAMENTO[0]);
+  const [leaveTipoOutro, setLeaveTipoOutro] = useState('');
+  const [leaveInicio, setLeaveInicio] = useState('');
+  const [leaveRetorno, setLeaveRetorno] = useState('');
+  const [leaveError, setLeaveError] = useState('');
   const [docNome, setDocNome] = useState('');
   const [docTipo, setDocTipo] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -426,6 +433,33 @@ export default function EmployeeProfilePage() {
       setVacInicio('');
       setVacFim('');
       setVacDiasAbono('');
+      setVacationError('');
+    },
+    onError: (err: unknown) => {
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setVacationError(Array.isArray(message) ? message.join(' ') : message || 'Não foi possível registrar a solicitação de férias.');
+    },
+  });
+
+  const createLeave = useMutation({
+    mutationFn: async () =>
+      api.post('/rh/vacations/leaves', {
+        employeeId: id,
+        tipo: leaveTipo === 'Outro' ? leaveTipoOutro : leaveTipo,
+        inicio: leaveInicio,
+        fim: leaveRetorno || undefined,
+      }),
+    onSuccess: () => {
+      invalidate();
+      setLeaveTipo(TIPOS_AFASTAMENTO[0]);
+      setLeaveTipoOutro('');
+      setLeaveInicio('');
+      setLeaveRetorno('');
+      setLeaveError('');
+    },
+    onError: (err: unknown) => {
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setLeaveError(Array.isArray(message) ? message.join(' ') : message || 'Não foi possível registrar o afastamento.');
     },
   });
 
@@ -1230,6 +1264,7 @@ export default function EmployeeProfilePage() {
                 <Button type="submit" disabled={requestVacation.isPending}>
                   Solicitar
                 </Button>
+                {vacationError && <p className="text-xs text-danger">{vacationError}</p>}
               </form>
             </Section>
 
@@ -1245,6 +1280,63 @@ export default function EmployeeProfilePage() {
             </Section>
 
             <Section title="Afastamentos">
+              <form
+                className="mb-4 flex flex-col items-start gap-3 border-b border-divider pb-4"
+                onSubmit={(ev) => {
+                  ev.preventDefault();
+                  createLeave.mutate();
+                }}
+              >
+                <label className="flex w-full flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Tipo</span>
+                  <select
+                    value={leaveTipo}
+                    onChange={(ev) => setLeaveTipo(ev.target.value)}
+                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  >
+                    {TIPOS_AFASTAMENTO.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {leaveTipo === 'Outro' && (
+                  <label className="flex w-full flex-col gap-1.5 text-sm">
+                    <span className="text-text-secondary">Descreva o tipo</span>
+                    <input
+                      value={leaveTipoOutro}
+                      onChange={(ev) => setLeaveTipoOutro(ev.target.value)}
+                      required
+                      className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    />
+                  </label>
+                )}
+                <label className="flex w-full flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Início</span>
+                  <input
+                    type="date"
+                    value={leaveInicio}
+                    onChange={(ev) => setLeaveInicio(ev.target.value)}
+                    required
+                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  />
+                </label>
+                <label className="flex w-full flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Retorno (opcional — deixe em branco se ainda em andamento)</span>
+                  <input
+                    type="date"
+                    value={leaveRetorno}
+                    onChange={(ev) => setLeaveRetorno(ev.target.value)}
+                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  />
+                </label>
+                <Button type="submit" disabled={createLeave.isPending}>
+                  Registrar afastamento
+                </Button>
+                {leaveError && <p className="text-xs text-danger">{leaveError}</p>}
+              </form>
+
               {e.leaveRecords.length === 0 && <p className="text-sm text-text-tertiary">Nenhum afastamento registrado.</p>}
               <ul className="flex flex-col gap-1 text-sm text-text-secondary">
                 {e.leaveRecords.map((l) => (
