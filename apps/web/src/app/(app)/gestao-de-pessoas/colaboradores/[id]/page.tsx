@@ -225,12 +225,13 @@ function toEditFields(e: EmployeeDetail): EditFields {
   };
 }
 
-const TABS = ['geral', 'cargoSalario', 'ferias', 'beneficios', 'avaliacoes', 'documentos', 'desligamento', 'registro', 'ocorrencias', 'historico'] as const;
+const TABS = ['geral', 'cargoSalario', 'ferias', 'afastamentos', 'beneficios', 'avaliacoes', 'documentos', 'desligamento', 'registro', 'ocorrencias', 'historico'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   geral: 'Visão geral',
   cargoSalario: 'Cargo e Salário',
-  ferias: 'Férias e Afastamentos',
+  ferias: 'Férias',
+  afastamentos: 'Afastamentos',
   beneficios: 'Benefícios',
   avaliacoes: 'Avaliações',
   documentos: 'Documentos',
@@ -1322,7 +1323,7 @@ export default function EmployeeProfilePage() {
             </div>
           </Section>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Section title="Solicitar férias">
               <form
                 className="flex flex-col items-start gap-3"
@@ -1404,111 +1405,117 @@ export default function EmployeeProfilePage() {
                 })}
               </ul>
             </Section>
+          </div>
+        </div>
+      )}
 
-            <Section title="Afastamentos">
-              <form
-                className="mb-4 flex flex-col items-start gap-3 border-b border-divider pb-4"
-                onSubmit={(ev) => {
-                  ev.preventDefault();
-                  createLeave.mutate();
-                }}
-              >
+      {tab === 'afastamentos' && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Section title="Registrar afastamento">
+            <form
+              className="flex flex-col items-start gap-3"
+              onSubmit={(ev) => {
+                ev.preventDefault();
+                createLeave.mutate();
+              }}
+            >
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Tipo</span>
+                <select
+                  value={leaveTipo}
+                  onChange={(ev) => setLeaveTipo(ev.target.value)}
+                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                >
+                  {TIPOS_AFASTAMENTO.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {leaveTipo === 'Outro' && (
                 <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Tipo</span>
-                  <select
-                    value={leaveTipo}
-                    onChange={(ev) => setLeaveTipo(ev.target.value)}
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                  >
-                    {TIPOS_AFASTAMENTO.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {leaveTipo === 'Outro' && (
-                  <label className="flex w-full flex-col gap-1.5 text-sm">
-                    <span className="text-text-secondary">Descreva o tipo</span>
-                    <input
-                      value={leaveTipoOutro}
-                      onChange={(ev) => setLeaveTipoOutro(ev.target.value)}
-                      required
-                      className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                    />
-                  </label>
-                )}
-                <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Início</span>
+                  <span className="text-text-secondary">Descreva o tipo</span>
                   <input
-                    type="date"
-                    value={leaveInicio}
-                    onChange={(ev) => setLeaveInicio(ev.target.value)}
+                    value={leaveTipoOutro}
+                    onChange={(ev) => setLeaveTipoOutro(ev.target.value)}
                     required
                     className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
-                <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Retorno (opcional — deixe em branco se ainda em andamento)</span>
-                  <input
-                    type="date"
-                    value={leaveRetorno}
-                    onChange={(ev) => setLeaveRetorno(ev.target.value)}
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-                  />
-                </label>
-                <Button type="submit" disabled={createLeave.isPending}>
-                  Registrar afastamento
-                </Button>
-                {leaveError && <p className="text-xs text-danger">{leaveError}</p>}
-              </form>
+              )}
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Início</span>
+                <input
+                  type="date"
+                  value={leaveInicio}
+                  onChange={(ev) => setLeaveInicio(ev.target.value)}
+                  required
+                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                />
+              </label>
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Retorno (opcional — deixe em branco se ainda em andamento)</span>
+                <input
+                  type="date"
+                  value={leaveRetorno}
+                  onChange={(ev) => setLeaveRetorno(ev.target.value)}
+                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                />
+              </label>
+              <Button type="submit" disabled={createLeave.isPending}>
+                Registrar afastamento
+              </Button>
+              {leaveError && <p className="text-xs text-danger">{leaveError}</p>}
+            </form>
+          </Section>
 
-              {e.leaveRecords.length === 0 && <p className="text-sm text-text-tertiary">Nenhum afastamento registrado.</p>}
-              <ul className="flex flex-col gap-2 text-sm">
-                {e.leaveRecords.map((l) => {
-                  const docs = e.documentos.filter((d) => d.leaveRecordId === l.id);
-                  return (
-                    <li key={l.id} className="flex flex-col gap-1.5 rounded-[10px] border border-border p-2.5">
-                      <span className="text-text-secondary">
-                        {l.tipo} — {formatDate(l.inicio)} {l.retorno ? `a ${formatDate(l.retorno)}` : '(em andamento)'}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-3">
-                        {docs.map((d) => (
-                          <a
-                            key={d.id}
-                            href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-accent hover:underline"
-                          >
-                            {d.nome}
-                          </a>
-                        ))}
-                        <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
-                          {uploadingLeaveId === l.id ? 'Enviando…' : 'Anexar atestado'}
-                          <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                            className="hidden"
-                            disabled={uploadingLeaveId === l.id}
-                            onChange={(ev) => {
-                              const file = ev.target.files?.[0];
-                              if (file) {
-                                setUploadingLeaveId(l.id);
-                                addLeaveDocumento.mutate({ leaveRecordId: l.id, file });
-                              }
-                              ev.target.value = '';
-                            }}
-                          />
-                        </label>
-                      </div>
-                      {uploadLeaveError?.leaveRecordId === l.id && <p className="text-xs text-danger">{uploadLeaveError.message}</p>}
-                    </li>
-                  );
-                })}
-              </ul>
-            </Section>
-          </div>
+          <Section title="Afastamentos registrados" cardClassName="lg:col-span-2">
+            {e.leaveRecords.length === 0 && <p className="text-sm text-text-tertiary">Nenhum afastamento registrado.</p>}
+            <ul className="flex flex-col gap-2 text-sm">
+              {e.leaveRecords.map((l) => {
+                const docs = e.documentos.filter((d) => d.leaveRecordId === l.id);
+                return (
+                  <li key={l.id} className="flex flex-col gap-1.5 rounded-[10px] border border-border p-2.5">
+                    <span className="text-text-secondary">
+                      {l.tipo} — {formatDate(l.inicio)} {l.retorno ? `a ${formatDate(l.retorno)}` : '(em andamento)'}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {docs.map((d) => (
+                        <a
+                          key={d.id}
+                          href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-accent hover:underline"
+                        >
+                          {d.nome}
+                        </a>
+                      ))}
+                      <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                        {uploadingLeaveId === l.id ? 'Enviando…' : 'Anexar atestado'}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          className="hidden"
+                          disabled={uploadingLeaveId === l.id}
+                          onChange={(ev) => {
+                            const file = ev.target.files?.[0];
+                            if (file) {
+                              setUploadingLeaveId(l.id);
+                              addLeaveDocumento.mutate({ leaveRecordId: l.id, file });
+                            }
+                            ev.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {uploadLeaveError?.leaveRecordId === l.id && <p className="text-xs text-danger">{uploadLeaveError.message}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+          </Section>
         </div>
       )}
 
