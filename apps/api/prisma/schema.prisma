@@ -106,6 +106,9 @@ model Tenant {
   documentRequirements DocumentRequirement[]
   tasks                Task[]
   tarefasDoDiaFixacoes TarefaDoDiaFixacao[]
+  periodosAquisitivos  PeriodoAquisitivo[]
+  fracoesDeFerias      FracaoDeFerias[]
+  faltasInjustificadas FaltaInjustificada[]
   license              TenantLicense?
 
   ethicsCases            EthicsCase[]
@@ -563,6 +566,8 @@ model Employee {
   vacationRequests      VacationRequest[]
   leaveRecords          LeaveRecord[]
   terminations          Termination[]
+  periodosAquisitivos   PeriodoAquisitivo[]
+  faltasInjustificadas  FaltaInjustificada[]
 
   adesoesValeDiario    AdesaoValeDiario[]
   adesoesAcademia      AdesaoAcademia[]
@@ -637,6 +642,7 @@ model EmployeeDocumento {
   ocorrenciaId      String?   @db.Uuid
   vacationRequestId String?   @db.Uuid
   leaveRecordId     String?   @db.Uuid
+  fracaoDeFeriasId  String?   @db.Uuid
   nome              String
   tipo              String
   tamanho           String
@@ -650,12 +656,14 @@ model EmployeeDocumento {
   ocorrencia      Ocorrencia?      @relation(fields: [ocorrenciaId], references: [id], onDelete: SetNull)
   vacationRequest VacationRequest? @relation(fields: [vacationRequestId], references: [id], onDelete: SetNull)
   leaveRecord     LeaveRecord?     @relation(fields: [leaveRecordId], references: [id], onDelete: SetNull)
+  fracaoDeFerias  FracaoDeFerias?  @relation(fields: [fracaoDeFeriasId], references: [id], onDelete: SetNull)
 
   @@index([employeeId])
   @@index([terminationId])
   @@index([ocorrenciaId])
   @@index([vacationRequestId])
   @@index([leaveRecordId])
+  @@index([fracaoDeFeriasId])
   @@map("employee_documentos")
 }
 
@@ -805,6 +813,9 @@ enum VacationStatus {
   @@map("vacation_status")
 }
 
+/// LEGADO -- substituída por PeriodoAquisitivo/FracaoDeFerias. Mantida
+/// somente como trilha histórica congelada (não recebe escrita nova);
+/// todo o histórico pré-existente foi migrado para o novo modelo.
 model VacationRequest {
   id         String         @id @default(uuid()) @db.Uuid
   tenantId   String         @db.Uuid
@@ -834,12 +845,116 @@ model LeaveRecord {
   esocialSent Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
-  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  employee   Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  documentos EmployeeDocumento[]
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee          Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  documentos        EmployeeDocumento[]
+  periodosSuspensos PeriodoAquisitivo[]
 
   @@index([tenantId, employeeId])
   @@map("leave_records")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Férias — por período aquisitivo (substitui VacationRequest)
+// ─────────────────────────────────────────────────────────────
+
+/// Um ciclo de 12 meses de aquisição, por colaborador. Deliberadamente
+/// enxuto: dias adquiridos, dias gozados, saldo disponível e status NÃO
+/// são colunas -- são sempre calculados (regras-ferias.util.ts) a partir
+/// de FaltaInjustificada + FracaoDeFerias, para nunca desalinhar de um
+/// cache, o mesmo problema que Employee.feriasSaldo já causava.
+model PeriodoAquisitivo {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @db.Uuid
+  employeeId        String   @db.Uuid
+  numero            Int // 1º, 2º, 3º período do colaborador -- pra ordenar/exibir sem recalcular
+  dataInicio        DateTime @db.Date
+  dataFim           DateTime @db.Date // fim da aquisição
+  /// Referência a um afastamento que suspendeu/reiniciou este período (art. 133 CLT).
+  /// Reservado para o futuro módulo de Afastamentos -- não computado automaticamente
+  /// nesta etapa, só um campo manual disponível desde já.
+  origemSuspensaoId String?  @db.Uuid
+  createdAt         DateTime @default(now())
+
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  origemSuspensao LeaveRecord?     @relation(fields: [origemSuspensaoId], references: [id], onDelete: SetNull)
+  fracoes         FracaoDeFerias[]
+
+  @@unique([tenantId, employeeId, numero])
+  @@index([tenantId, employeeId])
+  @@map("periodos_aquisitivos")
+}
+
+enum TipoFracaoFerias {
+  NORMAL
+  COLETIVA
+
+  @@map("tipo_fracao_ferias")
+}
+
+enum StatusFracaoFerias {
+  PENDENTE
+  APROVADA
+  REPROVADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+
+  @@map("status_fracao_ferias")
+}
+
+/// Uma fração de gozo (0 a N por período aquisitivo, validado por
+/// regras-ferias.util.ts, não pelo banco). Abono pecuniário e antecipação
+/// de 13º são atributos da fração (diasAbono/antecipa13), não tipos à
+/// parte -- não têm data/duração própria, e é assim que a solicitação
+/// funciona na prática (uma submissão só, com opções).
+model FracaoDeFerias {
+  id                  String             @id @default(uuid()) @db.Uuid
+  tenantId            String             @db.Uuid
+  periodoAquisitivoId String             @db.Uuid
+  tipo                TipoFracaoFerias   @default(NORMAL)
+  dataInicio          DateTime           @db.Date
+  dataFim             DateTime           @db.Date
+  dias                Int
+  diasAbono           Int                @default(0)
+  antecipa13          Boolean            @default(false)
+  status              StatusFracaoFerias @default(PENDENTE)
+  solicitadoPorId     String?            @db.Uuid
+  aprovadoPorId       String?            @db.Uuid
+  dataAprovacao       DateTime?
+  avisoFormalizadoEm  DateTime?
+  justificativa       String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  periodoAquisitivo PeriodoAquisitivo   @relation(fields: [periodoAquisitivoId], references: [id], onDelete: Cascade)
+  documentos        EmployeeDocumento[]
+
+  @@index([tenantId, periodoAquisitivoId])
+  @@map("fracoes_de_ferias")
+}
+
+/// Lançamento manual de falta injustificada, até existir registro de ponto
+/// real no Elos. A contagem por período aquisitivo é sempre por consulta
+/// (data entre periodo.dataInicio e periodo.dataFim), nunca cacheada --
+/// quando o ponto existir, ele só passa a escrever nesta mesma tabela,
+/// sem precisar mudar a regra de cálculo (art. 130 CLT).
+model FaltaInjustificada {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  employeeId    String   @db.Uuid
+  data          DateTime @db.Date
+  motivo        String?
+  registradoPor String
+  createdAt     DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, employeeId, data])
+  @@map("faltas_injustificadas")
 }
 
 // ─────────────────────────────────────────────────────────────

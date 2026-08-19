@@ -90,6 +90,51 @@ const DOC_STATUS_TONE: Record<DocumentRequirementStatus['status'], 'green' | 'bl
   NAO_SE_APLICA: 'grey',
 };
 
+type StatusPeriodoAquisitivo =
+  | 'EM_AQUISICAO'
+  | 'DISPONIVEL'
+  | 'A_VENCER'
+  | 'VENCIDA'
+  | 'PARCIALMENTE_GOZADA'
+  | 'QUITADA'
+  | 'PERDIDO_POR_AFASTAMENTO';
+
+const STATUS_PERIODO_LABEL: Record<StatusPeriodoAquisitivo, string> = {
+  EM_AQUISICAO: 'Em aquisição',
+  DISPONIVEL: 'Disponível',
+  A_VENCER: 'A vencer',
+  VENCIDA: 'Vencida',
+  PARCIALMENTE_GOZADA: 'Parcialmente gozada',
+  QUITADA: 'Quitada',
+  PERDIDO_POR_AFASTAMENTO: 'Perdeu o direito — afastamento > 6 meses (art. 133 CLT)',
+};
+
+const STATUS_PERIODO_TONE: Record<StatusPeriodoAquisitivo, 'green' | 'blue' | 'amber' | 'red' | 'grey'> = {
+  EM_AQUISICAO: 'grey',
+  DISPONIVEL: 'green',
+  A_VENCER: 'amber',
+  VENCIDA: 'red',
+  PARCIALMENTE_GOZADA: 'blue',
+  QUITADA: 'grey',
+  PERDIDO_POR_AFASTAMENTO: 'red',
+};
+
+interface FeriasHistoricoColaborador {
+  periodos: {
+    id: string;
+    numero: number;
+    dataInicio: string;
+    dataFim: string;
+    origemSuspensaoId: string | null;
+    resumo: {
+      dataLimiteConcessao: string;
+      diasAdquiridos: number;
+      saldoDisponivel: number;
+      status: StatusPeriodoAquisitivo;
+    };
+  }[];
+}
+
 interface EmployeeDetail {
   id: string;
   matricula: string;
@@ -176,6 +221,8 @@ interface EmployeeDetail {
     periodoAquisitivo: { inicio: string; fim: string } | null;
   }[];
   leaveRecords: { id: string; tipo: string; inicio: string; retorno: string | null }[];
+  afastadoAtual: boolean;
+  afastamentoAtivoTipo: string | null;
   ocorrencias: { id: string; tipo: string; data: string; descricao: string; autor: string }[];
   accidents: {
     id: string;
@@ -621,6 +668,12 @@ export default function EmployeeProfilePage() {
     enabled: tab === 'registro',
   });
 
+  const { data: feriasHistorico } = useQuery({
+    queryKey: ['rh', 'ferias', 'historico', id],
+    queryFn: async () => (await api.get<FeriasHistoricoColaborador>(`/rh/ferias/colaboradores/${id}/historico`)).data,
+    enabled: tab === 'registro',
+  });
+
   const setDocStatus = useMutation({
     mutationFn: async (vars: { requirementId: string; status: DocumentRequirementStatus['status'] }) =>
       api.patch(`/rh/documents/employees/${id}/requirements/${vars.requirementId}`, { status: vars.status }),
@@ -665,6 +718,9 @@ export default function EmployeeProfilePage() {
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{e.nome}</h2>
             <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
+            {e.status === 'ATIVO' && e.afastadoAtual && (
+              <Badge tone="amber">Afastado{e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}</Badge>
+            )}
             <Badge tone={complianceTone(e.conformidadeDocumental)}>Conformidade: {e.conformidadeDocumental}%</Badge>
           </div>
           <p className="text-sm text-text-secondary">
@@ -2012,24 +2068,34 @@ export default function EmployeeProfilePage() {
                       <tr className="text-left text-text-tertiary">
                         <th className="pb-2">Início</th>
                         <th className="pb-2">Fim</th>
+                        <th className="pb-2 print:hidden">Situação</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {e.periodosAquisitivos.map((p, i) => (
-                        <tr key={i} className="border-t border-divider">
-                          <td className="py-2">{formatDate(p.inicio)}</td>
-                          <td className="py-2">{formatDate(p.fim)}</td>
+                      {(feriasHistorico?.periodos ?? []).map((p) => (
+                        <tr key={p.id} className="border-t border-divider align-top">
+                          <td className="py-2">{formatDate(p.dataInicio)}</td>
+                          <td className="py-2">{formatDate(p.dataFim)}</td>
+                          <td className="py-2 print:hidden">
+                            <Badge tone={STATUS_PERIODO_TONE[p.resumo.status]}>{STATUS_PERIODO_LABEL[p.resumo.status]}</Badge>
+                          </td>
                         </tr>
                       ))}
-                      {e.periodosAquisitivos.length === 0 && (
+                      {(feriasHistorico?.periodos ?? []).length === 0 && (
                         <tr>
-                          <td colSpan={2}>
+                          <td colSpan={3}>
                             <EmptyState>Sem períodos aquisitivos.</EmptyState>
                           </td>
                         </tr>
                       )}
                     </tbody>
                   </table>
+                  <p className="mt-2 hidden text-xs text-text-tertiary print:block">
+                    {(feriasHistorico?.periodos ?? [])
+                      .filter((p) => p.resumo.status === 'PERDIDO_POR_AFASTAMENTO')
+                      .map((p) => `Período ${formatDate(p.dataInicio)} a ${formatDate(p.dataFim)}: ${STATUS_PERIODO_LABEL.PERDIDO_POR_AFASTAMENTO}.`)
+                      .join(' ')}
+                  </p>
                 </Card>
               </div>
 
@@ -2120,6 +2186,37 @@ export default function EmployeeProfilePage() {
                       <tr>
                         <td colSpan={4}>
                           <EmptyState>Sem registros.</EmptyState>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Afastamentos</h4>
+              <Card>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-text-tertiary">
+                      <th className="pb-2">Tipo</th>
+                      <th className="pb-2">Início</th>
+                      <th className="pb-2">Retorno</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {e.leaveRecords.map((l) => (
+                      <tr key={l.id} className="border-t border-divider">
+                        <td className="py-2">{l.tipo}</td>
+                        <td className="py-2">{formatDate(l.inicio)}</td>
+                        <td className="py-2">{l.retorno ? formatDate(l.retorno) : 'Em andamento'}</td>
+                      </tr>
+                    ))}
+                    {e.leaveRecords.length === 0 && (
+                      <tr>
+                        <td colSpan={3}>
+                          <EmptyState>Nenhum afastamento registrado.</EmptyState>
                         </td>
                       </tr>
                     )}

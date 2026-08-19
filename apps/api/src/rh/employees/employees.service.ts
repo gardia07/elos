@@ -121,6 +121,7 @@ export class EmployeesService {
           where: { status: 'APROVADA' },
           select: { inicio: true, fim: true, diasAbono: true },
         },
+        leaveRecords: { select: { tipo: true, inicio: true, retorno: true } },
       },
     });
     const { byEmployee: conformidade } =
@@ -132,6 +133,8 @@ export class EmployeesService {
         hoje,
         e.vacationRequests,
       );
+      const afastamentoAtivo =
+        e.leaveRecords.find((l) => l.retorno == null || l.retorno >= hoje) ?? null;
       return {
         ...e,
         feriasSaldo: feriasStatus.saldoDisponivel,
@@ -139,6 +142,8 @@ export class EmployeesService {
         conformidadeDocumental: conformidade[e.id] ?? e.conformidadeDocumental,
         tempoDeCasa: monthsBetween(e.dataAdmissao, hoje),
         feriasVencimentoAlerta: daysUntil(feriasStatus.vencimento, hoje) <= 60,
+        afastadoAtual: !!afastamentoAtivo,
+        afastamentoAtivoTipo: afastamentoAtivo?.tipo ?? null,
       };
     });
 
@@ -249,6 +254,9 @@ export class EmployeesService {
       employee.vacationRequests,
     );
 
+    const afastamentoAtivo =
+      employee.leaveRecords.find((l) => l.retorno == null || l.retorno >= hoje) ?? null;
+
     return {
       ...employee,
       historico,
@@ -264,6 +272,8 @@ export class EmployeesService {
       proximasFerias: proximasFerias
         ? { inicio: proximasFerias.inicio, fim: proximasFerias.fim }
         : null,
+      afastadoAtual: !!afastamentoAtivo,
+      afastamentoAtivoTipo: afastamentoAtivo?.tipo ?? null,
     };
   }
 
@@ -396,6 +406,7 @@ export class EmployeesService {
     terminationId?: string,
     vacationRequestId?: string,
     leaveRecordId?: string,
+    fracaoDeFeriasId?: string,
   ) {
     const { tenantId } = getRequestContext();
     await this.mustFind(id);
@@ -423,6 +434,15 @@ export class EmployeesService {
         throw new NotFoundException('Afastamento não encontrado.');
       }
     }
+    if (fracaoDeFeriasId) {
+      const fracao = await this.db().fracaoDeFerias.findUnique({
+        where: { id: fracaoDeFeriasId },
+        include: { periodoAquisitivo: { select: { employeeId: true } } },
+      });
+      if (!fracao || fracao.periodoAquisitivo.employeeId !== id) {
+        throw new NotFoundException('Solicitação de férias não encontrada.');
+      }
+    }
     const uploaded = await uploadDocumento(
       `colaboradores/${tenantId}/${id}/documentos`,
       file,
@@ -433,6 +453,7 @@ export class EmployeesService {
         terminationId: terminationId || null,
         vacationRequestId: vacationRequestId || null,
         leaveRecordId: leaveRecordId || null,
+        fracaoDeFeriasId: fracaoDeFeriasId || null,
         nome: nomeOverride || uploaded.nomeOriginal,
         tipo,
         tamanho: uploaded.tamanho,

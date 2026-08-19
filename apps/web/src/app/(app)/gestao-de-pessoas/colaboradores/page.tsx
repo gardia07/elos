@@ -177,6 +177,8 @@ interface Employee {
   conformidadeDocumental: number;
   tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
   tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
+  afastadoAtual: boolean;
+  afastamentoAtivoTipo: string | null;
 }
 
 interface FilterOptions {
@@ -512,7 +514,12 @@ export default function ColaboradoresPage() {
                   <Badge tone={complianceTone(e.conformidadeDocumental)}>{e.conformidadeDocumental}%</Badge>
                 </td>
                 <td className="px-5 py-3">
-                  <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
+                    {e.status === 'ATIVO' && e.afastadoAtual && (
+                      <Badge tone="amber">Afastado{e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}</Badge>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

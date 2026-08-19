@@ -15,6 +15,7 @@ import { EmployeesModule } from './rh/employees/employees.module';
 import { DocumentsModule } from './rh/documents/documents.module';
 import { EvaluationsModule } from './rh/evaluations/evaluations.module';
 import { VacationsModule } from './rh/vacations/vacations.module';
+import { FeriasModule } from './rh/ferias/ferias.module';
 import { TerminationsModule } from './rh/terminations/terminations.module';
 import { PainelModule } from './rh/painel/painel.module';
 import { DocumentTemplatesModule } from './rh/document-templates/document-templates.module';
@@ -59,6 +60,7 @@ import { SearchModule } from './search/search.module';
     DocumentsModule,
     EvaluationsModule,
     VacationsModule,
+    FeriasModule,
     TerminationsModule,
     PainelModule,
     DocumentTemplatesModule,
