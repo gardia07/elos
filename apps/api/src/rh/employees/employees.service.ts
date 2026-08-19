@@ -7,6 +7,7 @@ import { downloadDocumento, uploadDocumento } from '../../common/blob-storage';
 import { nextMatricula } from './matricula.util';
 import {
   buildAquisitivoCycles,
+  buildFeriasDetalhado,
   computeFeriasStatus,
   findCycleForUso,
 } from '../vacations/vacation-cycles.util';
@@ -242,12 +243,18 @@ export class EmployeesService {
       hoje,
       employee.vacationRequests,
     );
+    const periodosDetalhados = buildFeriasDetalhado(
+      employee.dataAdmissao,
+      hoje,
+      employee.vacationRequests,
+    );
 
     return {
       ...employee,
       historico,
       vacationRequests,
       periodosAquisitivos,
+      periodosDetalhados,
       feriasSaldo: feriasStatus.saldoDisponivel,
       feriasVencimento: feriasStatus.vencimento,
       conformidadeDocumental:

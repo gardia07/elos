@@ -96,3 +96,48 @@ export function computeFeriasStatus(
     vencimento: vencimento ?? addMonths(dataAdmissao, 12),
   };
 }
+
+/** Quantos meses completos (aniversários mensais) já se passaram desde `inicio` até `hoje`. */
+function mesesCompletosEntre(inicio: Date, hoje: Date): number {
+  let meses = 0;
+  while (addMonths(inicio, meses + 1) <= hoje) meses++;
+  return meses;
+}
+
+export interface CicloAquisitivoDetalhado {
+  inicio: Date;
+  fim: Date;
+  completo: boolean;
+  diasAdquiridos: number;
+  diasUsados: number;
+  diasSaldo: number;
+}
+
+/**
+ * Detalhamento por período aquisitivo (o "relatório" que a contabilidade costuma enviar): cada
+ * ciclo concluído credita 30 dias cheios; o ciclo em andamento credita o proporcional (2,5 dias
+ * por mês completo de trabalho dentro do ciclo, arredondado a 1 casa decimal) -- ainda não é
+ * saldo utilizável (não entra em computeFeriasStatus), é só a visão informativa do quanto já foi
+ * adquirido dentro do período corrente.
+ */
+export function buildFeriasDetalhado(
+  dataAdmissao: Date,
+  hoje: Date,
+  aprovadas: VacationUso[],
+): CicloAquisitivoDetalhado[] {
+  const cycles = buildAquisitivoCycles(dataAdmissao, hoje);
+  return cycles.map((cycle) => {
+    const completo = cycle.fim <= hoje;
+    if (!completo) {
+      const mesesCompletos = mesesCompletosEntre(cycle.inicio, hoje);
+      const diasAdquiridos = Math.round(mesesCompletos * 2.5 * 10) / 10;
+      return { inicio: cycle.inicio, fim: cycle.fim, completo, diasAdquiridos, diasUsados: 0, diasSaldo: diasAdquiridos };
+    }
+    const concessivoFim = addMonths(cycle.fim, 12);
+    const diasUsados = aprovadas
+      .filter((v) => v.inicio >= cycle.fim && v.inicio < concessivoFim)
+      .reduce((soma, v) => soma + inclusiveDays(v.inicio, v.fim) + v.diasAbono, 0);
+    const diasAdquiridos = 30;
+    return { inicio: cycle.inicio, fim: cycle.fim, completo, diasAdquiridos, diasUsados, diasSaldo: Math.max(0, diasAdquiridos - diasUsados) };
+  });
+}

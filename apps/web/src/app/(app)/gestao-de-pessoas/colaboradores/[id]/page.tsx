@@ -167,6 +167,7 @@ interface EmployeeDetail {
   }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
   periodosAquisitivos: { inicio: string; fim: string }[];
+  periodosDetalhados: { inicio: string; fim: string; completo: boolean; diasAdquiridos: number; diasUsados: number; diasSaldo: number }[];
   vacationRequests: {
     id: string;
     inicio: string;
@@ -1286,6 +1287,40 @@ export default function EmployeeProfilePage() {
               value={<span className={e.feriasVencimentoAlerta ? 'text-danger' : ''}>{formatDate(e.feriasVencimento)}</span>}
             />
           </div>
+
+          <Section title="Períodos aquisitivos">
+            <p className="mb-3 text-xs text-text-tertiary">
+              Cada período aquisitivo concluído garante 30 dias. O período em andamento mostra o proporcional já adquirido (2,5 dias por mês completo de casa).
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-divider text-left text-text-tertiary">
+                    <th className="py-2 pr-3 font-medium">Período</th>
+                    <th className="py-2 pr-3 font-medium">Status</th>
+                    <th className="py-2 pr-3 font-medium">Dias adquiridos</th>
+                    <th className="py-2 pr-3 font-medium">Dias usados</th>
+                    <th className="py-2 font-medium">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {e.periodosDetalhados.map((p) => (
+                    <tr key={p.inicio} className="border-b border-divider last:border-0">
+                      <td className="py-2 pr-3">
+                        {formatDate(p.inicio)} a {formatDate(p.fim)}
+                      </td>
+                      <td className="py-2 pr-3">
+                        <Badge tone={p.completo ? 'green' : 'blue'}>{p.completo ? 'Completo' : 'Em andamento'}</Badge>
+                      </td>
+                      <td className="py-2 pr-3">{p.diasAdquiridos}</td>
+                      <td className="py-2 pr-3">{p.diasUsados}</td>
+                      <td className="py-2 font-medium">{p.diasSaldo}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Section title="Solicitar férias">
