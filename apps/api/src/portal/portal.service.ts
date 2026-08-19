@@ -2,8 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { DocumentsService } from '../rh/documents/documents.service';
-import { VacationsService } from '../rh/vacations/vacations.service';
-import { computeFeriasStatus } from '../rh/vacations/vacation-cycles.util';
+import { FeriasService } from '../rh/ferias/ferias.service';
 import { RequestPortalVacationDto } from './dto/portal.dto';
 
 @Injectable()
@@ -11,7 +10,7 @@ export class PortalService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly documents: DocumentsService,
-    private readonly vacations: VacationsService,
+    private readonly feriasService: FeriasService,
   ) {}
 
   private db() {
@@ -30,34 +29,27 @@ export class PortalService {
 
   async me() {
     const employeeId = await this.myEmployeeId();
-    const employee = await this.db().employee.findUniqueOrThrow({
-      where: { id: employeeId },
-      select: {
-        nome: true,
-        cargo: true,
-        departamento: true,
-        filial: true,
-        matricula: true,
-        dataAdmissao: true,
-        status: true,
-        email: true,
-        telefone: true,
-        vacationRequests: {
-          where: { status: 'APROVADA' },
-          select: { inicio: true, fim: true, diasAbono: true },
+    const [employee, feriasStatus] = await Promise.all([
+      this.db().employee.findUniqueOrThrow({
+        where: { id: employeeId },
+        select: {
+          nome: true,
+          cargo: true,
+          departamento: true,
+          filial: true,
+          matricula: true,
+          dataAdmissao: true,
+          status: true,
+          email: true,
+          telefone: true,
         },
-      },
-    });
-    const { vacationRequests, ...rest } = employee;
-    const feriasStatus = computeFeriasStatus(
-      employee.dataAdmissao,
-      new Date(),
-      vacationRequests,
-    );
+      }),
+      this.feriasService.saldoAtual(employeeId),
+    ]);
     return {
-      ...rest,
+      ...employee,
       feriasSaldo: feriasStatus.saldoDisponivel,
-      feriasVencimento: feriasStatus.vencimento,
+      feriasVencimento: feriasStatus.proximoVencimento,
     };
   }
 
@@ -73,12 +65,25 @@ export class PortalService {
 
   async ferias() {
     const employeeId = await this.myEmployeeId();
-    return this.db().vacationRequest.findMany({ where: { employeeId }, orderBy: { createdAt: 'desc' } });
+    const { periodos } = await this.feriasService.historicoColaborador(employeeId);
+    return periodos
+      .flatMap((p) =>
+        p.fracoes.map((f) => ({
+          id: f.id,
+          inicio: f.dataInicio,
+          fim: f.dataFim,
+          dias: f.dias,
+          diasAbono: f.diasAbono,
+          status: f.statusEfetivo,
+          createdAt: f.createdAt,
+        })),
+      )
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async requestFerias(dto: RequestPortalVacationDto) {
     const employeeId = await this.myEmployeeId();
-    return this.vacations.createRequest({ employeeId, inicio: dto.inicio, fim: dto.fim });
+    return this.feriasService.programarPortal(employeeId, dto);
   }
 
   async holerites() {

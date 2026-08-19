@@ -10,7 +10,7 @@ const SUBPAGES = [
   { label: 'Admissão', href: '/gestao-de-pessoas/admissao' },
   { label: 'Colaboradores', href: '/gestao-de-pessoas/colaboradores' },
   { label: 'Avaliação e PDI', href: '/gestao-de-pessoas/avaliacao' },
-  { label: 'Férias e Afastamentos', href: '/gestao-de-pessoas/ferias' },
+  { label: 'Férias', href: '/gestao-de-pessoas/ferias' },
   { label: 'Desligamento', href: '/gestao-de-pessoas/desligamento' },
 ];
 

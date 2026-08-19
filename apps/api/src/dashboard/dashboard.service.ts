@@ -3,9 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
 import { ComplianceOverviewService } from '../compliance/overview.service';
 import { DocumentsService } from '../rh/documents/documents.service';
+import { FeriasService } from '../rh/ferias/ferias.service';
 import { LicenseService } from '../license/license.service';
 import { buildTerminationAlerts, PRAZO_DIAS } from '../rh/terminations/terminations-lembretes.util';
-import { computeFeriasStatus } from '../rh/vacations/vacation-cycles.util';
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -40,6 +40,7 @@ export class DashboardService {
     private readonly prisma: PrismaService,
     private readonly compliance: ComplianceOverviewService,
     private readonly documents: DocumentsService,
+    private readonly ferias: FeriasService,
     private readonly license: LicenseService,
   ) {}
 
@@ -173,15 +174,7 @@ export class DashboardService {
       }),
       db.employee.findMany({
         where: { status: 'ATIVO' },
-        select: {
-          id: true,
-          nome: true,
-          dataAdmissao: true,
-          vacationRequests: {
-            where: { status: 'APROVADA' },
-            select: { inicio: true, fim: true, diasAbono: true },
-          },
-        },
+        select: { id: true, nome: true },
       }),
       db.collectiveAgreement.count({
         where: { reajusteAplicadoEm: null, vigenciaFim: { gte: hoje } },
@@ -206,15 +199,7 @@ export class DashboardService {
           employee: { select: { nome: true } },
         },
       }),
-      db.vacationRequest.findMany({
-        where: { status: 'PENDENTE' },
-        select: {
-          id: true,
-          inicio: true,
-          employeeId: true,
-          employee: { select: { nome: true } },
-        },
-      }),
+      this.ferias.listarFracoes('PENDENTES', {}),
       db.nrTrainingRecord.findMany({
         select: {
           id: true,
@@ -255,21 +240,18 @@ export class DashboardService {
         href: '/dp/prazos',
       });
     }
+    const saldosFerias = await this.ferias.saldosPorEmployee(colaboradoresFeriasVencendo.map((c) => c.id));
     for (const colaborador of colaboradoresFeriasVencendo) {
-      const vencimento = computeFeriasStatus(
-        colaborador.dataAdmissao,
-        hoje,
-        colaborador.vacationRequests,
-      ).vencimento;
-      if (vencimento > em60dias) continue;
+      const saldo = saldosFerias.get(colaborador.id);
+      if (!saldo?.proximoVencimento || saldo.proximoVencimento > em60dias) continue;
       const diasRestantes = Math.round(
-        (vencimento.getTime() - hoje.getTime()) / 86_400_000,
+        (saldo.proximoVencimento.getTime() - hoje.getTime()) / 86_400_000,
       );
       alerts.push({
         hub: 'RH',
         alertKey: `rh-ferias-vencendo-${colaborador.id}`,
         prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
-        mensagem: `${colaborador.nome} — período aquisitivo de férias ${diasRestantes < 0 ? 'venceu' : 'vence'} ${formatDiasRestantes(vencimento, hoje)}`,
+        mensagem: `${colaborador.nome} — período aquisitivo de férias ${diasRestantes < 0 ? 'venceu' : 'vence'} ${formatDiasRestantes(saldo.proximoVencimento, hoje)}`,
         href: `/gestao-de-pessoas/colaboradores/${colaborador.id}`,
       });
     }
@@ -316,7 +298,7 @@ export class DashboardService {
         hub: 'RH',
         alertKey: `rh-ferias-pendente-${f.id}`,
         prioridade: 'MEDIA',
-        mensagem: `${f.employee.nome} — solicitação de férias aguardando aprovação`,
+        mensagem: `${f.nome} — solicitação de férias aguardando aprovação`,
         href: `/gestao-de-pessoas/colaboradores/${f.employeeId}`,
       });
     }

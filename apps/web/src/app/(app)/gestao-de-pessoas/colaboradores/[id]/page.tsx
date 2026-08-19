@@ -223,7 +223,6 @@ interface EmployeeDetail {
   feriasSaldo: number;
   feriasVencimento: string;
   feriasVencimentoAlerta: boolean;
-  proximasFerias: { inicio: string; fim: string } | null;
   tempoDeCasa: { anos: number; meses: number };
   dependentes: { id: string; nome: string; parentesco: string; cpf: string | null; dataNascimento: string | null }[];
   historico: { id: string; evento: string; categoria: string; autor: string; data: string; revertivel: boolean }[];
@@ -249,14 +248,11 @@ interface EmployeeDetail {
     leaveRecordId: string | null;
   }[];
   feriasHistorico: { id: string; periodo: string; dias: number }[];
-  periodosAquisitivos: { inicio: string; fim: string }[];
-  periodosDetalhados: { inicio: string; fim: string; completo: boolean; diasAdquiridos: number; diasUsados: number; diasSaldo: number }[];
   vacationRequests: {
     id: string;
     inicio: string;
     fim: string;
     diasAbono: number;
-    periodoAquisitivo: { inicio: string; fim: string } | null;
   }[];
   leaveRecords: { id: string; tipo: string; inicio: string; retorno: string | null }[];
   afastadoAtual: boolean;

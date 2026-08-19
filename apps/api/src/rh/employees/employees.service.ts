@@ -2,15 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DocumentsService } from '../documents/documents.service';
+import { FeriasService } from '../ferias/ferias.service';
 import { getRequestContext } from '../../common/request-context';
 import { downloadDocumento, uploadDocumento } from '../../common/blob-storage';
 import { nextMatricula } from './matricula.util';
-import {
-  buildAquisitivoCycles,
-  buildFeriasDetalhado,
-  computeFeriasStatus,
-  findCycleForUso,
-} from '../vacations/vacation-cycles.util';
 import {
   AddContatoEmergenciaDto,
   AddDependenteDto,
@@ -49,6 +44,7 @@ export class EmployeesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly documents: DocumentsService,
+    private readonly ferias: FeriasService,
   ) {}
 
   private db() {
@@ -117,31 +113,25 @@ export class EmployeesService {
       where,
       orderBy: { nome: 'asc' },
       include: {
-        vacationRequests: {
-          where: { status: 'APROVADA' },
-          select: { inicio: true, fim: true, diasAbono: true },
-        },
         leaveRecords: { select: { tipo: true, inicio: true, retorno: true } },
       },
     });
-    const { byEmployee: conformidade } =
-      await this.documents.complianceOverview(employees.map((e) => e.id));
+    const [{ byEmployee: conformidade }, saldos] = await Promise.all([
+      this.documents.complianceOverview(employees.map((e) => e.id)),
+      this.ferias.saldosPorEmployee(employees.map((e) => e.id)),
+    ]);
     const hoje = new Date();
     let mapped = employees.map((e) => {
-      const feriasStatus = computeFeriasStatus(
-        e.dataAdmissao,
-        hoje,
-        e.vacationRequests,
-      );
+      const feriasStatus = saldos.get(e.id) ?? { saldoDisponivel: 0, proximoVencimento: null, feriasVencendoEm60Dias: false };
       const afastamentoAtivo =
         e.leaveRecords.find((l) => l.retorno == null || l.retorno >= hoje) ?? null;
       return {
         ...e,
         feriasSaldo: feriasStatus.saldoDisponivel,
-        feriasVencimento: feriasStatus.vencimento,
+        feriasVencimento: feriasStatus.proximoVencimento,
         conformidadeDocumental: conformidade[e.id] ?? e.conformidadeDocumental,
         tempoDeCasa: monthsBetween(e.dataAdmissao, hoje),
-        feriasVencimentoAlerta: daysUntil(feriasStatus.vencimento, hoje) <= 60,
+        feriasVencimentoAlerta: feriasStatus.feriasVencendoEm60Dias,
         afastadoAtual: !!afastamentoAtivo,
         afastamentoAtivoTipo: afastamentoAtivo?.tipo ?? null,
       };
@@ -224,35 +214,11 @@ export class EmployeesService {
 
     const historico = await this.attachRevertivel(id, employee.historico);
 
-    const { byEmployee: conformidade } =
-      await this.documents.complianceOverview([id]);
+    const [{ byEmployee: conformidade }, feriasStatus] = await Promise.all([
+      this.documents.complianceOverview([id]),
+      this.ferias.saldoAtual(id),
+    ]);
     const hoje = new Date();
-    const proximasFerias =
-      employee.vacationRequests.find((r) => r.fim >= hoje) ?? null;
-
-    const periodosAquisitivos = buildAquisitivoCycles(
-      employee.dataAdmissao,
-      hoje,
-    );
-    const vacationRequests = employee.vacationRequests.map((v) => {
-      const ciclo = findCycleForUso(periodosAquisitivos, v.inicio);
-      return {
-        ...v,
-        periodoAquisitivo: ciclo
-          ? { inicio: ciclo.inicio, fim: ciclo.fim }
-          : null,
-      };
-    });
-    const feriasStatus = computeFeriasStatus(
-      employee.dataAdmissao,
-      hoje,
-      employee.vacationRequests,
-    );
-    const periodosDetalhados = buildFeriasDetalhado(
-      employee.dataAdmissao,
-      hoje,
-      employee.vacationRequests,
-    );
 
     const afastamentoAtivo =
       employee.leaveRecords.find((l) => l.retorno == null || l.retorno >= hoje) ?? null;
@@ -260,18 +226,12 @@ export class EmployeesService {
     return {
       ...employee,
       historico,
-      vacationRequests,
-      periodosAquisitivos,
-      periodosDetalhados,
       feriasSaldo: feriasStatus.saldoDisponivel,
-      feriasVencimento: feriasStatus.vencimento,
+      feriasVencimento: feriasStatus.proximoVencimento,
       conformidadeDocumental:
         conformidade[id] ?? employee.conformidadeDocumental,
       tempoDeCasa: monthsBetween(employee.dataAdmissao, hoje),
-      feriasVencimentoAlerta: daysUntil(feriasStatus.vencimento, hoje) <= 60,
-      proximasFerias: proximasFerias
-        ? { inicio: proximasFerias.inicio, fim: proximasFerias.fim }
-        : null,
+      feriasVencimentoAlerta: feriasStatus.feriasVencendoEm60Dias,
       afastadoAtual: !!afastamentoAtivo,
       afastamentoAtivoTipo: afastamentoAtivo?.tipo ?? null,
     };
@@ -779,8 +739,4 @@ export class EmployeesService {
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
     return employee;
   }
-}
-
-function daysUntil(date: Date, from: Date): number {
-  return Math.round((date.getTime() - from.getTime()) / 86_400_000);
 }

@@ -4,9 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { FeriasService } from '../../rh/ferias/ferias.service';
 import { AVISO_SIMULACAO, calcularRescisao } from './calculo-rescisao';
 import { SimularFeriasDto, SimularRescisaoDto } from './dto/simulacoes.dto';
-import { computeFeriasStatus } from '../../rh/vacations/vacation-cycles.util';
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -14,7 +14,10 @@ function round2(n: number): number {
 
 @Injectable()
 export class SimulacoesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ferias: FeriasService,
+  ) {}
 
   private db() {
     return this.prisma.forCurrentTenant();
@@ -54,16 +57,7 @@ export class SimulacoesService {
   async simularRescisao(dto: SimularRescisaoDto) {
     const employee = await this.db().employee.findUnique({
       where: { id: dto.employeeId },
-      select: {
-        id: true,
-        nome: true,
-        salario: true,
-        dataAdmissao: true,
-        vacationRequests: {
-          where: { status: 'APROVADA' },
-          select: { inicio: true, fim: true, diasAbono: true },
-        },
-      },
+      select: { id: true, nome: true, salario: true, dataAdmissao: true },
     });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
 
@@ -76,11 +70,7 @@ export class SimulacoesService {
       );
     }
 
-    const feriasStatus = computeFeriasStatus(
-      employee.dataAdmissao,
-      dataPrevista,
-      employee.vacationRequests,
-    );
+    const feriasStatus = await this.ferias.projecaoSaldoEm(employee.id, dataPrevista);
     const resultado = calcularRescisao({
       salario: Number(employee.salario),
       dataAdmissao: employee.dataAdmissao,

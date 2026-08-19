@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { PortalController } from './portal.controller';
 import { PortalService } from './portal.service';
 import { DocumentsModule } from '../rh/documents/documents.module';
-import { VacationsModule } from '../rh/vacations/vacations.module';
+import { FeriasModule } from '../rh/ferias/ferias.module';
 
 @Module({
-  imports: [DocumentsModule, VacationsModule],
+  imports: [DocumentsModule, FeriasModule],
   controllers: [PortalController],
   providers: [PortalService],
 })

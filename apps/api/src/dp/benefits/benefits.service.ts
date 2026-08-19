@@ -328,10 +328,10 @@ export class BenefitsService {
     let itensApurados = 0;
 
     for (const employee of employees) {
-      const feriasAprovadas = await db.vacationRequest.findMany({
-        where: { employeeId: employee.id, status: 'APROVADA', inicio: { lte: fim }, fim: { gte: inicio } },
+      const feriasAprovadas = await db.fracaoDeFerias.findMany({
+        where: { periodoAquisitivo: { employeeId: employee.id }, status: 'APROVADA', dataInicio: { lte: fim }, dataFim: { gte: inicio } },
       });
-      const feriasPeriodos = feriasAprovadas.map((f) => ({ inicio: f.inicio, fim: f.fim as Date | null }));
+      const feriasPeriodos = feriasAprovadas.map((f) => ({ inicio: f.dataInicio, fim: f.dataFim as Date | null }));
 
       const afastamentos = await db.leaveRecord.findMany({
         where: { employeeId: employee.id, inicio: { lte: fim }, OR: [{ retorno: null }, { retorno: { gte: inicio } }] },

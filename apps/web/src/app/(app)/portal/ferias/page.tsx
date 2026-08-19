@@ -9,18 +9,35 @@ interface VacationRequest {
   id: string;
   inicio: string;
   fim: string;
-  status: 'PENDENTE' | 'APROVADA' | 'RECUSADA';
+  dias: number;
+  diasAbono: number;
+  status: 'PENDENTE' | 'APROVADA' | 'REPROVADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
   createdAt: string;
 }
 
-const STATUS_LABEL = { PENDENTE: 'Pendente', APROVADA: 'Aprovada', RECUSADA: 'Recusada' } as const;
-const STATUS_TONE = { PENDENTE: 'amber', APROVADA: 'green', RECUSADA: 'red' } as const;
+const STATUS_LABEL = {
+  PENDENTE: 'Pendente',
+  APROVADA: 'Aprovada',
+  REPROVADA: 'Reprovada',
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDA: 'Concluída',
+  CANCELADA: 'Cancelada',
+} as const;
+const STATUS_TONE = {
+  PENDENTE: 'amber',
+  APROVADA: 'blue',
+  REPROVADA: 'red',
+  EM_ANDAMENTO: 'green',
+  CONCLUIDA: 'grey',
+  CANCELADA: 'red',
+} as const;
 
 export default function PortalFeriasPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [inicio, setInicio] = useState('');
   const [fim, setFim] = useState('');
+  const [error, setError] = useState('');
 
   const { data: requests } = useQuery({
     queryKey: ['portal', 'ferias'],
@@ -35,6 +52,11 @@ export default function PortalFeriasPage() {
       setShowForm(false);
       setInicio('');
       setFim('');
+      setError('');
+    },
+    onError: (err: unknown) => {
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      setError(Array.isArray(message) ? message.join(' ') : message || 'Não foi possível enviar a solicitação.');
     },
   });
 
@@ -64,6 +86,7 @@ export default function PortalFeriasPage() {
             <Button type="submit" disabled={create.isPending}>
               Enviar solicitação
             </Button>
+            {error && <p className="text-xs text-danger">{error}</p>}
           </form>
         </Card>
       )}

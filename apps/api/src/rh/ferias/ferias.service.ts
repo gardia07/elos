@@ -6,6 +6,8 @@ import {
   buildCiclosAquisitivos,
   computePeriodoResumo,
   dataLimiteConcessao,
+  encontrarPeriodoPorDataDeUso,
+  inclusiveDays,
   statusEfetivoFracao,
   TIPO_AFASTAMENTO_SUSPENSIVO,
   validarAbono,
@@ -70,6 +72,34 @@ export class FeriasService {
 
   private async faltasPorPeriodo(employeeId: string, dataInicio: Date, dataFim: Date): Promise<number> {
     return this.db().faltaInjustificada.count({ where: { employeeId, data: { gte: dataInicio, lt: dataFim } } });
+  }
+
+  /** Encontra o período aquisitivo (já persistido) a que uma data de gozo pertence -- usado
+   * pelo autoatendimento do portal, que não expõe seleção de período pro colaborador. */
+  private async periodoParaData(employeeId: string, data: Date) {
+    const employee = await this.db().employee.findUnique({ where: { id: employeeId }, select: { dataAdmissao: true } });
+    if (!employee) throw new NotFoundException('Colaborador não encontrado.');
+    const hoje = hojeUtc();
+    await this.garantirPeriodos(employeeId, employee.dataAdmissao, hoje);
+    const periodos = await this.db().periodoAquisitivo.findMany({ where: { employeeId } });
+    const ciclo = encontrarPeriodoPorDataDeUso(
+      periodos.map((p) => ({ numero: p.numero, dataInicio: p.dataInicio, dataFim: p.dataFim })),
+      data,
+    );
+    if (!ciclo) return null;
+    return periodos.find((p) => p.numero === ciclo.numero) ?? null;
+  }
+
+  /** Solicitação de férias do autoatendimento (portal) -- só recebe início/fim, sem escolha de
+   * período/fracionamento avançado; detecta o período aquisitivo automaticamente. */
+  async programarPortal(employeeId: string, dto: { inicio: string; fim: string }) {
+    const dataInicio = startOfDayUtc(dto.inicio);
+    const dataFim = startOfDayUtc(dto.fim);
+    const periodo = await this.periodoParaData(employeeId, dataInicio);
+    if (!periodo) {
+      throw new BadRequestException('Não foi possível identificar o período aquisitivo para essa data de início.');
+    }
+    return this.programar(employeeId, { periodoAquisitivoId: periodo.id, dataInicio: dto.inicio, dias: inclusiveDays(dataInicio, dataFim) });
   }
 
   async historicoColaborador(employeeId: string) {
@@ -430,44 +460,92 @@ export class FeriasService {
     return { ok: true };
   }
 
-  /** Saldo consolidado de um colaborador — reaproveitado pelos 8 consumidores que antes liam Employee.feriasSaldo. */
-  async saldoAtual(employeeId: string): Promise<{ saldoDisponivel: number; proximoVencimento: Date | null; feriasVencendoEm60Dias: boolean }> {
-    const employee = await this.db().employee.findUnique({ where: { id: employeeId } });
+  /**
+   * Projeta o saldo de férias numa data hipotética (ex.: simulação de rescisão numa
+   * data prevista futura) -- diferente de garantirPeriodos/saldoAtual, NUNCA persiste
+   * período novo, só projeta em memória a partir dos períodos já existentes.
+   */
+  async projecaoSaldoEm(employeeId: string, dataReferencia: Date): Promise<{ saldoDisponivel: number }> {
+    const employee = await this.db().employee.findUnique({ where: { id: employeeId }, select: { dataAdmissao: true } });
     if (!employee) throw new NotFoundException('Colaborador não encontrado.');
-    const hoje = hojeUtc();
-    await this.garantirPeriodos(employeeId, employee.dataAdmissao, hoje);
 
-    const periodos = await this.db().periodoAquisitivo.findMany({
-      where: { employeeId },
-      include: { fracoes: { select: { status: true, dias: true, diasAbono: true } } },
-    });
-    const faltas = await this.db().faltaInjustificada.findMany({ where: { employeeId } });
+    const [afastamentos, periodosExistentes, faltas] = await Promise.all([
+      this.afastamentosSuspensivos(employeeId),
+      this.db().periodoAquisitivo.findMany({
+        where: { employeeId },
+        include: { fracoes: { select: { status: true, dias: true, diasAbono: true } } },
+      }),
+      this.db().faltaInjustificada.findMany({ where: { employeeId } }),
+    ]);
+    const fracoesPorNumero = new Map(periodosExistentes.map((p) => [p.numero, p.fracoes]));
 
+    const ciclos = buildCiclosAquisitivos(employee.dataAdmissao, dataReferencia, afastamentos);
     let saldoDisponivel = 0;
-    let proximoVencimento: Date | null = null;
-    for (const p of periodos) {
-      const faltasNoPeriodo = faltas.filter((f) => f.data >= p.dataInicio && f.data < p.dataFim).length;
-      const resumo = computePeriodoResumo(
-        { numero: p.numero, dataInicio: p.dataInicio, dataFim: p.dataFim, suspensoPorAfastamento: p.origemSuspensaoId != null },
-        faltasNoPeriodo,
-        p.fracoes,
-        hoje,
-      );
+    for (const ciclo of ciclos) {
+      const faltasNoPeriodo = faltas.filter((f) => f.data >= ciclo.dataInicio && f.data < ciclo.dataFim).length;
+      const fracoes = fracoesPorNumero.get(ciclo.numero) ?? [];
+      const resumo = computePeriodoResumo(ciclo, faltasNoPeriodo, fracoes, dataReferencia);
       if (resumo.status !== 'EM_AQUISICAO') saldoDisponivel += resumo.saldoDisponivel;
-      if (
-        resumo.status !== 'EM_AQUISICAO' &&
-        resumo.status !== 'QUITADA' &&
-        resumo.status !== 'PERDIDO_POR_AFASTAMENTO' &&
-        (proximoVencimento === null || resumo.dataLimiteConcessao < proximoVencimento)
-      ) {
-        proximoVencimento = resumo.dataLimiteConcessao;
+    }
+    return { saldoDisponivel };
+  }
+
+  /** Saldo consolidado de um colaborador — reaproveitado pelos consumidores que antes liam Employee.feriasSaldo. */
+  async saldoAtual(employeeId: string): Promise<{ saldoDisponivel: number; proximoVencimento: Date | null; feriasVencendoEm60Dias: boolean }> {
+    const resultado = await this.saldosPorEmployee([employeeId]);
+    const saldo = resultado.get(employeeId);
+    if (!saldo) throw new NotFoundException('Colaborador não encontrado.');
+    return saldo;
+  }
+
+  /** Mesma coisa que saldoAtual, mas em lote -- evita N chamadas sequenciais em telas de listagem. */
+  async saldosPorEmployee(
+    employeeIds: string[],
+  ): Promise<Map<string, { saldoDisponivel: number; proximoVencimento: Date | null; feriasVencendoEm60Dias: boolean }>> {
+    const resultado = new Map<string, { saldoDisponivel: number; proximoVencimento: Date | null; feriasVencendoEm60Dias: boolean }>();
+    if (employeeIds.length === 0) return resultado;
+
+    const hoje = hojeUtc();
+    const employees = await this.db().employee.findMany({ where: { id: { in: employeeIds } }, select: { id: true, dataAdmissao: true } });
+    await Promise.all(employees.map((e) => this.garantirPeriodos(e.id, e.dataAdmissao, hoje)));
+
+    const [periodos, faltas] = await Promise.all([
+      this.db().periodoAquisitivo.findMany({
+        where: { employeeId: { in: employeeIds } },
+        include: { fracoes: { select: { status: true, dias: true, diasAbono: true } } },
+      }),
+      this.db().faltaInjustificada.findMany({ where: { employeeId: { in: employeeIds } } }),
+    ]);
+
+    for (const employee of employees) {
+      const periodosDoEmployee = periodos.filter((p) => p.employeeId === employee.id);
+      let saldoDisponivel = 0;
+      let proximoVencimento: Date | null = null;
+      for (const p of periodosDoEmployee) {
+        const faltasNoPeriodo = faltas.filter((f) => f.employeeId === employee.id && f.data >= p.dataInicio && f.data < p.dataFim).length;
+        const resumo = computePeriodoResumo(
+          { numero: p.numero, dataInicio: p.dataInicio, dataFim: p.dataFim, suspensoPorAfastamento: p.origemSuspensaoId != null },
+          faltasNoPeriodo,
+          p.fracoes,
+          hoje,
+        );
+        if (resumo.status !== 'EM_AQUISICAO') saldoDisponivel += resumo.saldoDisponivel;
+        if (
+          resumo.status !== 'EM_AQUISICAO' &&
+          resumo.status !== 'QUITADA' &&
+          resumo.status !== 'PERDIDO_POR_AFASTAMENTO' &&
+          (proximoVencimento === null || resumo.dataLimiteConcessao < proximoVencimento)
+        ) {
+          proximoVencimento = resumo.dataLimiteConcessao;
+        }
       }
+      if (!proximoVencimento) {
+        const ultimoPeriodo = periodosDoEmployee[periodosDoEmployee.length - 1];
+        proximoVencimento = ultimoPeriodo ? dataLimiteConcessao(ultimoPeriodo.dataFim) : dataLimiteConcessao(employee.dataAdmissao);
+      }
+      const diasAteVencimento = Math.round((proximoVencimento.getTime() - hoje.getTime()) / 86_400_000);
+      resultado.set(employee.id, { saldoDisponivel, proximoVencimento, feriasVencendoEm60Dias: diasAteVencimento <= 60 });
     }
-    if (!proximoVencimento) {
-      const ultimoPeriodo = periodos[periodos.length - 1];
-      proximoVencimento = ultimoPeriodo ? dataLimiteConcessao(ultimoPeriodo.dataFim) : dataLimiteConcessao(employee.dataAdmissao);
-    }
-    const diasAteVencimento = Math.round((proximoVencimento.getTime() - hoje.getTime()) / 86_400_000);
-    return { saldoDisponivel, proximoVencimento, feriasVencendoEm60Dias: diasAteVencimento <= 60 };
+    return resultado;
   }
 }
