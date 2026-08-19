@@ -197,7 +197,7 @@ export default function ColaboradoresPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [nome, setNome] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('ATIVO');
   const [showFilters, setShowFilters] = useState(false);
   const [showDocConfig, setShowDocConfig] = useState(false);
   const [departamento, setDepartamento] = useState('');

@@ -127,15 +127,15 @@ export function TarefasDoDia() {
   const itens = data?.itens ?? [];
 
   return (
-    <Card>
-      <div className="mb-3 flex items-center justify-between">
+    <Card className="flex h-full max-h-[420px] flex-col">
+      <div className="mb-3 flex shrink-0 items-center justify-between">
         <h3 className="text-sm font-semibold">Tarefas do dia</h3>
         <span className="text-xs text-text-tertiary">
           {data?.concluidasHoje ?? 0} de {data?.totalHoje ?? 0} concluídas hoje
         </span>
       </div>
 
-      <ul className="flex flex-col gap-2">
+      <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {itens.map((item) => (
           <li key={item.id} className="rounded-[10px] border border-border p-2.5">
             <div className="flex items-start gap-2">
@@ -234,7 +234,7 @@ export function TarefasDoDia() {
       </ul>
 
       <form
-        className="mt-3 flex gap-2"
+        className="mt-3 flex shrink-0 gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           if (novoTitulo.trim()) criarManual.mutate(novoTitulo.trim());

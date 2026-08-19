@@ -269,7 +269,7 @@ export class DashboardService {
         hub: 'RH',
         alertKey: `rh-ferias-vencendo-${colaborador.id}`,
         prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
-        mensagem: `${colaborador.nome} — período aquisitivo de férias ${diasRestantes < 0 ? 'venceu' : 'vence'} (${formatDiasRestantes(vencimento, hoje)})`,
+        mensagem: `${colaborador.nome} — período aquisitivo de férias ${diasRestantes < 0 ? 'venceu' : 'vence'} ${formatDiasRestantes(vencimento, hoje)}`,
         href: `/gestao-de-pessoas/colaboradores/${colaborador.id}`,
       });
     }
@@ -331,7 +331,7 @@ export class DashboardService {
         hub: 'SST',
         alertKey: `sst-treinamento-vencendo-${t.id}`,
         prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
-        mensagem: `${t.employee.nome} — treinamento ${t.curso} ${diasRestantes < 0 ? 'vencido' : 'vencendo'} (${formatDiasRestantes(vencimento, hoje)})`,
+        mensagem: `${t.employee.nome} — treinamento ${t.curso} ${diasRestantes < 0 ? 'vencido' : 'vencendo'} ${formatDiasRestantes(vencimento, hoje)}`,
         href: '/sst/treinamentos-nr',
       });
     }
@@ -345,7 +345,7 @@ export class DashboardService {
         hub: 'DP',
         alertKey: `dp-cnh-vencendo-${c.id}`,
         prioridade: diasRestantes < 0 ? 'ALTA' : 'MEDIA',
-        mensagem: `${c.nome} — CNH ${diasRestantes < 0 ? 'vencida' : 'vencendo'} (${formatDiasRestantes(vencimento, hoje)})`,
+        mensagem: `${c.nome} — CNH ${diasRestantes < 0 ? 'vencida' : 'vencendo'} ${formatDiasRestantes(vencimento, hoje)}`,
         href: `/gestao-de-pessoas/colaboradores/${c.id}`,
       });
     }
