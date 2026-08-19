@@ -29,6 +29,7 @@ import { PayrollModule } from './dp/payroll/payroll.module';
 import { SimulacoesModule } from './dp/simulacoes/simulacoes.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { TarefasDoDiaModule } from './tarefas-do-dia/tarefas-do-dia.module';
 import { AccidentsModule } from './sst/accidents/accidents.module';
 import { ExamsModule } from './sst/exams/exams.module';
 import { NrTrainingsModule } from './sst/nr-trainings/nr-trainings.module';
@@ -72,6 +73,7 @@ import { SearchModule } from './search/search.module';
     SimulacoesModule,
     AgendaModule,
     DashboardModule,
+    TarefasDoDiaModule,
     AccidentsModule,
     ExamsModule,
     NrTrainingsModule,

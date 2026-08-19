@@ -105,6 +105,7 @@ model Tenant {
 
   documentRequirements DocumentRequirement[]
   tasks                Task[]
+  tarefasDoDiaFixacoes TarefaDoDiaFixacao[]
   license              TenantLicense?
 
   ethicsCases            EthicsCase[]
@@ -1998,6 +1999,28 @@ model Task {
   @@unique([tenantId, alertKey])
   @@index([tenantId, status])
   @@map("tasks")
+}
+
+/**
+ * Fixação manual no widget "Tarefas do dia" — item combinado de Task
+ * (alerta/manual) ou AgendaItem, sobrepondo a pontuação automática e
+ * indo pro topo da lista. Tabela própria (em vez de um campo em cada
+ * origem) porque o widget combina fontes de tabelas diferentes sob um
+ * único conceito de fixação, por usuário.
+ */
+model TarefaDoDiaFixacao {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  origem    String // 'TASK' | 'AGENDA'
+  origemId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, origem, origemId])
+  @@index([tenantId, userId])
+  @@map("tarefas_do_dia_fixacoes")
 }
 
 // ─────────────────────────────────────────────────────────────
