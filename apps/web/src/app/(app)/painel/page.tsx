@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarDays, Kanban, ListTodo, Sparkles, Wrench } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { complianceTone } from '@/lib/format';
 import { Badge, Card, KpiCard } from '@/components/ui';
@@ -10,6 +11,14 @@ import { PriorityAlert, PriorityAlerts } from '@/components/priority-alerts';
 import { CATALOG_BLOCKS } from '../ferramentas/catalogo/catalog-data';
 import { ExternalIcon, ToolIcon } from '../ferramentas/catalogo/external-icons';
 import type { AtalhoExterno } from '../ferramentas/catalogo/types';
+
+const ATALHOS_PRINCIPAIS = [
+  { nome: 'Agenda', href: '/agenda', Icon: CalendarDays },
+  { nome: 'Planner', href: '/planner', Icon: ListTodo },
+  { nome: 'Projetos', href: '/agenda/projetos', Icon: Kanban },
+  { nome: 'Elô', href: '/elo', Icon: Sparkles },
+  { nome: 'Ferramentas', href: '/ferramentas', Icon: Wrench },
+];
 
 interface License {
   modulos: string[];
@@ -122,6 +131,22 @@ export default function PainelPage() {
           </div>
 
           <PriorityAlerts alertas={alertasPrioritarios} onResolver={(id) => completeTask.mutate(id)} />
+
+          <Card>
+            <h3 className="mb-3 text-sm font-semibold">Atalhos</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {ATALHOS_PRINCIPAIS.map(({ nome, href, Icon }) => (
+                <Link
+                  key={nome}
+                  href={href}
+                  className="flex flex-col items-start gap-2 rounded-[10px] border border-border p-3 transition hover:border-accent"
+                >
+                  <Icon className="h-4 w-4 text-accent" />
+                  <span className="text-xs font-medium text-text">{nome}</span>
+                </Link>
+              ))}
+            </div>
+          </Card>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
