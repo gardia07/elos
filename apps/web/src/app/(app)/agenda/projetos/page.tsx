@@ -84,7 +84,7 @@ export default function ProjetosPage() {
                   <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: p.cor }} />
                   <h3 className="font-semibold text-text">{p.nome}</h3>
                 </div>
-                <Badge tone={p.atrasado ? 'red' : PROJETO_STATUS_TONE[p.status]}>{p.atrasado ? 'Atrasado' : PROJETO_STATUS_LABEL[p.status]}</Badge>
+                <Badge tone={PROJETO_STATUS_TONE[p.status]}>{PROJETO_STATUS_LABEL[p.status]}</Badge>
               </div>
 
               {p.descricao && <p className="line-clamp-2 text-sm text-text-secondary">{p.descricao}</p>}

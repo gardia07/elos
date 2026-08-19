@@ -204,7 +204,7 @@ export default function ProjetoDetalhePage() {
 
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: projeto.cor }} />
-          <Badge tone={projeto.atrasado ? 'red' : PROJETO_STATUS_TONE[projeto.status]}>{projeto.atrasado ? 'Atrasado' : PROJETO_STATUS_LABEL[projeto.status]}</Badge>
+          <Badge tone={PROJETO_STATUS_TONE[projeto.status]}>{PROJETO_STATUS_LABEL[projeto.status]}</Badge>
           {projeto.descricao && <span className="text-sm text-text-secondary">{projeto.descricao}</span>}
           <span className="ml-auto flex items-center gap-1.5 text-xs text-text-tertiary">
             <Users className="h-3.5 w-3.5" /> {projeto.participantes.map((p) => p.nome).join(', ')}

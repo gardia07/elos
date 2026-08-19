@@ -24,6 +24,31 @@ interface ModeloItem {
   diasAposInicio: number;
 }
 
+type ProjetoStatusValor = 'PLANEJADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'EM_RISCO' | 'CANCELADO';
+
+/**
+ * Status é sempre recalculado a partir do progresso -- nunca lido direto do
+ * banco -- exceto Cancelado, que fica sob controle manual porque não dá pra
+ * inferir cancelamento a partir de tarefas/datas. Uma vez cancelado, o
+ * projeto para de ser recalculado até alguém reativá-lo pela edição manual.
+ */
+function computeStatus(
+  projeto: { status: string; dataInicio: Date; dataFim: Date | null },
+  tarefas: { concluida: boolean }[],
+  marcos: { data: Date; concluido: boolean }[],
+  hojeUtc: Date,
+): ProjetoStatusValor {
+  if (projeto.status === 'CANCELADO') return 'CANCELADO';
+  if (tarefas.length > 0 && tarefas.every((t) => t.concluida)) return 'CONCLUIDO';
+
+  const prazoVencido = !!projeto.dataFim && projeto.dataFim.getTime() < hojeUtc.getTime();
+  const marcoVencido = marcos.some((m) => !m.concluido && m.data.getTime() < hojeUtc.getTime());
+  if (prazoVencido || marcoVencido) return 'EM_RISCO';
+
+  if (projeto.dataInicio.getTime() <= hojeUtc.getTime()) return 'EM_ANDAMENTO';
+  return 'PLANEJADO';
+}
+
 /** O campo é Json no Prisma (tipagem fraca em tempo de compilação) — os modelos só são escritos por salvarComoModelo, então a forma abaixo é garantida na prática. */
 function parseModeloItens(json: unknown): ModeloItem[] {
   if (!Array.isArray(json)) return [];
@@ -49,7 +74,11 @@ export class ProjetosService {
     const db = this.db();
     const projetos = await db.projeto.findMany({
       where: { participantes: { some: { userId } } },
-      include: { participantes: true, tarefas: { where: { deletedAt: null }, select: { concluida: true } } },
+      include: {
+        participantes: true,
+        tarefas: { where: { deletedAt: null }, select: { concluida: true } },
+        marcos: { select: { data: true, concluido: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -66,14 +95,15 @@ export class ProjetosService {
     return projetos.map((p) => {
       const total = p.tarefas.length;
       const concluidas = p.tarefas.filter((t) => t.concluida).length;
-      const atrasado = !!p.dataFim && p.dataFim.getTime() < hojeUtc.getTime() && p.status !== 'CONCLUIDO' && p.status !== 'CANCELADO';
+      const status = computeStatus(p, p.tarefas, p.marcos, hojeUtc);
+      const atrasado = status === 'EM_RISCO' && !!p.dataFim && p.dataFim.getTime() < hojeUtc.getTime();
       return {
         id: p.id,
         nome: p.nome,
         descricao: p.descricao,
         dataInicio: p.dataInicio,
         dataFim: p.dataFim,
-        status: p.status,
+        status,
         cor: p.cor,
         wipLimiteEmAndamento: p.wipLimiteEmAndamento,
         criadoPorId: p.criadoPorId,

@@ -7,10 +7,8 @@ import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import type { AgendaItem, Projeto, ProjetoModelo, ProjetoStatus, Usuario } from '../types';
-import { PROJETO_STATUS_LABEL } from '../types';
 import { parseIsoUtc } from '../lib';
 
-const STATUS_OPCOES: ProjetoStatus[] = ['PLANEJADO', 'EM_ANDAMENTO', 'EM_RISCO', 'CONCLUIDO', 'CANCELADO'];
 const CORES = ['#3b82f6', '#8A7FB0', '#c9a227', '#b06a5e', '#2f9e6e', '#5e6ad2'];
 
 /**
@@ -403,20 +401,19 @@ export function ProjetoDrawer({
         </div>
 
         {projeto && (
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-text-secondary">Status</span>
-            <select
-              value={values.status}
-              onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as ProjetoStatus }))}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
-            >
-              {STATUS_OPCOES.map((s) => (
-                <option key={s} value={s}>
-                  {PROJETO_STATUS_LABEL[s]}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-col gap-1.5 rounded-[10px] border border-border p-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={values.status === 'CANCELADO'}
+                onChange={(e) => setValues((v) => ({ ...v, status: (e.target.checked ? 'CANCELADO' : 'PLANEJADO') as ProjetoStatus }))}
+              />
+              <span className="text-text-secondary">Cancelar projeto</span>
+            </label>
+            <span className="text-xs text-text-tertiary">
+              Os demais status (Planejado, Em andamento, Em risco, Concluído) são calculados automaticamente a partir do progresso das tarefas, marcos e prazos.
+            </span>
+          </div>
         )}
 
         {projeto && (
