@@ -131,13 +131,9 @@ export default function PainelPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <TarefasDoDia />
-            </div>
-            <div className="lg:col-span-2">
-              <PriorityAlerts alertas={alertasPrioritarios} onResolver={(id) => completeTask.mutate(id)} />
-            </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <TarefasDoDia />
+            <PriorityAlerts alertas={alertasPrioritarios} onResolver={(id) => completeTask.mutate(id)} />
           </div>
 
           <Card>
