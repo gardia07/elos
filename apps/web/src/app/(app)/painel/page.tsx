@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Kanban, ListTodo, Sparkles, Wrench } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { complianceTone } from '@/lib/format';
 import { Badge, Card, KpiCard } from '@/components/ui';
 import { Header } from '@/components/header';
+import { PriorityAlert, PriorityAlerts } from '@/components/priority-alerts';
 import { CATALOG_BLOCKS } from '../ferramentas/catalogo/catalog-data';
 import { ExternalIcon, ToolIcon } from '../ferramentas/catalogo/external-icons';
 import type { AtalhoExterno } from '../ferramentas/catalogo/types';
@@ -35,6 +36,17 @@ interface Kpis {
   alertasCriticosAtivos: number;
 }
 
+interface Task {
+  id: string;
+  modulo: string;
+  titulo: string;
+  prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
+  origem: string;
+  detalhes: { href?: string } | null;
+}
+
+const PRIORIDADE_PESO = { CRITICA: 3, ALTA: 2, MEDIA: 1, BAIXA: 0 } as const;
+const PRIORIDADE_SEVERIDADE = { CRITICA: 'alta', ALTA: 'alta', MEDIA: 'media', BAIXA: 'baixa' } as const;
 const RISCO_TONE = { Baixo: 'green', Médio: 'amber', Alto: 'red' } as const;
 
 function Delta({ value, unidade, favoravel }: { value: number | null; unidade: string; favoravel: 'alto' | 'baixo' }) {
@@ -52,9 +64,21 @@ function Delta({ value, unidade, favoravel }: { value: number | null; unidade: s
 }
 
 export default function PainelPage() {
+  const queryClient = useQueryClient();
+
   const { data: kpis } = useQuery({
     queryKey: ['dashboard', 'kpis'],
     queryFn: async () => (await api.get<Kpis>('/dashboard/kpis')).data,
+  });
+
+  const { data: tasks } = useQuery({
+    queryKey: ['dashboard', 'tasks'],
+    queryFn: async () => (await api.get<Task[]>('/dashboard/tasks')).data,
+  });
+
+  const completeTask = useMutation({
+    mutationFn: async (id: string) => api.patch(`/dashboard/tasks/${id}`, { status: 'CONCLUIDA' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard', 'tasks'] }),
   });
 
   const { data: license } = useQuery({
@@ -73,6 +97,11 @@ export default function PainelPage() {
   const ferramentasAtalho = CATALOG_BLOCKS.filter((b) => b.modulo === null || modulosContratados.includes(b.modulo))
     .flatMap((b) => b.ferramentas.filter((t): t is { nome: string; href: string } => t.href !== null))
     .slice(0, 6);
+
+  const alertasPrioritarios: PriorityAlert[] = (tasks ?? [])
+    .filter((t) => t.origem === 'SISTEMA')
+    .sort((a, b) => PRIORIDADE_PESO[b.prioridade] - PRIORIDADE_PESO[a.prioridade])
+    .map((t) => ({ id: t.id, categoria: t.modulo, mensagem: t.titulo, severidade: PRIORIDADE_SEVERIDADE[t.prioridade], href: t.detalhes?.href }));
 
   return (
     <>
@@ -102,7 +131,14 @@ export default function PainelPage() {
             />
           </div>
 
-          <TarefasDoDia />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+              <TarefasDoDia />
+            </div>
+            <div className="lg:col-span-2">
+              <PriorityAlerts alertas={alertasPrioritarios} onResolver={(id) => completeTask.mutate(id)} />
+            </div>
+          </div>
 
           <Card>
             <h3 className="mb-3 text-sm font-semibold">Atalhos</h3>
