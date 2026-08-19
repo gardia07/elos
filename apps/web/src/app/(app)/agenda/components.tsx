@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Bell, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, ListChecks, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
+import { AlertTriangle, Bell, ChevronDown, ChevronLeft, ChevronRight, ListChecks, Moon, Plus, Repeat, Search, Send, StickyNote, Trash2, UserRound, Users, PartyPopper } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button, Drawer } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -109,13 +108,6 @@ export function AgendaHeader({
         >
           <Moon className="h-4 w-4" /> Revisão do dia
         </button>
-
-        <Link
-          href="/agenda/projetos"
-          className="flex items-center gap-1.5 rounded-[10px] border border-border-strong bg-surface px-3.5 py-2 text-sm font-medium text-text-secondary hover:border-accent hover:text-accent"
-        >
-          <FolderKanban className="h-4 w-4" /> Projetos
-        </Link>
 
         <Button onClick={onNew} className="flex items-center gap-1.5">
           <Plus className="h-4 w-4" /> Novo
