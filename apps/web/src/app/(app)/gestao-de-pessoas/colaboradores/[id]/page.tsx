@@ -15,7 +15,7 @@ import {
   TerminationStatusValue,
   TerminationTipo,
 } from '@/lib/format';
-import { Badge, Button, Card, EmptyState, KpiCard } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, KpiCard, Switch } from '@/components/ui';
 import { type TenantInfo } from '@/components/empresa-form';
 
 const ESCOLARIDADE_OPTIONS = [
@@ -1519,7 +1519,7 @@ export default function EmployeeProfilePage() {
         </div>
       )}
 
-      {tab === 'beneficios' && <BeneficiosTab employeeId={e.id} />}
+      {tab === 'beneficios' && <BeneficiosTab employeeId={e.id} dataNascimento={e.dataNascimento} />}
 
       {tab === 'avaliacoes' && (
         <Card className="max-w-2xl">
@@ -2236,6 +2236,7 @@ interface PlanoOption {
   id: string;
   nome: string;
   operadora: string | null;
+  faixasEtarias: { id: string; idadeMin: number; idadeMax: number; valor: string }[];
 }
 interface AdesaoValeDiario {
   id: string;
@@ -2248,7 +2249,7 @@ interface AdesaoAcademia {
   id: string;
   dataAdesao: string;
   dataCancelamento: string | null;
-  convenio: { id: string; nome: string };
+  convenio: { id: string; nome: string; valorMensalidade: string };
 }
 interface DependentePlanoSaude {
   id: string;
@@ -2277,8 +2278,44 @@ interface ResumoBeneficios {
   beneficioFixo: AdesaoBeneficioFixo[];
 }
 
-function BeneficiosTab({ employeeId }: { employeeId: string }) {
+const CATEGORIA_BENEFICIO_LABEL: Record<BeneficioTipoOption['categoria'], string> = {
+  ALIMENTACAO: 'Alimentação',
+  ACADEMIA: 'Academia',
+  SAUDE: 'Saúde',
+  OUTRO: 'Outro',
+};
+
+/** Opção de um benefício do tipo "faixas/planos" (Academia/Saúde) -- valor null quando ainda não dá pra calcular (ex.: plano de saúde sem faixa etária cadastrada pra idade do colaborador). */
+interface OpcaoBeneficio {
+  id: string;
+  nome: string;
+  valor: number | null;
+}
+
+/** Adesão ativa já normalizada, independente da categoria/tabela de origem. */
+interface AdesaoResolvida {
+  id: string;
+  dataInicio: string;
+  opcaoId: string | null;
+  opcaoNome: string | null;
+  valor: number | null;
+  dependentes?: DependentePlanoSaude[];
+}
+
+const DIAS_UTEIS_ESTIMADO = 22;
+
+/**
+ * Lista dirigida pelo catálogo (BeneficioTipo, já cadastrado em Benefícios →
+ * Tipos e coparticipação) em vez de 4 cards fixos. Alimentação/Outro têm
+ * valor customizável por adesão; Academia/Saúde têm valor vindo de uma
+ * opção cadastrada (convênio/plano) -- quando só existe 1 opção, mostra
+ * direto como somente-leitura em vez de dropdown com 1 item só.
+ */
+function BeneficiosTab({ employeeId, dataNascimento }: { employeeId: string; dataNascimento: string | null }) {
   const queryClient = useQueryClient();
+  const [busca, setBusca] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState<'' | BeneficioTipoOption['categoria']>('');
+  const [draftValores, setDraftValores] = useState<Record<string, number>>({});
 
   const { data: resumo } = useQuery({
     queryKey: ['dp', 'benefits', 'employee', employeeId],
@@ -2298,109 +2335,53 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['dp', 'benefits', 'employee', employeeId] });
-  const tiposAlimentacao = tipos?.filter((t) => t.categoria === 'ALIMENTACAO') ?? [];
-  const tiposOutro = tipos?.filter((t) => t.categoria === 'OUTRO') ?? [];
 
-  const [showValeForm, setShowValeForm] = useState(false);
-  const [valeBeneficioTipoId, setValeBeneficioTipoId] = useState('');
-  const [valeValorDiario, setValeValorDiario] = useState('');
-  const [valeDataInicio, setValeDataInicio] = useState('');
   const addVale = useMutation({
-    mutationFn: async () =>
-      api.post(`/dp/benefits/employees/${employeeId}/vale-diario`, {
-        beneficioTipoId: valeBeneficioTipoId,
-        valorDiario: Number(valeValorDiario),
-        dataInicio: valeDataInicio,
-      }),
-    onSuccess: () => {
-      invalidate();
-      setShowValeForm(false);
-      setValeBeneficioTipoId('');
-      setValeValorDiario('');
-      setValeDataInicio('');
-    },
+    mutationFn: async (vars: { tipoId: string; valorDiario: number; dataInicio: string }) =>
+      api.post(`/dp/benefits/employees/${employeeId}/vale-diario`, { beneficioTipoId: vars.tipoId, valorDiario: vars.valorDiario, dataInicio: vars.dataInicio }),
+    onSuccess: invalidate,
+  });
+  const updateVale = useMutation({
+    mutationFn: async (vars: { adesaoId: string; valorDiario: number }) =>
+      api.patch(`/dp/benefits/employees/${employeeId}/vale-diario/${vars.adesaoId}`, { valorDiario: vars.valorDiario }),
+    onSuccess: invalidate,
   });
   const cancelVale = useMutation({
     mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/vale-diario/${adesaoId}`),
     onSuccess: invalidate,
   });
-  const [editingValeId, setEditingValeId] = useState<string | null>(null);
-  const [editValeValorDiario, setEditValeValorDiario] = useState('');
-  const updateVale = useMutation({
-    mutationFn: async (adesaoId: string) =>
-      api.patch(`/dp/benefits/employees/${employeeId}/vale-diario/${adesaoId}`, { valorDiario: Number(editValeValorDiario) }),
-    onSuccess: () => {
-      invalidate();
-      setEditingValeId(null);
-    },
+
+  const addFixo = useMutation({
+    mutationFn: async (vars: { tipoId: string; valorMensal: number; dataInicio: string }) =>
+      api.post(`/dp/benefits/employees/${employeeId}/outros`, { beneficioTipoId: vars.tipoId, valorMensal: vars.valorMensal, dataInicio: vars.dataInicio }),
+    onSuccess: invalidate,
+  });
+  const updateFixo = useMutation({
+    mutationFn: async (vars: { adesaoId: string; valorMensal: number }) =>
+      api.patch(`/dp/benefits/employees/${employeeId}/outros/${vars.adesaoId}`, { valorMensal: vars.valorMensal }),
+    onSuccess: invalidate,
+  });
+  const cancelFixo = useMutation({
+    mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/outros/${adesaoId}`),
+    onSuccess: invalidate,
   });
 
-  const [showAcademiaForm, setShowAcademiaForm] = useState(false);
-  const [convenioId, setConvenioId] = useState('');
-  const [dataAdesaoAcademia, setDataAdesaoAcademia] = useState('');
   const addAcademia = useMutation({
-    mutationFn: async () => api.post(`/dp/benefits/employees/${employeeId}/academia`, { convenioId, dataAdesao: dataAdesaoAcademia }),
-    onSuccess: () => {
-      invalidate();
-      setShowAcademiaForm(false);
-      setConvenioId('');
-      setDataAdesaoAcademia('');
-    },
+    mutationFn: async (vars: { convenioId: string; dataAdesao: string }) => api.post(`/dp/benefits/employees/${employeeId}/academia`, vars),
+    onSuccess: invalidate,
   });
   const cancelAcademia = useMutation({
     mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/academia/${adesaoId}`),
     onSuccess: invalidate,
   });
 
-  const [showSaudeForm, setShowSaudeForm] = useState(false);
-  const [planoId, setPlanoId] = useState('');
-  const [dataAdesaoSaude, setDataAdesaoSaude] = useState('');
   const addSaude = useMutation({
-    mutationFn: async () => api.post(`/dp/benefits/employees/${employeeId}/plano-saude`, { planoId, dataAdesao: dataAdesaoSaude }),
-    onSuccess: () => {
-      invalidate();
-      setShowSaudeForm(false);
-      setPlanoId('');
-      setDataAdesaoSaude('');
-    },
+    mutationFn: async (vars: { planoId: string; dataAdesao: string }) => api.post(`/dp/benefits/employees/${employeeId}/plano-saude`, vars),
+    onSuccess: invalidate,
   });
   const cancelSaude = useMutation({
     mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/plano-saude/${adesaoId}`),
     onSuccess: invalidate,
-  });
-
-  const [showFixoForm, setShowFixoForm] = useState(false);
-  const [fixoBeneficioTipoId, setFixoBeneficioTipoId] = useState('');
-  const [fixoValorMensal, setFixoValorMensal] = useState('');
-  const [fixoDataInicio, setFixoDataInicio] = useState('');
-  const addFixo = useMutation({
-    mutationFn: async () =>
-      api.post(`/dp/benefits/employees/${employeeId}/outros`, {
-        beneficioTipoId: fixoBeneficioTipoId,
-        valorMensal: Number(fixoValorMensal),
-        dataInicio: fixoDataInicio,
-      }),
-    onSuccess: () => {
-      invalidate();
-      setShowFixoForm(false);
-      setFixoBeneficioTipoId('');
-      setFixoValorMensal('');
-      setFixoDataInicio('');
-    },
-  });
-  const cancelFixo = useMutation({
-    mutationFn: async (adesaoId: string) => api.delete(`/dp/benefits/employees/${employeeId}/outros/${adesaoId}`),
-    onSuccess: invalidate,
-  });
-  const [editingFixoId, setEditingFixoId] = useState<string | null>(null);
-  const [editFixoValorMensal, setEditFixoValorMensal] = useState('');
-  const updateFixo = useMutation({
-    mutationFn: async (adesaoId: string) =>
-      api.patch(`/dp/benefits/employees/${employeeId}/outros/${adesaoId}`, { valorMensal: Number(editFixoValorMensal) }),
-    onSuccess: () => {
-      invalidate();
-      setEditingFixoId(null);
-    },
   });
 
   const [depFormAdesaoId, setDepFormAdesaoId] = useState<string | null>(null);
@@ -2428,358 +2409,419 @@ function BeneficiosTab({ employeeId }: { employeeId: string }) {
     onSuccess: invalidate,
   });
 
+  const idade = (() => {
+    if (!dataNascimento) return null;
+    const nasc = new Date(dataNascimento);
+    const hoje = new Date();
+    let anos = hoje.getUTCFullYear() - nasc.getUTCFullYear();
+    const aniversarioPassou = hoje.getUTCMonth() > nasc.getUTCMonth() || (hoje.getUTCMonth() === nasc.getUTCMonth() && hoje.getUTCDate() >= nasc.getUTCDate());
+    if (!aniversarioPassou) anos--;
+    return anos;
+  })();
+
+  function valorPlanoSaude(planoId: string): number | null {
+    const plano = planos?.find((p) => p.id === planoId);
+    if (!plano || idade == null) return null;
+    const faixa = plano.faixasEtarias.find((f) => idade >= f.idadeMin && idade <= f.idadeMax);
+    return faixa ? Number(faixa.valor) : null;
+  }
+
+  function opcoesPara(tipo: BeneficioTipoOption): OpcaoBeneficio[] | null {
+    if (tipo.categoria === 'ACADEMIA') return (convenios ?? []).map((c) => ({ id: c.id, nome: c.nome, valor: Number(c.valorMensalidade) }));
+    if (tipo.categoria === 'SAUDE') return (planos ?? []).map((p) => ({ id: p.id, nome: p.nome, valor: valorPlanoSaude(p.id) }));
+    return null;
+  }
+
+  function resolverAdesao(tipo: BeneficioTipoOption): AdesaoResolvida | null {
+    if (!resumo) return null;
+    if (tipo.categoria === 'ALIMENTACAO') {
+      const a = resumo.valeDiario.find((v) => v.beneficioTipo.id === tipo.id && !v.dataFim);
+      return a ? { id: a.id, dataInicio: a.dataInicio, opcaoId: null, opcaoNome: null, valor: Number(a.valorDiario) } : null;
+    }
+    if (tipo.categoria === 'OUTRO') {
+      const a = resumo.beneficioFixo.find((f) => f.beneficioTipo.id === tipo.id && !f.dataFim);
+      return a ? { id: a.id, dataInicio: a.dataInicio, opcaoId: null, opcaoNome: null, valor: Number(a.valorMensal) } : null;
+    }
+    if (tipo.categoria === 'ACADEMIA') {
+      const a = resumo.academia.find((x) => !x.dataCancelamento);
+      return a ? { id: a.id, dataInicio: a.dataAdesao, opcaoId: a.convenio.id, opcaoNome: a.convenio.nome, valor: Number(a.convenio.valorMensalidade) } : null;
+    }
+    const a = resumo.planoSaude.find((x) => !x.dataCancelamento);
+    return a ? { id: a.id, dataInicio: a.dataAdesao, opcaoId: a.plano.id, opcaoNome: a.plano.nome, valor: valorPlanoSaude(a.plano.id), dependentes: a.dependentes } : null;
+  }
+
+  function setDraftValor(tipoId: string, valor: number | undefined) {
+    setDraftValores((prev) => {
+      const next = { ...prev };
+      if (valor == null) delete next[tipoId];
+      else next[tipoId] = valor;
+      return next;
+    });
+  }
+
+  function salvarNovo(tipo: BeneficioTipoOption, form: { valor: string; opcaoId: string; dataInicio: string }) {
+    if (tipo.categoria === 'ALIMENTACAO') addVale.mutate({ tipoId: tipo.id, valorDiario: Number(form.valor), dataInicio: form.dataInicio });
+    else if (tipo.categoria === 'OUTRO') addFixo.mutate({ tipoId: tipo.id, valorMensal: Number(form.valor), dataInicio: form.dataInicio });
+    else if (tipo.categoria === 'ACADEMIA') addAcademia.mutate({ convenioId: form.opcaoId, dataAdesao: form.dataInicio });
+    else addSaude.mutate({ planoId: form.opcaoId, dataAdesao: form.dataInicio });
+  }
+
+  async function salvarEdicao(tipo: BeneficioTipoOption, adesaoId: string, form: { valor: string; opcaoId: string; dataInicio: string }) {
+    if (tipo.categoria === 'ALIMENTACAO') updateVale.mutate({ adesaoId, valorDiario: Number(form.valor) });
+    else if (tipo.categoria === 'OUTRO') updateFixo.mutate({ adesaoId, valorMensal: Number(form.valor) });
+    else if (tipo.categoria === 'ACADEMIA') {
+      // Sem endpoint de update para academia -- edita trocando a adesão (cancela a antiga, cria a nova).
+      await cancelAcademia.mutateAsync(adesaoId);
+      addAcademia.mutate({ convenioId: form.opcaoId, dataAdesao: form.dataInicio });
+    } else {
+      await cancelSaude.mutateAsync(adesaoId);
+      addSaude.mutate({ planoId: form.opcaoId, dataAdesao: form.dataInicio });
+    }
+  }
+
+  function remover(tipo: BeneficioTipoOption, adesaoId: string) {
+    if (tipo.categoria === 'ALIMENTACAO') cancelVale.mutate(adesaoId);
+    else if (tipo.categoria === 'OUTRO') cancelFixo.mutate(adesaoId);
+    else if (tipo.categoria === 'ACADEMIA') cancelAcademia.mutate(adesaoId);
+    else cancelSaude.mutate(adesaoId);
+  }
+
+  const buscaNormalizada = busca.trim().toLowerCase();
+  const itens = (tipos ?? [])
+    .filter((t) => !filtroCategoria || t.categoria === filtroCategoria)
+    .filter((t) => !buscaNormalizada || t.nome.toLowerCase().includes(buscaNormalizada));
+
+  let totalAtivos = 0;
+  let custoMensalEstimado = 0;
+  for (const tipo of tipos ?? []) {
+    const draft = draftValores[tipo.id];
+    const adesao = resolverAdesao(tipo);
+    if (draft == null && !adesao) continue;
+    totalAtivos++;
+    const valorRaw = draft ?? adesao?.valor ?? null;
+    if (valorRaw != null) custoMensalEstimado += tipo.categoria === 'ALIMENTACAO' ? valorRaw * DIAS_UTEIS_ESTIMADO : valorRaw;
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <Section title="Vale-alimentação / Vale-refeição">
-        <ul className="flex flex-col gap-1.5 text-sm">
-          {resumo?.valeDiario.map((v) =>
-            editingValeId === v.id ? (
-              <li key={v.id}>
-                <form
-                  className="flex items-center gap-2"
-                  onSubmit={(ev) => {
-                    ev.preventDefault();
-                    updateVale.mutate(v.id);
-                  }}
-                >
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={editValeValorDiario}
-                    onChange={(ev) => setEditValeValorDiario(ev.target.value)}
-                    required
-                    className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
-                  />
-                  <Button type="submit" variant="secondary" disabled={updateVale.isPending}>
-                    Salvar
-                  </Button>
-                  <button type="button" onClick={() => setEditingValeId(null)} className="text-xs text-text-secondary hover:underline">
-                    cancelar
-                  </button>
-                </form>
-              </li>
-            ) : (
-              <li key={v.id} className="flex items-center justify-between">
-                <span>
-                  {v.beneficioTipo.nome} · {formatBRL(Number(v.valorDiario))}/dia · desde {formatDate(v.dataInicio)}
-                  {v.dataFim && ` até ${formatDate(v.dataFim)}`}
-                </span>
-                {!v.dataFim ? (
-                  <span className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        setEditingValeId(v.id);
-                        setEditValeValorDiario(String(Number(v.valorDiario)));
-                      }}
-                      className="text-xs text-accent hover:underline"
-                    >
-                      editar
-                    </button>
-                    <button onClick={() => cancelVale.mutate(v.id)} className="text-xs text-danger hover:underline">
-                      cancelar
-                    </button>
-                  </span>
-                ) : (
-                  <span className="text-xs text-text-tertiary">encerrado</span>
-                )}
-              </li>
-            ),
-          )}
-          {resumo?.valeDiario.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
-        </ul>
-        {!showValeForm ? (
-          <Button variant="secondary" className="self-start" onClick={() => setShowValeForm(true)}>
-            Adicionar adesão
-          </Button>
-        ) : (
-          <form
-            className="flex flex-wrap items-end gap-2"
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              addVale.mutate();
-            }}
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Tipo</span>
-              <select
-                value={valeBeneficioTipoId}
-                onChange={(ev) => setValeBeneficioTipoId(ev.target.value)}
-                required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
-              >
-                <option value="">Selecione…</option>
-                {tiposAlimentacao.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <input type="number" min={0} step="0.01" placeholder="Valor diário" value={valeValorDiario} onChange={(ev) => setValeValorDiario(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <input type="date" value={valeDataInicio} onChange={(ev) => setValeDataInicio(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <Button type="submit" disabled={addVale.isPending}>
-              Adicionar
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowValeForm(false)}>
-              Cancelar
-            </Button>
-          </form>
-        )}
-      </Section>
+      <div className="grid grid-cols-2 gap-4">
+        <KpiCard label="Benefícios ativos" value={totalAtivos} />
+        <KpiCard label="Custo mensal estimado" value={formatBRL(custoMensalEstimado)} />
+      </div>
 
-      <Section title="Academia">
-        <ul className="flex flex-col gap-1.5 text-sm">
-          {resumo?.academia.map((a) => (
-            <li key={a.id} className="flex items-center justify-between">
-              <span>
-                {a.convenio.nome} · desde {formatDate(a.dataAdesao)}
-                {a.dataCancelamento && ` até ${formatDate(a.dataCancelamento)}`}
-              </span>
-              {!a.dataCancelamento ? (
-                <button onClick={() => cancelAcademia.mutate(a.id)} className="text-xs text-danger hover:underline">
-                  cancelar
-                </button>
-              ) : (
-                <span className="text-xs text-text-tertiary">encerrado</span>
-              )}
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar benefício…"
+          className="w-64 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+        />
+        <select
+          value={filtroCategoria}
+          onChange={(e) => setFiltroCategoria(e.target.value as typeof filtroCategoria)}
+          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+        >
+          <option value="">Todas as categorias</option>
+          {(Object.keys(CATEGORIA_BENEFICIO_LABEL) as BeneficioTipoOption['categoria'][]).map((c) => (
+            <option key={c} value={c}>
+              {CATEGORIA_BENEFICIO_LABEL[c]}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <Card className="p-0">
+        <ul>
+          {itens.map((tipo) => (
+            <BeneficioLinha
+              key={tipo.id}
+              tipo={tipo}
+              adesao={resolverAdesao(tipo)}
+              opcoes={opcoesPara(tipo)}
+              onDraftChange={(valor) => setDraftValor(tipo.id, valor)}
+              onSalvarNovo={(form) => salvarNovo(tipo, form)}
+              onSalvarEdicao={(adesaoId, form) => salvarEdicao(tipo, adesaoId, form)}
+              onRemover={(adesaoId) => remover(tipo, adesaoId)}
+              dependentesForm={
+                tipo.categoria === 'SAUDE'
+                  ? {
+                      aberto: depFormAdesaoId,
+                      onAbrir: setDepFormAdesaoId,
+                      nome: depNome,
+                      setNome: setDepNome,
+                      dataNascimento: depDataNascimento,
+                      setDataNascimento: setDepDataNascimento,
+                      parentesco: depParentesco,
+                      setParentesco: setDepParentesco,
+                      salvando: addDependente.isPending,
+                      onAdicionar: (adesaoId) => addDependente.mutate(adesaoId),
+                      onRemover: (adesaoId, dependenteId) => removeDependente.mutate({ adesaoId, dependenteId }),
+                    }
+                  : undefined
+              }
+            />
+          ))}
+          {itens.length === 0 && (
+            <li className="p-6 text-center text-sm text-text-tertiary">
+              {(tipos?.length ?? 0) === 0
+                ? 'Nenhum benefício cadastrado ainda. Cadastre em Benefícios → Tipos e coparticipação.'
+                : 'Nenhum benefício encontrado para esse filtro.'}
             </li>
-          ))}
-          {resumo?.academia.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
-        </ul>
-        {!showAcademiaForm ? (
-          <Button variant="secondary" className="self-start" onClick={() => setShowAcademiaForm(true)}>
-            Adicionar adesão
-          </Button>
-        ) : (
-          <form
-            className="flex flex-wrap items-end gap-2"
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              addAcademia.mutate();
-            }}
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Convênio</span>
-              <select
-                value={convenioId}
-                onChange={(ev) => setConvenioId(ev.target.value)}
-                required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
-              >
-                <option value="">Selecione…</option>
-                {convenios?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <input type="date" value={dataAdesaoAcademia} onChange={(ev) => setDataAdesaoAcademia(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <Button type="submit" disabled={addAcademia.isPending}>
-              Adicionar
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowAcademiaForm(false)}>
-              Cancelar
-            </Button>
-          </form>
-        )}
-      </Section>
-
-      <Section title="Plano de saúde">
-        <div className="flex flex-col gap-3">
-          {resumo?.planoSaude.map((s) => (
-            <div key={s.id} className="rounded-[10px] border border-border p-3">
-              <div className="flex items-center justify-between text-sm">
-                <span>
-                  {s.plano.nome} · desde {formatDate(s.dataAdesao)}
-                  {s.dataCancelamento && ` até ${formatDate(s.dataCancelamento)}`}
-                </span>
-                {!s.dataCancelamento ? (
-                  <button onClick={() => cancelSaude.mutate(s.id)} className="text-xs text-danger hover:underline">
-                    cancelar adesão
-                  </button>
-                ) : (
-                  <span className="text-xs text-text-tertiary">encerrado</span>
-                )}
-              </div>
-              <div className="mt-2 flex flex-col gap-1 pl-3 text-xs text-text-secondary">
-                {s.dependentes.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between">
-                    <span>
-                      {d.nome} · {d.parentesco ?? '—'} · {formatDate(d.dataNascimento)}
-                    </span>
-                    <button onClick={() => removeDependente.mutate({ adesaoId: s.id, dependenteId: d.id })} className="text-danger hover:underline">
-                      remover
-                    </button>
-                  </div>
-                ))}
-              </div>
-              {depFormAdesaoId === s.id ? (
-                <form
-                  className="mt-2 flex flex-wrap items-end gap-2"
-                  onSubmit={(ev) => {
-                    ev.preventDefault();
-                    addDependente.mutate(s.id);
-                  }}
-                >
-                  <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs" />
-                  <input type="date" value={depDataNascimento} onChange={(ev) => setDepDataNascimento(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs" />
-                  <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs" />
-                  <Button type="submit" variant="secondary" disabled={addDependente.isPending}>
-                    Adicionar
-                  </Button>
-                </form>
-              ) : (
-                <button onClick={() => setDepFormAdesaoId(s.id)} className="mt-2 text-xs text-accent hover:underline">
-                  + dependente no plano
-                </button>
-              )}
-            </div>
-          ))}
-          {resumo?.planoSaude.length === 0 && <p className="text-sm text-text-tertiary">Nenhuma adesão.</p>}
-        </div>
-        {!showSaudeForm ? (
-          <Button variant="secondary" className="self-start" onClick={() => setShowSaudeForm(true)}>
-            Adicionar adesão
-          </Button>
-        ) : (
-          <form
-            className="flex flex-wrap items-end gap-2"
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              addSaude.mutate();
-            }}
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Plano</span>
-              <select
-                value={planoId}
-                onChange={(ev) => setPlanoId(ev.target.value)}
-                required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
-              >
-                <option value="">Selecione…</option>
-                {planos?.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <input type="date" value={dataAdesaoSaude} onChange={(ev) => setDataAdesaoSaude(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <Button type="submit" disabled={addSaude.isPending}>
-              Adicionar
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowSaudeForm(false)}>
-              Cancelar
-            </Button>
-          </form>
-        )}
-      </Section>
-
-      <Section title="Outros benefícios">
-        <ul className="flex flex-col gap-1.5 text-sm">
-          {resumo?.beneficioFixo.map((f) =>
-            editingFixoId === f.id ? (
-              <li key={f.id}>
-                <form
-                  className="flex items-center gap-2"
-                  onSubmit={(ev) => {
-                    ev.preventDefault();
-                    updateFixo.mutate(f.id);
-                  }}
-                >
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={editFixoValorMensal}
-                    onChange={(ev) => setEditFixoValorMensal(ev.target.value)}
-                    required
-                    className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
-                  />
-                  <Button type="submit" variant="secondary" disabled={updateFixo.isPending}>
-                    Salvar
-                  </Button>
-                  <button type="button" onClick={() => setEditingFixoId(null)} className="text-xs text-text-secondary hover:underline">
-                    cancelar
-                  </button>
-                </form>
-              </li>
-            ) : (
-              <li key={f.id} className="flex items-center justify-between">
-                <span>
-                  {f.beneficioTipo.nome} · {formatBRL(Number(f.valorMensal))}/mês · desde {formatDate(f.dataInicio)}
-                  {f.dataFim && ` até ${formatDate(f.dataFim)}`}
-                </span>
-                {!f.dataFim ? (
-                  <span className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        setEditingFixoId(f.id);
-                        setEditFixoValorMensal(String(Number(f.valorMensal)));
-                      }}
-                      className="text-xs text-accent hover:underline"
-                    >
-                      editar
-                    </button>
-                    <button onClick={() => cancelFixo.mutate(f.id)} className="text-xs text-danger hover:underline">
-                      cancelar
-                    </button>
-                  </span>
-                ) : (
-                  <span className="text-xs text-text-tertiary">encerrado</span>
-                )}
-              </li>
-            ),
           )}
-          {resumo?.beneficioFixo.length === 0 && <p className="text-text-tertiary">Nenhuma adesão.</p>}
         </ul>
-        {tiposOutro.length === 0 ? (
-          <p className="text-xs text-text-tertiary">
-            Nenhum tipo cadastrado ainda. Cadastre um em Benefícios → Tipos e coparticipação, categoria &quot;Outro&quot;.
-          </p>
-        ) : !showFixoForm ? (
-          <Button variant="secondary" className="self-start" onClick={() => setShowFixoForm(true)}>
-            Adicionar adesão
-          </Button>
-        ) : (
-          <form
-            className="flex flex-wrap items-end gap-2"
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              addFixo.mutate();
-            }}
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-text-secondary">Tipo</span>
-              <select
-                value={fixoBeneficioTipoId}
-                onChange={(ev) => setFixoBeneficioTipoId(ev.target.value)}
-                required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
-              >
-                <option value="">Selecione…</option>
-                {tiposOutro.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <input type="number" min={0} step="0.01" placeholder="Valor mensal" value={fixoValorMensal} onChange={(ev) => setFixoValorMensal(ev.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <input type="date" value={fixoDataInicio} onChange={(ev) => setFixoDataInicio(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <Button type="submit" disabled={addFixo.isPending}>
-              Adicionar
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowFixoForm(false)}>
-              Cancelar
-            </Button>
-          </form>
-        )}
-      </Section>
+      </Card>
     </div>
+  );
+}
+
+function BeneficioLinha({
+  tipo,
+  adesao,
+  opcoes,
+  onDraftChange,
+  onSalvarNovo,
+  onSalvarEdicao,
+  onRemover,
+  dependentesForm,
+}: {
+  tipo: BeneficioTipoOption;
+  adesao: AdesaoResolvida | null;
+  opcoes: OpcaoBeneficio[] | null;
+  onDraftChange: (valor: number | undefined) => void;
+  onSalvarNovo: (form: { valor: string; opcaoId: string; dataInicio: string }) => void;
+  onSalvarEdicao: (adesaoId: string, form: { valor: string; opcaoId: string; dataInicio: string }) => void;
+  onRemover: (adesaoId: string) => void;
+  dependentesForm?: {
+    aberto: string | null;
+    onAbrir: (adesaoId: string | null) => void;
+    nome: string;
+    setNome: (v: string) => void;
+    dataNascimento: string;
+    setDataNascimento: (v: string) => void;
+    parentesco: string;
+    setParentesco: (v: string) => void;
+    salvando: boolean;
+    onAdicionar: (adesaoId: string) => void;
+    onRemover: (adesaoId: string, dependenteId: string) => void;
+  };
+}) {
+  const [aberto, setAberto] = useState(false);
+  const [editando, setEditando] = useState(false);
+  const [formValor, setFormValor] = useState('');
+  const [formOpcaoId, setFormOpcaoId] = useState('');
+  const [formDataInicio, setFormDataInicio] = useState('');
+
+  const unidadeLabel = tipo.categoria === 'ALIMENTACAO' ? '/dia' : '/mês';
+  const opcaoUnica = opcoes && opcoes.length === 1 ? opcoes[0] : null;
+
+  function abrirNovo() {
+    setEditando(false);
+    setFormValor('');
+    setFormOpcaoId(opcaoUnica?.id ?? '');
+    setFormDataInicio(new Date().toISOString().slice(0, 10));
+    setAberto(true);
+    onDraftChange(opcaoUnica?.valor ?? 0);
+  }
+
+  function abrirEdicao() {
+    if (!adesao) return;
+    setEditando(true);
+    setFormValor(adesao.valor != null ? String(adesao.valor) : '');
+    setFormOpcaoId(adesao.opcaoId ?? '');
+    setFormDataInicio(adesao.dataInicio.slice(0, 10));
+    setAberto(true);
+    onDraftChange(adesao.valor ?? undefined);
+  }
+
+  function fechar() {
+    setAberto(false);
+    setEditando(false);
+    onDraftChange(undefined);
+  }
+
+  function handleToggle(ligar: boolean) {
+    if (ligar) {
+      if (!adesao) abrirNovo();
+    } else if (aberto && !editando) {
+      fechar();
+    } else if (adesao) {
+      onRemover(adesao.id);
+      if (aberto) fechar();
+    }
+  }
+
+  function salvar() {
+    if (opcoes && !formOpcaoId) return;
+    if (!opcoes && !formValor) return;
+    if (!formDataInicio) return;
+    if (editando && adesao) onSalvarEdicao(adesao.id, { valor: formValor, opcaoId: formOpcaoId, dataInicio: formDataInicio });
+    else onSalvarNovo({ valor: formValor, opcaoId: formOpcaoId, dataInicio: formDataInicio });
+    fechar();
+  }
+
+  const opcaoSelecionada = opcoes?.find((o) => o.id === formOpcaoId) ?? null;
+  const podeSalvar = (opcoes ? !!formOpcaoId : !!formValor) && !!formDataInicio;
+
+  return (
+    <li className="flex flex-col gap-3 border-b border-divider p-4 last:border-0">
+      <div className="flex items-start gap-3">
+        <Switch checked={!!adesao || aberto} onChange={handleToggle} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-text">{tipo.nome}</span>
+            <Badge tone="blue">{CATEGORIA_BENEFICIO_LABEL[tipo.categoria]}</Badge>
+          </div>
+
+          {!aberto && adesao && (
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-text-secondary">
+              <span>
+                {adesao.opcaoNome && `${adesao.opcaoNome} · `}
+                {adesao.valor != null ? `${formatBRL(adesao.valor)}${unidadeLabel}` : 'valor calculado na apuração'} · desde {formatDate(adesao.dataInicio)}
+              </span>
+              <span className="flex items-center gap-2 text-xs">
+                <button onClick={abrirEdicao} className="text-accent hover:underline">
+                  editar
+                </button>
+                <button onClick={() => onRemover(adesao.id)} className="text-danger hover:underline">
+                  remover
+                </button>
+              </span>
+            </div>
+          )}
+
+          {!aberto && !adesao && <p className="mt-1 text-xs text-text-tertiary">Não ativo para este colaborador.</p>}
+        </div>
+      </div>
+
+      {aberto && (
+        <div className="flex flex-wrap items-end gap-3 border-t border-divider pt-3 pl-8">
+          {opcoes ? (
+            opcoes.length === 0 ? (
+              <p className="text-xs text-text-tertiary">Nenhuma opção cadastrada ainda para essa categoria.</p>
+            ) : opcaoUnica ? (
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">{opcaoUnica.nome}</span>
+                <span className="rounded-[10px] border border-border-strong bg-surface-alt px-3 py-2 text-text-tertiary">
+                  {opcaoUnica.valor != null ? `${formatBRL(opcaoUnica.valor)}${unidadeLabel}` : 'calculado na apuração'}
+                </span>
+              </label>
+            ) : (
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="text-text-secondary">Opção</span>
+                <select
+                  value={formOpcaoId}
+                  onChange={(e) => {
+                    setFormOpcaoId(e.target.value);
+                    const opcao = opcoes.find((o) => o.id === e.target.value);
+                    onDraftChange(opcao?.valor ?? 0);
+                  }}
+                  className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                >
+                  <option value="">Selecione…</option>
+                  {opcoes.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.nome}
+                    </option>
+                  ))}
+                </select>
+                {opcaoSelecionada && (
+                  <span className="text-xs text-text-tertiary">
+                    {opcaoSelecionada.valor != null ? `${formatBRL(opcaoSelecionada.valor)}${unidadeLabel}` : 'valor calculado na apuração'}
+                  </span>
+                )}
+              </label>
+            )
+          ) : (
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-text-secondary">Valor{unidadeLabel}</span>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={formValor}
+                onChange={(e) => {
+                  setFormValor(e.target.value);
+                  onDraftChange(e.target.value ? Number(e.target.value) : 0);
+                }}
+                className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              />
+            </label>
+          )}
+
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-text-secondary">Início</span>
+            <input
+              type="date"
+              value={formDataInicio}
+              onChange={(e) => setFormDataInicio(e.target.value)}
+              disabled={editando && !opcoes}
+              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 disabled:opacity-60"
+            />
+          </label>
+
+          <Button onClick={salvar} disabled={!podeSalvar}>
+            Salvar
+          </Button>
+          <Button variant="secondary" onClick={fechar}>
+            Cancelar
+          </Button>
+        </div>
+      )}
+
+      {tipo.categoria === 'SAUDE' && adesao && dependentesForm && (
+        <div className="border-t border-divider pt-3 pl-8">
+          <div className="flex flex-col gap-1 text-xs text-text-secondary">
+            {(adesao.dependentes ?? []).map((d) => (
+              <div key={d.id} className="flex items-center justify-between">
+                <span>
+                  {d.nome} · {d.parentesco ?? '—'} · {formatDate(d.dataNascimento)}
+                </span>
+                <button onClick={() => dependentesForm.onRemover(adesao.id, d.id)} className="text-danger hover:underline">
+                  remover
+                </button>
+              </div>
+            ))}
+          </div>
+          {dependentesForm.aberto === adesao.id ? (
+            <form
+              className="mt-2 flex flex-wrap items-end gap-2"
+              onSubmit={(ev) => {
+                ev.preventDefault();
+                dependentesForm.onAdicionar(adesao.id);
+              }}
+            >
+              <input
+                placeholder="Nome"
+                value={dependentesForm.nome}
+                onChange={(ev) => dependentesForm.setNome(ev.target.value)}
+                required
+                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs"
+              />
+              <input
+                type="date"
+                value={dependentesForm.dataNascimento}
+                onChange={(ev) => dependentesForm.setDataNascimento(ev.target.value)}
+                required
+                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs"
+              />
+              <input
+                placeholder="Parentesco"
+                value={dependentesForm.parentesco}
+                onChange={(ev) => dependentesForm.setParentesco(ev.target.value)}
+                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs"
+              />
+              <Button type="submit" variant="secondary" disabled={dependentesForm.salvando}>
+                Adicionar
+              </Button>
+            </form>
+          ) : (
+            <button onClick={() => dependentesForm.onAbrir(adesao.id)} className="mt-2 text-xs text-accent hover:underline">
+              + dependente no plano
+            </button>
+          )}
+        </div>
+      )}
+    </li>
   );
 }
 
