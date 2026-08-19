@@ -105,7 +105,7 @@ export class UpdateEmployeeDto {
   @IsOptional() @IsString() genero?: string;
   @IsOptional() @IsString() escolaridade?: string;
   @IsOptional() @IsString() cnh?: string;
-  @IsOptional() @IsIn(CNH_CATEGORIAS) cnhCategoria?: CnhCategoria;
+  @IsOptional() @EmptyStringToUndefined() @IsIn(CNH_CATEGORIAS) cnhCategoria?: CnhCategoria;
   @IsOptional() @EmptyStringToUndefined() @IsDateString() cnhValidade?: string;
   @IsOptional() @IsString() nomeMae?: string;
   @IsOptional() @IsString() nomePai?: string;
