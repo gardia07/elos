@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { complianceTone } from '@/lib/format';
+import { complianceTone, statusColaboradorLabel, statusColaboradorTone } from '@/lib/format';
 import { Badge, Button, Card } from '@/components/ui';
 
 interface DocumentRequirement {
@@ -514,12 +514,10 @@ export default function ColaboradoresPage() {
                   <Badge tone={complianceTone(e.conformidadeDocumental)}>{e.conformidadeDocumental}%</Badge>
                 </td>
                 <td className="px-5 py-3">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
-                    {e.status === 'ATIVO' && e.afastadoAtual && (
-                      <Badge tone="amber">Afastado{e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}</Badge>
-                    )}
-                  </div>
+                  <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>
+                    {statusColaboradorLabel(e.status, e.afastadoAtual)}
+                    {e.status === 'ATIVO' && e.afastadoAtual && e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}
+                  </Badge>
                 </td>
               </tr>
             ))}

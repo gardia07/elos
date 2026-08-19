@@ -14,6 +14,17 @@ export function complianceTone(pct: number): 'green' | 'amber' | 'red' {
   return 'red';
 }
 
+/** Status exibido do colaborador -- Afastado tem prioridade visual sobre Ativo (mesmo status ATIVO por trás). */
+export function statusColaboradorLabel(status: 'ATIVO' | 'INATIVO', afastadoAtual: boolean): string {
+  if (status === 'ATIVO' && afastadoAtual) return 'Afastado';
+  return status === 'ATIVO' ? 'Ativo' : 'Inativo';
+}
+
+export function statusColaboradorTone(status: 'ATIVO' | 'INATIVO', afastadoAtual: boolean): 'green' | 'amber' | 'grey' {
+  if (status === 'ATIVO' && afastadoAtual) return 'amber';
+  return status === 'ATIVO' ? 'green' : 'grey';
+}
+
 export function formatDate(v: string): string {
   return new Date(v).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }

@@ -9,6 +9,8 @@ import {
   complianceTone,
   maskCPF,
   maskPhoneBR,
+  statusColaboradorLabel,
+  statusColaboradorTone,
   TERMINATION_STATUS_LABEL,
   TERMINATION_STATUS_TONE,
   TERMINATION_TIPO_LABEL,
@@ -717,10 +719,10 @@ export default function EmployeeProfilePage() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{e.nome}</h2>
-            <Badge tone={e.status === 'ATIVO' ? 'green' : 'grey'}>{e.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</Badge>
-            {e.status === 'ATIVO' && e.afastadoAtual && (
-              <Badge tone="amber">Afastado{e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}</Badge>
-            )}
+            <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>
+              {statusColaboradorLabel(e.status, e.afastadoAtual)}
+              {e.status === 'ATIVO' && e.afastadoAtual && e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}
+            </Badge>
             <Badge tone={complianceTone(e.conformidadeDocumental)}>Conformidade: {e.conformidadeDocumental}%</Badge>
           </div>
           <p className="text-sm text-text-secondary">
@@ -2037,7 +2039,7 @@ export default function EmployeeProfilePage() {
                 <FormBox label="Data de admissão" value={formatDate(e.dataAdmissao)} />
                 <FormBox label="Tipo de contrato" value={TIPO_CONTRATO_LABEL[e.tipoContrato]} />
                 <FormBox label="Salário" value={`${formatBRL(Number(e.salario))} (${TIPO_SALARIO_LABEL[e.tipoSalario]})`} />
-                <FormBox label="Status" value={e.status === 'ATIVO' ? 'Ativo' : 'Inativo'} />
+                <FormBox label="Status" value={statusColaboradorLabel(e.status, e.afastadoAtual)} />
                 <FormBox label="Banco" value={e.banco ? `${e.banco}${e.agencia ? ' · ag. ' + e.agencia : ''}${e.conta ? ' · cc ' + e.conta : ''}` : null} className="sm:col-span-2" />
                 <FormBox label="Chave PIX" value={e.chavePix} />
               </div>
