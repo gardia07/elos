@@ -1208,13 +1208,13 @@ export default function EmployeeProfilePage() {
 
             {showPromote && (
               <form
-                className="flex flex-wrap items-end gap-3 border-t border-divider pt-4"
+                className="flex items-end gap-3 border-t border-divider pt-4"
                 onSubmit={(ev) => {
                   ev.preventDefault();
                   promote.mutate();
                 }}
               >
-                <label className="flex flex-col gap-1.5 text-sm">
+                <label className="flex flex-none flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Motivo</span>
                   <select
                     value={motivoPromocao}
@@ -1227,7 +1227,7 @@ export default function EmployeeProfilePage() {
                     <option value="Outro">Outro</option>
                   </select>
                 </label>
-                <label className="flex flex-col gap-1.5 text-sm">
+                <label className="flex flex-none flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">{promoteMode === 'cargo' ? 'Novo cargo' : 'Novo cargo (se houver)'}</span>
                   <input
                     value={novoCargo}
@@ -1237,11 +1237,11 @@ export default function EmployeeProfilePage() {
                     className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
-                <label className="flex flex-col gap-1.5 text-sm">
+                <label className="flex flex-none flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">{promoteMode === 'cargo' ? 'Salário (mantido)' : 'Novo salário'}</span>
                   <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
                 </label>
-                <label className="flex flex-col gap-1.5 text-sm">
+                <label className="flex flex-none flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Vigente desde</span>
                   <input
                     type="date"
@@ -1251,7 +1251,7 @@ export default function EmployeeProfilePage() {
                     className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
-                <label className="flex min-w-[200px] flex-1 flex-col gap-1.5 text-sm">
+                <label className="flex flex-1 flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Anotações</span>
                   <input
                     value={anotacaoPromocao}
@@ -1259,10 +1259,10 @@ export default function EmployeeProfilePage() {
                     className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
-                <Button type="submit" disabled={promote.isPending}>
+                <Button type="submit" disabled={promote.isPending} className="flex-none">
                   Confirmar
                 </Button>
-                <Button type="button" variant="secondary" onClick={() => setShowPromote(false)}>
+                <Button type="button" variant="secondary" onClick={() => setShowPromote(false)} className="flex-none">
                   Cancelar
                 </Button>
               </form>
