@@ -193,7 +193,7 @@ describe('validarFracionamento', () => {
   });
 });
 
-describe('validarAbono', () => {
+describe('validarAbono (art. 143, §1º, CLT -- prazo conta do fim do período aquisitivo, não do concessivo)', () => {
   it('aceita até 10 dias com antecedência suficiente', () => {
     expect(validarAbono(10, d('2026-10-01'), d('2027-01-01'), d('2026-08-19'))).toEqual([]);
   });
@@ -201,9 +201,13 @@ describe('validarAbono', () => {
     const violacoes = validarAbono(11, d('2026-10-01'), d('2027-01-01'), d('2026-08-19'));
     expect(violacoes.some((v) => v.includes('10 dias'))).toBe(true);
   });
-  it('rejeita quando falta menos de 15 dias pro fim do concessivo', () => {
+  it('rejeita quando falta menos de 15 dias pro fim do período aquisitivo', () => {
     const violacoes = validarAbono(5, d('2026-08-25'), d('2026-08-30'), d('2026-08-19'));
-    expect(violacoes.some((v) => v.includes('antecedência'))).toBe(true);
+    expect(violacoes.some((v) => v.includes('período aquisitivo'))).toBe(true);
+  });
+  it('sinaliza decadência quando o período aquisitivo já terminou', () => {
+    const violacoes = validarAbono(5, d('2026-08-25'), d('2026-06-01'), d('2026-08-19'));
+    expect(violacoes.some((v) => v.includes('decaiu'))).toBe(true);
   });
 });
 

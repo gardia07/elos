@@ -321,8 +321,7 @@ export class FeriasService {
     }
 
     if (dto.diasAbono) {
-      const limiteConcessao = dataLimiteConcessao(periodo.dataFim);
-      const violacoesAbono = validarAbono(dto.diasAbono, dataInicio, limiteConcessao, hoje);
+      const violacoesAbono = validarAbono(dto.diasAbono, dataInicio, periodo.dataFim, hoje);
       if (violacoesAbono.length > 0) throw new BadRequestException(violacoesAbono.join(' '));
     }
 
@@ -396,7 +395,7 @@ export class FeriasService {
     }
 
     if (diasAbono) {
-      alertas.push(...validarAbono(diasAbono, hoje, dataLimiteConcessao(periodo.dataFim), hoje));
+      alertas.push(...validarAbono(diasAbono, hoje, periodo.dataFim, hoje));
     }
 
     return { alertas, saldoDisponivel: resumo.saldoDisponivel };
