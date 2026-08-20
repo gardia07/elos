@@ -93,7 +93,7 @@ export default function PontoPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Colaborador</span>
-              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Selecione…</option>
                 {employees?.map((e) => (
                   <option key={e.id} value={e.id}>
@@ -104,11 +104,11 @@ export default function PontoPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Data</span>
-              <input type="date" value={data} onChange={(e) => setData(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={data} onChange={(e) => setData(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Ocorrência</span>
-              <input value={ocorrencia} onChange={(e) => setOcorrencia(e.target.value)} placeholder="Atraso, falta de marcação…" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={ocorrencia} onChange={(e) => setOcorrencia(e.target.value)} placeholder="Atraso, falta de marcação…" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Registrar

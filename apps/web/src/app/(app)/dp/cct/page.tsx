@@ -70,24 +70,24 @@ export default function CctPage() {
             <div className="flex flex-wrap items-end gap-3">
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Sindicato</span>
-                <input value={sindicato} onChange={(e) => setSindicato(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input value={sindicato} onChange={(e) => setSindicato(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Vigência início</span>
-                <input type="date" value={vigenciaInicio} onChange={(e) => setVigenciaInicio(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input type="date" value={vigenciaInicio} onChange={(e) => setVigenciaInicio(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Vigência fim</span>
-                <input type="date" value={vigenciaFim} onChange={(e) => setVigenciaFim(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input type="date" value={vigenciaFim} onChange={(e) => setVigenciaFim(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Reajuste (%)</span>
-                <input type="number" step="0.1" value={reajustePercentual} onChange={(e) => setReajustePercentual(e.target.value)} required className="w-24 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input type="number" step="0.1" value={reajustePercentual} onChange={(e) => setReajustePercentual(e.target.value)} required className="w-24 rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
             </div>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Cláusulas</span>
-              <textarea value={clausulas} onChange={(e) => setClausulas(e.target.value)} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <textarea value={clausulas} onChange={(e) => setClausulas(e.target.value)} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending} className="self-start">
               Salvar convenção

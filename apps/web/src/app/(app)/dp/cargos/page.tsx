@@ -73,27 +73,27 @@ export default function CargosPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Cargo</span>
-              <input value={cargo} onChange={(e) => setCargo(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={cargo} onChange={(e) => setCargo(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">CBO</span>
-              <input value={cbo} onChange={(e) => setCbo(e.target.value)} placeholder="0000-00" className="w-28 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={cbo} onChange={(e) => setCbo(e.target.value)} placeholder="0000-00" className="w-28 rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Faixa mín.</span>
-              <input type="number" value={faixaMin} onChange={(e) => setFaixaMin(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" value={faixaMin} onChange={(e) => setFaixaMin(e.target.value)} required className="w-28 rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Faixa máx.</span>
-              <input type="number" value={faixaMax} onChange={(e) => setFaixaMax(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" value={faixaMax} onChange={(e) => setFaixaMax(e.target.value)} required className="w-28 rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Nível</span>
-              <input value={nivel} onChange={(e) => setNivel(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={nivel} onChange={(e) => setNivel(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Requisitos</span>
-              <input value={requisitos} onChange={(e) => setRequisitos(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={requisitos} onChange={(e) => setRequisitos(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Salvar

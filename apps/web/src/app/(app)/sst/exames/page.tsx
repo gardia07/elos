@@ -98,7 +98,7 @@ export default function ExamesPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Colaborador</span>
-              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Selecione…</option>
                 {employees?.map((e) => (
                   <option key={e.id} value={e.id}>
@@ -109,7 +109,7 @@ export default function ExamesPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tipo</span>
-              <select value={tipo} onChange={(e) => setTipo(e.target.value as Exam['tipo'])} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={tipo} onChange={(e) => setTipo(e.target.value as Exam['tipo'])} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 {Object.entries(TIPO_LABEL).map(([v, l]) => (
                   <option key={v} value={v}>
                     {l}
@@ -119,7 +119,7 @@ export default function ExamesPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Data prevista</span>
-              <input type="date" value={dataPrevista} onChange={(e) => setDataPrevista(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={dataPrevista} onChange={(e) => setDataPrevista(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Agendar

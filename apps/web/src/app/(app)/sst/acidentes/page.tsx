@@ -135,7 +135,7 @@ export default function AcidentesPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Colaborador</span>
-              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Selecione…</option>
                 {employees?.map((e) => (
                   <option key={e.id} value={e.id}>
@@ -146,7 +146,7 @@ export default function AcidentesPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tipo</span>
-              <select value={tipoAcidente} onChange={(e) => setTipoAcidente(e.target.value as typeof tipoAcidente)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={tipoAcidente} onChange={(e) => setTipoAcidente(e.target.value as typeof tipoAcidente)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="TIPICO">Típico</option>
                 <option value="TRAJETO">Trajeto</option>
                 <option value="DOENCA_OCUPACIONAL">Doença ocupacional</option>
@@ -154,11 +154,11 @@ export default function AcidentesPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Data do acidente</span>
-              <input type="date" value={dataAcidente} onChange={(e) => setDataAcidente(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={dataAcidente} onChange={(e) => setDataAcidente(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Emissão da CAT</span>
-              <input type="date" value={dataEmissaoCat} onChange={(e) => setDataEmissaoCat(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={dataEmissaoCat} onChange={(e) => setDataEmissaoCat(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex items-center gap-2 pb-2 text-sm">
               <input type="checkbox" checked={comAfastamento} onChange={(e) => setComAfastamento(e.target.checked)} />
@@ -167,12 +167,12 @@ export default function AcidentesPage() {
             {comAfastamento && (
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Dias de afastamento</span>
-                <input type="number" min={0} value={diasAfastamento} onChange={(e) => setDiasAfastamento(e.target.value)} className="w-28 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input type="number" min={0} value={diasAfastamento} onChange={(e) => setDiasAfastamento(e.target.value)} className="w-28 rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
             )}
             <label className="flex w-full flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Descrição</span>
-              <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Registrar
@@ -235,7 +235,7 @@ export default function AcidentesPage() {
             </div>
 
             {detail.emissaoAtrasada && (
-              <p className="rounded-[10px] bg-danger/10 px-3 py-2 text-xs text-danger">
+              <p className="rounded-container bg-danger/10 px-3 py-2 text-xs text-danger">
                 ⚠ CAT emitida fora do prazo legal de 1 dia útil.
               </p>
             )}
@@ -252,11 +252,11 @@ export default function AcidentesPage() {
               <h4 className="mb-2 text-sm font-semibold">Investigação</h4>
               <label className="mb-2 flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Causa raiz</span>
-                <textarea value={causaRaiz} onChange={(e) => setCausaRaiz(e.target.value)} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <textarea value={causaRaiz} onChange={(e) => setCausaRaiz(e.target.value)} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Ação corretiva</span>
-                <textarea value={acaoCorretiva} onChange={(e) => setAcaoCorretiva(e.target.value)} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <textarea value={acaoCorretiva} onChange={(e) => setAcaoCorretiva(e.target.value)} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <Button variant="secondary" className="mt-2" onClick={() => saveInvestigation.mutate()} disabled={saveInvestigation.isPending}>
                 Salvar investigação
@@ -267,7 +267,7 @@ export default function AcidentesPage() {
               <div className="border-t border-divider pt-3">
                 <label className="mb-2 flex flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Nota de encerramento</span>
-                  <textarea value={notaEncerramento} onChange={(e) => setNotaEncerramento(e.target.value)} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                  <textarea value={notaEncerramento} onChange={(e) => setNotaEncerramento(e.target.value)} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
                 </label>
                 <Button onClick={() => closeAccident.mutate()} disabled={closeAccident.isPending}>
                   Encerrar CAT

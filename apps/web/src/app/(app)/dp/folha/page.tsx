@@ -54,7 +54,7 @@ export default function FolhaPage() {
                 onChange={(e) => setCompetencia(e.target.value)}
                 placeholder="2026-08"
                 required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             <Button type="submit" disabled={create.isPending}>

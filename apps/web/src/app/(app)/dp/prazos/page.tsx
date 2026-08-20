@@ -58,11 +58,11 @@ export default function PrazosPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Obrigação</span>
-              <input value={obrigacao} onChange={(e) => setObrigacao(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={obrigacao} onChange={(e) => setObrigacao(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Vencimento</span>
-              <input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Adicionar

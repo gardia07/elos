@@ -74,7 +74,7 @@ export default function CustosPage() {
           type="month"
           value={competencia}
           onChange={(e) => setCompetencia(e.target.value)}
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
       </div>
 

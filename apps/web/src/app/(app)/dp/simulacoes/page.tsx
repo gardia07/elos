@@ -99,7 +99,7 @@ function SimulacaoFerias({ employees }: { employees: Employee[] }) {
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
             required
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           >
             <option value="">Selecione…</option>
             {employees.map((e) => (
@@ -118,7 +118,7 @@ function SimulacaoFerias({ employees }: { employees: Employee[] }) {
             value={dias}
             onChange={(e) => setDias(e.target.value)}
             required
-            className="w-28 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="w-28 rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -129,7 +129,7 @@ function SimulacaoFerias({ employees }: { employees: Employee[] }) {
             max={10}
             value={abonoDias}
             onChange={(e) => setAbonoDias(e.target.value)}
-            className="w-28 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="w-28 rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
         <Button disabled={simular.isPending}>Simular</Button>
@@ -187,7 +187,7 @@ function SimulacaoRescisao({ employees }: { employees: Employee[] }) {
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
             required
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           >
             <option value="">Selecione…</option>
             {employees.map((e) => (
@@ -202,7 +202,7 @@ function SimulacaoRescisao({ employees }: { employees: Employee[] }) {
           <select
             value={tipo}
             onChange={(e) => setTipo(e.target.value as typeof tipo)}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           >
             <option value="SEM_JUSTA_CAUSA">Dispensa sem justa causa</option>
             <option value="PEDIDO_DEMISSAO">Pedido de demissão</option>
@@ -216,7 +216,7 @@ function SimulacaoRescisao({ employees }: { employees: Employee[] }) {
             value={dataPrevista}
             onChange={(e) => setDataPrevista(e.target.value)}
             required
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -228,7 +228,7 @@ function SimulacaoRescisao({ employees }: { employees: Employee[] }) {
             placeholder="Estimar automaticamente"
             value={saldoFgtsEstimado}
             onChange={(e) => setSaldoFgtsEstimado(e.target.value)}
-            className="w-44 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="w-44 rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
         <Button disabled={simular.isPending}>Simular</Button>

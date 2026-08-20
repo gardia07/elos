@@ -77,15 +77,15 @@ export default function MapaRiscosPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Setor</span>
-              <input value={setor} onChange={(e) => setSetor(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={setor} onChange={(e) => setSetor(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Riscos identificados</span>
-              <input value={riscos} onChange={(e) => setRiscos(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={riscos} onChange={(e) => setRiscos(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Nível</span>
-              <select value={nivel} onChange={(e) => setNivel(e.target.value as RiskEntry['nivel'])} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={nivel} onChange={(e) => setNivel(e.target.value as RiskEntry['nivel'])} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="ALTO">Alto</option>
                 <option value="MEDIO">Médio</option>
                 <option value="BAIXO">Baixo</option>

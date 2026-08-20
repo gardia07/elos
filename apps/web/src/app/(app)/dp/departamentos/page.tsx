@@ -49,11 +49,11 @@ export default function DepartamentosPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Nome</span>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={nome} onChange={(e) => setNome(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Descrição</span>
-              <input value={descricao} onChange={(e) => setDescricao(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={descricao} onChange={(e) => setDescricao(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Salvar

@@ -67,15 +67,15 @@ export default function PgrPcmsoPage() {
 
         {showForm && (
           <form
-            className="mb-4 flex flex-col gap-2 rounded-[10px] border border-border p-3"
+            className="mb-4 flex flex-col gap-2 rounded-container border border-border p-3"
             onSubmit={(e) => {
               e.preventDefault();
               create.mutate();
             }}
           >
-            <input value={acao} onChange={(e) => setAcao(e.target.value)} placeholder="Ação" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Setor" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input value={acao} onChange={(e) => setAcao(e.target.value)} placeholder="Ação" required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Setor" required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
             <Button type="submit" disabled={create.isPending} className="self-start">
               Salvar
             </Button>
@@ -84,7 +84,7 @@ export default function PgrPcmsoPage() {
 
         <ul className="flex flex-col gap-2">
           {actions?.map((a) => (
-            <li key={a.id} className="flex items-center justify-between rounded-[10px] border border-border p-2.5 text-sm">
+            <li key={a.id} className="flex items-center justify-between rounded-container border border-border p-2.5 text-sm">
               <div>
                 <div className="font-medium">{a.acao}</div>
                 <div className="text-xs text-text-tertiary">
@@ -94,7 +94,7 @@ export default function PgrPcmsoPage() {
               <select
                 value={a.status}
                 onChange={(e) => updateStatus.mutate({ id: a.id, status: e.target.value as PgrAction['status'] })}
-                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                className="rounded-control border border-border-strong bg-surface px-2 py-1 text-xs"
               >
                 <option value="PLANEJADA">Planejada</option>
                 <option value="EM_ANDAMENTO">Em andamento</option>

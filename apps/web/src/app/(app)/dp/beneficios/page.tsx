@@ -155,7 +155,7 @@ function TiposTab() {
               onChange={(e) => setNome(e.target.value)}
               placeholder="VA, VR, Plano de Saúde…"
               required
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
@@ -163,7 +163,7 @@ function TiposTab() {
             <select
               value={categoria}
               onChange={(e) => setCategoria(e.target.value as BeneficioTipo['categoria'])}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             >
               {(Object.keys(CATEGORIA_LABEL) as BeneficioTipo['categoria'][]).map((c) => (
                 <option key={c} value={c}>
@@ -213,7 +213,7 @@ function TiposTab() {
                         onChange={(e) => setPercEmpresa(e.target.value)}
                         placeholder="% empresa"
                         required
-                        className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                        className="w-24 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm"
                       />
                       <input
                         type="number"
@@ -224,7 +224,7 @@ function TiposTab() {
                         onChange={(e) => setPercColab(e.target.value)}
                         placeholder="% colaborador"
                         required
-                        className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                        className="w-28 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm"
                       />
                       <Button type="submit" variant="secondary" disabled={saveCopart.isPending}>
                         Salvar
@@ -317,7 +317,7 @@ function AcademiaTab() {
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Convênio</span>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Smart Fit, Bio Ritmo…" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Smart Fit, Bio Ritmo…" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Mensalidade</span>
@@ -328,7 +328,7 @@ function AcademiaTab() {
               value={valorMensalidade}
               onChange={(e) => setValorMensalidade(e.target.value)}
               required
-              className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="w-32 rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <Button type="submit" disabled={create.isPending}>
@@ -358,7 +358,7 @@ function AcademiaTab() {
                         update.mutate(c.id);
                       }}
                     >
-                      <input value={editNome} onChange={(e) => setEditNome(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                      <input value={editNome} onChange={(e) => setEditNome(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
                       <input
                         type="number"
                         min={0}
@@ -366,7 +366,7 @@ function AcademiaTab() {
                         value={editValor}
                         onChange={(e) => setEditValor(e.target.value)}
                         required
-                        className="w-32 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm"
+                        className="w-32 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm"
                       />
                       <Button type="submit" variant="secondary" disabled={update.isPending}>
                         Salvar
@@ -504,11 +504,11 @@ function SaudeTab() {
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Plano</span>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Executivo, Empresarial…" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Executivo, Empresarial…" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Operadora</span>
-            <input value={operadora} onChange={(e) => setOperadora(e.target.value)} placeholder="Unimed, SulAmérica…" className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+            <input value={operadora} onChange={(e) => setOperadora(e.target.value)} placeholder="Unimed, SulAmérica…" className="rounded-control border border-border-strong bg-surface px-3 py-2" />
           </label>
           <Button type="submit" disabled={create.isPending}>
             Adicionar plano
@@ -527,8 +527,8 @@ function SaudeTab() {
                   updatePlano.mutate(p.id);
                 }}
               >
-                <input value={editPlanoNome} onChange={(e) => setEditPlanoNome(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
-                <input value={editPlanoOperadora} onChange={(e) => setEditPlanoOperadora(e.target.value)} placeholder="Operadora" className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                <input value={editPlanoNome} onChange={(e) => setEditPlanoNome(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                <input value={editPlanoOperadora} onChange={(e) => setEditPlanoOperadora(e.target.value)} placeholder="Operadora" className="rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
                 <Button type="submit" variant="secondary" disabled={updatePlano.isPending}>
                   Salvar
                 </Button>
@@ -576,9 +576,9 @@ function SaudeTab() {
                             updateFaixa.mutate({ planoId: p.id, faixaId: f.id });
                           }}
                         >
-                          <input type="number" min={0} placeholder="Idade mín." value={editIdadeMin} onChange={(e) => setEditIdadeMin(e.target.value)} required className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
-                          <input type="number" min={0} placeholder="Idade máx." value={editIdadeMax} onChange={(e) => setEditIdadeMax(e.target.value)} required className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
-                          <input type="number" min={0} step="0.01" placeholder="Valor" value={editValorFaixa} onChange={(e) => setEditValorFaixa(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                          <input type="number" min={0} placeholder="Idade mín." value={editIdadeMin} onChange={(e) => setEditIdadeMin(e.target.value)} required className="w-24 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                          <input type="number" min={0} placeholder="Idade máx." value={editIdadeMax} onChange={(e) => setEditIdadeMax(e.target.value)} required className="w-24 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                          <input type="number" min={0} step="0.01" placeholder="Valor" value={editValorFaixa} onChange={(e) => setEditValorFaixa(e.target.value)} required className="w-28 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
                           <Button type="submit" variant="secondary" disabled={updateFaixa.isPending}>
                             Salvar
                           </Button>
@@ -624,9 +624,9 @@ function SaudeTab() {
                     addFaixa.mutate(p.id);
                   }}
                 >
-                  <input type="number" min={0} placeholder="Idade mín." value={idadeMin} onChange={(e) => setIdadeMin(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
-                  <input type="number" min={0} placeholder="Idade máx." value={idadeMax} onChange={(e) => setIdadeMax(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
-                  <input type="number" min={0} step="0.01" placeholder="Valor" value={valorFaixa} onChange={(e) => setValorFaixa(e.target.value)} required className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                  <input type="number" min={0} placeholder="Idade mín." value={idadeMin} onChange={(e) => setIdadeMin(e.target.value)} required className="w-28 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                  <input type="number" min={0} placeholder="Idade máx." value={idadeMax} onChange={(e) => setIdadeMax(e.target.value)} required className="w-28 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
+                  <input type="number" min={0} step="0.01" placeholder="Valor" value={valorFaixa} onChange={(e) => setValorFaixa(e.target.value)} required className="w-28 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-sm" />
                   <Button type="submit" variant="secondary" disabled={addFaixa.isPending}>
                     Adicionar faixa
                   </Button>
@@ -694,18 +694,18 @@ function FeriadosTab() {
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Data</span>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Nome</span>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Independência…" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Independência…" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Abrangência</span>
             <select
               value={abrangencia}
               onChange={(e) => setAbrangencia(e.target.value as Feriado['abrangencia'])}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             >
               {(Object.keys(ABRANGENCIA_LABEL) as Feriado['abrangencia'][]).map((a) => (
                 <option key={a} value={a}>
@@ -717,13 +717,13 @@ function FeriadosTab() {
           {abrangencia !== 'NACIONAL' && (
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">UF</span>
-              <input value={uf} onChange={(e) => setUf(e.target.value.toUpperCase().slice(0, 2))} required className="w-20 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={uf} onChange={(e) => setUf(e.target.value.toUpperCase().slice(0, 2))} required className="w-20 rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
           )}
           {abrangencia === 'MUNICIPAL' && (
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Município</span>
-              <input value={municipioIbge} onChange={(e) => setMunicipioIbge(e.target.value)} placeholder="Nome ou código IBGE" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={municipioIbge} onChange={(e) => setMunicipioIbge(e.target.value)} placeholder="Nome ou código IBGE" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
           )}
           <Button type="submit" disabled={create.isPending}>
@@ -830,7 +830,7 @@ function ApuracaoTab() {
               value={competencia}
               onChange={(e) => setCompetencia(e.target.value)}
               required
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <Button type="submit" disabled={calcular.isPending}>

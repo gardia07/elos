@@ -61,7 +61,7 @@ export default function TreinamentosNrPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Colaborador</span>
-              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Selecione…</option>
                 {employees?.map((e) => (
                   <option key={e.id} value={e.id}>
@@ -72,15 +72,15 @@ export default function TreinamentosNrPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Curso (NR)</span>
-              <input value={curso} onChange={(e) => setCurso(e.target.value)} placeholder="NR-35 Trabalho em Altura" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={curso} onChange={(e) => setCurso(e.target.value)} placeholder="NR-35 Trabalho em Altura" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Data de realização</span>
-              <input type="date" value={dataRealizacao} onChange={(e) => setDataRealizacao(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={dataRealizacao} onChange={(e) => setDataRealizacao(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Validade (meses)</span>
-              <select value={validadeMeses} onChange={(e) => setValidadeMeses(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={validadeMeses} onChange={(e) => setValidadeMeses(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="12">12</option>
                 <option value="24">24</option>
                 <option value="36">36</option>

@@ -66,7 +66,7 @@ export default function UniformePage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Colaborador</span>
-              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Selecione…</option>
                 {employees?.map((e) => (
                   <option key={e.id} value={e.id}>
@@ -77,15 +77,15 @@ export default function UniformePage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Item</span>
-              <input value={item} onChange={(e) => setItem(e.target.value)} placeholder="Uniforme, EPI…" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={item} onChange={(e) => setItem(e.target.value)} placeholder="Uniforme, EPI…" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Entregue em</span>
-              <input type="date" value={entregaEm} onChange={(e) => setEntregaEm(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={entregaEm} onChange={(e) => setEntregaEm(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Validade (meses)</span>
-              <input type="number" min={1} value={validadeMeses} onChange={(e) => setValidadeMeses(e.target.value)} required className="w-24 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" min={1} value={validadeMeses} onChange={(e) => setValidadeMeses(e.target.value)} required className="w-24 rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Registrar

@@ -279,7 +279,7 @@ export default function PayrollRunPage() {
                 setResultado(null);
                 if (f) preview.mutate(f);
               }}
-              className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              className="w-full rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
             />
             {preview.isPending && <p className="mt-2 text-xs text-text-tertiary">Lendo planilha…</p>}
             {preview.isError && (
@@ -297,7 +297,7 @@ export default function PayrollRunPage() {
 
               <div>
                 <h4 className="mb-2 text-sm font-semibold">Mapeamento de colunas</h4>
-                <div className="overflow-x-auto rounded-[10px] border border-border">
+                <div className="overflow-x-auto rounded-container border border-border">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-surface-alt text-left text-text-tertiary">
@@ -319,7 +319,7 @@ export default function PayrollRunPage() {
                             <select
                               value={m.alvo}
                               onChange={(e) => updateMapping(m.indice, { alvo: e.target.value as ColumnAlvo })}
-                              className="rounded-[10px] border border-border-strong bg-surface px-2 py-1"
+                              className="rounded-control border border-border-strong bg-surface px-2 py-1"
                             >
                               <option value="IGNORAR">Ignorar</option>
                               <option value="MATRICULA">Matrícula (identificação)</option>
@@ -333,7 +333,7 @@ export default function PayrollRunPage() {
                               <select
                                 value={m.rubricaTipo ?? 'PROVENTO'}
                                 onChange={(e) => updateMapping(m.indice, { rubricaTipo: e.target.value as RubricaTipo })}
-                                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1"
+                                className="rounded-control border border-border-strong bg-surface px-2 py-1"
                               >
                                 <option value="PROVENTO">Provento</option>
                                 <option value="DESCONTO">Desconto</option>
@@ -346,7 +346,7 @@ export default function PayrollRunPage() {
                               <input
                                 value={m.descricao ?? ''}
                                 onChange={(e) => updateMapping(m.indice, { descricao: e.target.value })}
-                                className="w-full rounded-[10px] border border-border-strong bg-surface px-2 py-1"
+                                className="w-full rounded-control border border-border-strong bg-surface px-2 py-1"
                               />
                             )}
                           </td>
@@ -373,7 +373,7 @@ export default function PayrollRunPage() {
                   value={templateNome}
                   onChange={(e) => setTemplateNome(e.target.value)}
                   placeholder="Nome do modelo (ex: Folha Contabilidade XYZ)"
-                  className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                  className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
                 />
               )}
 
