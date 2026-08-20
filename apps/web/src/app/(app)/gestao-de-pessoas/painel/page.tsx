@@ -37,7 +37,7 @@ interface Painel {
 function formatMes(mes: string): string {
   const [year, month] = mes.split('-');
   const d = new Date(Number(year), Number(month) - 1, 1);
-  return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  return d.toLocaleDateString('pt-BR', { month: 'long' });
 }
 
 function formatTempoDeCasa(meses: number): string {

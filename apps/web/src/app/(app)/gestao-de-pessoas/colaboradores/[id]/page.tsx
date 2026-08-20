@@ -1480,7 +1480,7 @@ export default function EmployeeProfilePage() {
                       .filter((p) => p.resumo.saldoDisponivel > 0)
                       .map((p) => (
                         <option key={p.id} value={p.id}>
-                          {formatDate(p.dataInicio)} a {formatDate(p.dataFim)} — saldo {p.resumo.saldoDisponivel}d
+                          {formatDate(p.dataInicio)} a {formatDate(p.dataFim)} — saldo {p.resumo.saldoDisponivel} dias
                         </option>
                       ))}
                   </select>

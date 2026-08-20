@@ -403,7 +403,7 @@ export default function FeriasPage() {
                   <option key={p.id} value={p.id}>
                     {formatDate(p.dataInicio)} – {formatDate(p.dataFim)}
                     {p.resumo.status === 'VENCIDA' && p.resumo.diasParaVencer != null ? ` · vencida há ${Math.abs(p.resumo.diasParaVencer)} dias` : ''} · saldo{' '}
-                    {p.resumo.saldoDisponivel}
+                    {p.resumo.saldoDisponivel} dias
                   </option>
                 ))}
             </select>
