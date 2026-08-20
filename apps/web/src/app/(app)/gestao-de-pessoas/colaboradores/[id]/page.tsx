@@ -2488,6 +2488,17 @@ export default function EmployeeProfilePage() {
                 <EmptyState>Sem observações registradas.</EmptyState>
               </Card>
             </div>
+
+            <div className="mt-4 flex flex-col gap-10 print:mt-10">
+              <p className="text-xs text-[#8B8B8B]">
+                Local e data: <span className="ml-1 inline-block w-64 border-b border-[#8B8B8B]">&nbsp;</span>
+              </p>
+              <div className="flex flex-col items-center gap-1 self-center">
+                <div className="w-72 border-t border-[#1F2430]" />
+                <p className="text-xs font-medium text-[#2B2B2B]">{e.nome}</p>
+                <p className="text-[10px] uppercase tracking-wide text-[#8B8B8B]">Assinatura do(a) Colaborador(a)</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
