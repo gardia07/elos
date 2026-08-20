@@ -802,8 +802,8 @@ export default function EmployeeProfilePage() {
               <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>{statusColaboradorLabel(e.status, e.afastadoAtual)}</Badge>
               <Badge tone={complianceTone(e.conformidadeDocumental)}>Conformidade: {e.conformidadeDocumental}%</Badge>
             </div>
-            <p className="text-sm text-text-secondary">
-              {e.cargo} · {e.departamento} · {e.filial ?? '—'} · gestor: {e.gestorDireto || 'Não atribuído'}
+            <p className="text-xs text-text-secondary">
+              {e.cargo} · {e.departamento} · {e.filial ?? '—'} · Gestor: {e.gestorDireto || 'Não atribuído'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -2148,13 +2148,13 @@ export default function EmployeeProfilePage() {
             </Button>
           </div>
 
-          <div id="registro-empregado-print" className="flex flex-col gap-4 rounded-container bg-white p-6 text-[#2B2B2B]">
+          <div id="registro-empregado-print" className="flex flex-col gap-4 rounded-[10px] bg-white p-6 text-[#2B2B2B]">
             <div className="text-center">
               <h3 className="text-lg font-bold tracking-wide text-[#1F2430]">REGISTRO DE EMPREGADO</h3>
               <p className="text-xs text-[#8B8B8B]">Matrícula {e.matricula}</p>
             </div>
 
-            <Card className="border-[#E2E0DA] bg-white">
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Empregador</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Razão social" value={tenant?.razaoSocial ?? tenant?.name} className="sm:col-span-2" />
@@ -2163,7 +2163,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA] bg-white">
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Empregado</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Nome" value={e.nome} className="sm:col-span-2" />
@@ -2177,7 +2177,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA] bg-white">
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Documentos</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="CPF" value={e.cpf} />
@@ -2195,7 +2195,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA] bg-white">
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Cargo, admissão e remuneração</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Cargo" value={e.cargo} />
@@ -2209,7 +2209,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA] bg-white">
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Contatos de emergência</h4>
               {e.contatosEmergencia.length === 0 ? (
                 <p className="text-sm text-text-tertiary">Nenhum contato cadastrado.</p>
@@ -2225,114 +2225,113 @@ export default function EmployeeProfilePage() {
               )}
             </Card>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 print:grid-cols-3">
-              <div>
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Período Aquisitivo</h4>
-                <Card className="border-[#E2E0DA] bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left font-bold text-[#8B8B8B]">
-                        <th className="pb-2">Início</th>
-                        <th className="pb-2">Fim</th>
-                        <th className="pb-2 print:hidden">Situação</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(feriasHistorico?.periodos ?? []).map((p) => (
-                        <tr key={p.id} className="border-t border-divider align-top">
-                          <td className="py-2">{formatDate(p.dataInicio)}</td>
-                          <td className="py-2">{formatDate(p.dataFim)}</td>
-                          <td className="py-2 print:hidden">
-                            <Badge tone={STATUS_PERIODO_TONE[p.resumo.status]}>{STATUS_PERIODO_LABEL[p.resumo.status]}</Badge>
-                          </td>
+            <div>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias</h4>
+              <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
+                <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] sm:grid-cols-3 sm:divide-x sm:divide-y-0 print:grid-cols-3 print:divide-x print:divide-y-0">
+                  <div className="p-4">
+                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Período Aquisitivo</div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left font-bold text-[#8B8B8B]">
+                          <th className="pb-2">Início</th>
+                          <th className="pb-2">Fim</th>
+                          <th className="pb-2 print:hidden">Situação</th>
                         </tr>
-                      ))}
-                      {(feriasHistorico?.periodos ?? []).length === 0 && (
-                        <tr>
-                          <td colSpan={3}>
-                            <EmptyState>Sem períodos aquisitivos.</EmptyState>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                  <p className="mt-2 hidden text-xs text-text-tertiary print:block">
-                    {(feriasHistorico?.periodos ?? [])
-                      .filter((p) => p.resumo.status === 'PERDIDO_POR_AFASTAMENTO')
-                      .map((p) => `Período ${formatDate(p.dataInicio)} a ${formatDate(p.dataFim)}: ${STATUS_PERIODO_LABEL.PERDIDO_POR_AFASTAMENTO}.`)
-                      .join(' ')}
-                  </p>
-                </Card>
-              </div>
-
-              <div>
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Usufruto</h4>
-                <Card className="border-[#E2E0DA] bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left font-bold text-[#8B8B8B]">
-                        <th className="pb-2">Início</th>
-                        <th className="pb-2">Fim</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(feriasHistorico?.periodos ?? [])
-                        .flatMap((p) => p.fracoes)
-                        .filter((f) => f.statusEfetivo === 'CONCLUIDA')
-                        .map((f) => (
-                          <tr key={f.id} className="border-t border-divider">
-                            <td className="py-2">{formatDate(f.dataInicio)}</td>
-                            <td className="py-2">{formatDate(f.dataFim)}</td>
+                      </thead>
+                      <tbody>
+                        {(feriasHistorico?.periodos ?? []).map((p) => (
+                          <tr key={p.id} className="border-t border-divider align-top">
+                            <td className="py-2">{formatDate(p.dataInicio)}</td>
+                            <td className="py-2">{formatDate(p.dataFim)}</td>
+                            <td className="py-2 print:hidden">
+                              <Badge tone={STATUS_PERIODO_TONE[p.resumo.status]}>{STATUS_PERIODO_LABEL[p.resumo.status]}</Badge>
+                            </td>
                           </tr>
                         ))}
-                      {(feriasHistorico?.periodos ?? []).flatMap((p) => p.fracoes).filter((f) => f.statusEfetivo === 'CONCLUIDA').length === 0 && (
-                        <tr>
-                          <td colSpan={2}>
-                            <EmptyState>Sem férias gozadas registradas.</EmptyState>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </Card>
-              </div>
-
-              <div>
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Abono Pecuniário</h4>
-                <Card className="border-[#E2E0DA] bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left font-bold text-[#8B8B8B]">
-                        <th className="pb-2">Período</th>
-                        <th className="pb-2">Dias vendidos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(feriasHistorico?.periodos ?? [])
-                        .flatMap((p) => p.fracoes)
-                        .filter((f) => f.statusEfetivo === 'CONCLUIDA' && f.diasAbono > 0)
-                        .map((f) => (
-                          <tr key={f.id} className="border-t border-divider">
-                            <td className="py-2">{formatDate(f.dataInicio)} a {formatDate(f.dataFim)}</td>
-                            <td className="py-2">{f.diasAbono}</td>
+                        {(feriasHistorico?.periodos ?? []).length === 0 && (
+                          <tr>
+                            <td colSpan={3}>
+                              <EmptyState>Sem períodos aquisitivos.</EmptyState>
+                            </td>
                           </tr>
-                        ))}
-                      {(feriasHistorico?.periodos ?? []).flatMap((p) => p.fracoes).filter((f) => f.statusEfetivo === 'CONCLUIDA' && f.diasAbono > 0).length === 0 && (
-                        <tr>
-                          <td colSpan={2}>
-                            <EmptyState>Sem abono pecuniário registrado.</EmptyState>
-                          </td>
+                        )}
+                      </tbody>
+                    </table>
+                    <p className="mt-2 hidden text-xs text-text-tertiary print:block">
+                      {(feriasHistorico?.periodos ?? [])
+                        .filter((p) => p.resumo.status === 'PERDIDO_POR_AFASTAMENTO')
+                        .map((p) => `Período ${formatDate(p.dataInicio)} a ${formatDate(p.dataFim)}: ${STATUS_PERIODO_LABEL.PERDIDO_POR_AFASTAMENTO}.`)
+                        .join(' ')}
+                    </p>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Usufruto</div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left font-bold text-[#8B8B8B]">
+                          <th className="pb-2">Início</th>
+                          <th className="pb-2">Fim</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </Card>
-              </div>
+                      </thead>
+                      <tbody>
+                        {(feriasHistorico?.periodos ?? [])
+                          .flatMap((p) => p.fracoes)
+                          .filter((f) => f.statusEfetivo === 'CONCLUIDA')
+                          .map((f) => (
+                            <tr key={f.id} className="border-t border-divider">
+                              <td className="py-2">{formatDate(f.dataInicio)}</td>
+                              <td className="py-2">{formatDate(f.dataFim)}</td>
+                            </tr>
+                          ))}
+                        {(feriasHistorico?.periodos ?? []).flatMap((p) => p.fracoes).filter((f) => f.statusEfetivo === 'CONCLUIDA').length === 0 && (
+                          <tr>
+                            <td colSpan={2}>
+                              <EmptyState>Sem férias gozadas registradas.</EmptyState>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Abono Pecuniário</div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left font-bold text-[#8B8B8B]">
+                          <th className="pb-2">Período</th>
+                          <th className="pb-2">Dias vendidos</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(feriasHistorico?.periodos ?? [])
+                          .flatMap((p) => p.fracoes)
+                          .filter((f) => f.statusEfetivo === 'CONCLUIDA' && f.diasAbono > 0)
+                          .map((f) => (
+                            <tr key={f.id} className="border-t border-divider">
+                              <td className="py-2">{formatDate(f.dataInicio)} a {formatDate(f.dataFim)}</td>
+                              <td className="py-2">{f.diasAbono}</td>
+                            </tr>
+                          ))}
+                        {(feriasHistorico?.periodos ?? []).flatMap((p) => p.fracoes).filter((f) => f.statusEfetivo === 'CONCLUIDA' && f.diasAbono > 0).length === 0 && (
+                          <tr>
+                            <td colSpan={2}>
+                              <EmptyState>Sem abono pecuniário registrado.</EmptyState>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </Card>
             </div>
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Alterações de salário, cargo e/ou função</h4>
-              <Card className="border-[#E2E0DA] bg-white">
+              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2368,7 +2367,7 @@ export default function EmployeeProfilePage() {
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Afastamentos</h4>
-              <Card className="border-[#E2E0DA] bg-white">
+              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2397,61 +2396,62 @@ export default function EmployeeProfilePage() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 print:grid-cols-2">
-              <div>
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Acidentes de trabalho e doenças ocupacionais</h4>
-                <Card className="border-[#E2E0DA] bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left font-bold text-[#8B8B8B]">
-                        <th className="pb-2">Data</th>
-                        <th className="pb-2">Tipo</th>
-                        <th className="pb-2">Afastamento</th>
-                        <th className="pb-2">Descrição</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {e.accidents.map((a) => (
-                        <tr key={a.id} className="border-t border-divider align-top">
-                          <td className="py-2">{formatDate(a.dataAcidente)}</td>
-                          <td className="py-2">{ACCIDENT_TIPO_LABEL[a.tipoAcidente]}</td>
-                          <td className="py-2">{a.comAfastamento ? `${a.diasAfastamento} dia(s)` : 'Não'}</td>
-                          <td className="py-2">{a.descricao ?? '—'}</td>
+            <div>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Acidentes de trabalho e rescisão de contrato</h4>
+              <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
+                <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] sm:grid-cols-2 sm:divide-x sm:divide-y-0 print:grid-cols-2 print:divide-x print:divide-y-0">
+                  <div className="p-4">
+                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Acidentes de trabalho e doenças ocupacionais</div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left font-bold text-[#8B8B8B]">
+                          <th className="pb-2">Data</th>
+                          <th className="pb-2">Tipo</th>
+                          <th className="pb-2">Afastamento</th>
+                          <th className="pb-2">Descrição</th>
                         </tr>
-                      ))}
-                      {e.accidents.length === 0 && (
-                        <tr>
-                          <td colSpan={4}>
-                            <EmptyState>Nenhum acidente ou doença ocupacional registrada.</EmptyState>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </Card>
-              </div>
+                      </thead>
+                      <tbody>
+                        {e.accidents.map((a) => (
+                          <tr key={a.id} className="border-t border-divider align-top">
+                            <td className="py-2">{formatDate(a.dataAcidente)}</td>
+                            <td className="py-2">{ACCIDENT_TIPO_LABEL[a.tipoAcidente]}</td>
+                            <td className="py-2">{a.comAfastamento ? `${a.diasAfastamento} dia(s)` : 'Não'}</td>
+                            <td className="py-2">{a.descricao ?? '—'}</td>
+                          </tr>
+                        ))}
+                        {e.accidents.length === 0 && (
+                          <tr>
+                            <td colSpan={4}>
+                              <EmptyState>Nenhum acidente ou doença ocupacional registrada.</EmptyState>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
-              <div>
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Rescisão de contrato de trabalho</h4>
-                <Card className="border-[#E2E0DA] bg-white">
-                  {e.terminations.length === 0 ? (
-                    <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
-                  ) : (
-                    <div className="flex flex-col gap-1 text-sm">
-                      {e.terminations.map((t) => (
-                        <div key={t.id}>
-                          Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              </div>
+                  <div className="p-4">
+                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Rescisão de contrato de trabalho</div>
+                    {e.terminations.length === 0 ? (
+                      <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
+                    ) : (
+                      <div className="flex flex-col gap-1 text-sm">
+                        {e.terminations.map((t) => (
+                          <div key={t.id}>
+                            Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
             </div>
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Ocorrências</h4>
-              <Card className="border-[#E2E0DA] bg-white">
+              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2484,7 +2484,7 @@ export default function EmployeeProfilePage() {
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Observações</h4>
-              <Card className="border-[#E2E0DA] bg-white">
+              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
                 <EmptyState>Sem observações registradas.</EmptyState>
               </Card>
             </div>
@@ -3128,7 +3128,7 @@ function Row({ label, value, className = '' }: { label: string; value: React.Rea
 
 function FormBox({ label, value, className = '' }: { label: string; value: React.ReactNode; className?: string }) {
   return (
-    <div className={`border border-[#E2E0DA] px-2 py-1.5 text-xs ${className}`}>
+    <div className={`rounded-[8px] border border-[#E2E0DA] px-2 py-1.5 text-xs ${className}`}>
       <div className="text-[9px] uppercase tracking-wide text-[#8B8B8B]">{label}</div>
       <div className="font-medium text-[#2B2B2B]">{value || '—'}</div>
     </div>
