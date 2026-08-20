@@ -2154,8 +2154,8 @@ export default function EmployeeProfilePage() {
               <p className="text-xs text-text-tertiary">Matrícula {e.matricula}</p>
             </div>
 
-            <Card>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Empregador</h4>
+            <Card className="border-[#E2E0DA]">
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Empregador</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Razão social" value={tenant?.razaoSocial ?? tenant?.name} className="sm:col-span-2" />
                 <FormBox label="CNPJ" value={tenant?.cnpj} />
@@ -2163,8 +2163,8 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Empregado</h4>
+            <Card className="border-[#E2E0DA]">
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Empregado</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Nome" value={e.nome} className="sm:col-span-2" />
                 <FormBox label="Data de nascimento" value={e.dataNascimento ? formatDate(e.dataNascimento) : null} />
@@ -2177,8 +2177,8 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Documentos</h4>
+            <Card className="border-[#E2E0DA]">
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Documentos</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="CPF" value={e.cpf} />
                 <FormBox label="RG" value={e.rg} />
@@ -2195,8 +2195,8 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Cargo, admissão e remuneração</h4>
+            <Card className="border-[#E2E0DA]">
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Cargo, admissão e remuneração</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Cargo" value={e.cargo} />
                 <FormBox label="Departamento" value={e.departamento} />
@@ -2209,8 +2209,8 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Contatos de emergência</h4>
+            <Card className="border-[#E2E0DA]">
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Contatos de emergência</h4>
               {e.contatosEmergencia.length === 0 ? (
                 <p className="text-sm text-text-tertiary">Nenhum contato cadastrado.</p>
               ) : (
@@ -2227,11 +2227,11 @@ export default function EmployeeProfilePage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 print:grid-cols-3">
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — Período Aquisitivo</h4>
-                <Card>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Período Aquisitivo</h4>
+                <Card className="border-[#E2E0DA]">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-text-tertiary">
+                      <tr className="text-left font-bold text-[#8B8B8B]">
                         <th className="pb-2">Início</th>
                         <th className="pb-2">Fim</th>
                         <th className="pb-2 print:hidden">Situação</th>
@@ -2266,23 +2266,26 @@ export default function EmployeeProfilePage() {
               </div>
 
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — Usufruto</h4>
-                <Card>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Usufruto</h4>
+                <Card className="border-[#E2E0DA]">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-text-tertiary">
+                      <tr className="text-left font-bold text-[#8B8B8B]">
                         <th className="pb-2">Início</th>
                         <th className="pb-2">Fim</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {e.vacationRequests.map((v) => (
-                        <tr key={v.id} className="border-t border-divider">
-                          <td className="py-2">{formatDate(v.inicio)}</td>
-                          <td className="py-2">{formatDate(v.fim)}</td>
-                        </tr>
-                      ))}
-                      {e.vacationRequests.length === 0 && (
+                      {(feriasHistorico?.periodos ?? [])
+                        .flatMap((p) => p.fracoes)
+                        .filter((f) => f.statusEfetivo === 'CONCLUIDA')
+                        .map((f) => (
+                          <tr key={f.id} className="border-t border-divider">
+                            <td className="py-2">{formatDate(f.dataInicio)}</td>
+                            <td className="py-2">{formatDate(f.dataFim)}</td>
+                          </tr>
+                        ))}
+                      {(feriasHistorico?.periodos ?? []).flatMap((p) => p.fracoes).filter((f) => f.statusEfetivo === 'CONCLUIDA').length === 0 && (
                         <tr>
                           <td colSpan={2}>
                             <EmptyState>Sem férias gozadas registradas.</EmptyState>
@@ -2295,23 +2298,26 @@ export default function EmployeeProfilePage() {
               </div>
 
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Férias — Abono Pecuniário</h4>
-                <Card>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Abono Pecuniário</h4>
+                <Card className="border-[#E2E0DA]">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-text-tertiary">
+                      <tr className="text-left font-bold text-[#8B8B8B]">
                         <th className="pb-2">Período</th>
                         <th className="pb-2">Dias vendidos</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {e.vacationRequests.filter((v) => v.diasAbono > 0).map((v) => (
-                        <tr key={v.id} className="border-t border-divider">
-                          <td className="py-2">{formatDate(v.inicio)} a {formatDate(v.fim)}</td>
-                          <td className="py-2">{v.diasAbono}</td>
-                        </tr>
-                      ))}
-                      {e.vacationRequests.filter((v) => v.diasAbono > 0).length === 0 && (
+                      {(feriasHistorico?.periodos ?? [])
+                        .flatMap((p) => p.fracoes)
+                        .filter((f) => f.statusEfetivo === 'CONCLUIDA' && f.diasAbono > 0)
+                        .map((f) => (
+                          <tr key={f.id} className="border-t border-divider">
+                            <td className="py-2">{formatDate(f.dataInicio)} a {formatDate(f.dataFim)}</td>
+                            <td className="py-2">{f.diasAbono}</td>
+                          </tr>
+                        ))}
+                      {(feriasHistorico?.periodos ?? []).flatMap((p) => p.fracoes).filter((f) => f.statusEfetivo === 'CONCLUIDA' && f.diasAbono > 0).length === 0 && (
                         <tr>
                           <td colSpan={2}>
                             <EmptyState>Sem abono pecuniário registrado.</EmptyState>
@@ -2325,11 +2331,11 @@ export default function EmployeeProfilePage() {
             </div>
 
             <div>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Alterações de salário, cargo e/ou função</h4>
-              <Card>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Alterações de salário, cargo e/ou função</h4>
+              <Card className="border-[#E2E0DA]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-text-tertiary">
+                    <tr className="text-left font-bold text-[#8B8B8B]">
                       <th className="pb-2">Vigente desde</th>
                       <th className="pb-2">Cargo</th>
                       <th className="pb-2">Salário</th>
@@ -2361,11 +2367,11 @@ export default function EmployeeProfilePage() {
             </div>
 
             <div>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Afastamentos</h4>
-              <Card>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Afastamentos</h4>
+              <Card className="border-[#E2E0DA]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-text-tertiary">
+                    <tr className="text-left font-bold text-[#8B8B8B]">
                       <th className="pb-2">Tipo</th>
                       <th className="pb-2">Início</th>
                       <th className="pb-2">Retorno</th>
@@ -2393,11 +2399,11 @@ export default function EmployeeProfilePage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 print:grid-cols-2">
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Acidentes de trabalho e doenças ocupacionais</h4>
-                <Card>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Acidentes de trabalho e doenças ocupacionais</h4>
+                <Card className="border-[#E2E0DA]">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-text-tertiary">
+                      <tr className="text-left font-bold text-[#8B8B8B]">
                         <th className="pb-2">Data</th>
                         <th className="pb-2">Tipo</th>
                         <th className="pb-2">Afastamento</th>
@@ -2425,28 +2431,30 @@ export default function EmployeeProfilePage() {
                 </Card>
               </div>
 
-              <Card>
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Rescisão de contrato de trabalho</h4>
-                {e.terminations.length === 0 ? (
-                  <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
-                ) : (
-                  <div className="flex flex-col gap-1 text-sm">
-                    {e.terminations.map((t) => (
-                      <div key={t.id}>
-                        Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
+              <div>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Rescisão de contrato de trabalho</h4>
+                <Card className="border-[#E2E0DA]">
+                  {e.terminations.length === 0 ? (
+                    <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
+                  ) : (
+                    <div className="flex flex-col gap-1 text-sm">
+                      {e.terminations.map((t) => (
+                        <div key={t.id}>
+                          Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </div>
             </div>
 
             <div>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Ocorrências</h4>
-              <Card>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Ocorrências</h4>
+              <Card className="border-[#E2E0DA]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-text-tertiary">
+                    <tr className="text-left font-bold text-[#8B8B8B]">
                       <th className="pb-2">Data</th>
                       <th className="pb-2">Tipo</th>
                       <th className="pb-2">Descrição</th>
@@ -2474,10 +2482,12 @@ export default function EmployeeProfilePage() {
               </Card>
             </div>
 
-            <Card>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Observações</h4>
-              <div className="h-16 border-b border-dashed border-border-strong" />
-            </Card>
+            <div>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Observações</h4>
+              <Card className="border-[#E2E0DA]">
+                <EmptyState>Sem observações registradas.</EmptyState>
+              </Card>
+            </div>
           </div>
         </div>
       )}
@@ -3118,9 +3128,9 @@ function Row({ label, value, className = '' }: { label: string; value: React.Rea
 
 function FormBox({ label, value, className = '' }: { label: string; value: React.ReactNode; className?: string }) {
   return (
-    <div className={`border border-border-strong px-2 py-1.5 text-xs ${className}`}>
-      <div className="text-[9px] uppercase tracking-wide text-text-tertiary">{label}</div>
-      <div className="font-medium text-text">{value || '—'}</div>
+    <div className={`border border-[#E2E0DA] px-2 py-1.5 text-xs ${className}`}>
+      <div className="text-[9px] uppercase tracking-wide text-[#8B8B8B]">{label}</div>
+      <div className="font-medium text-[#2B2B2B]">{value || '—'}</div>
     </div>
   );
 }
