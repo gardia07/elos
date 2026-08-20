@@ -138,6 +138,7 @@ export class PromoteEmployeeDto {
   @EmptyStringToUndefined()
   @IsDateString()
   vigenciaDesde?: string;
+  @IsOptional() @EmptyStringToUndefined() @IsString() observacao?: string;
 }
 
 export class UpdateCargoSalarioHistoricoDto {

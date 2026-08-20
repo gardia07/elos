@@ -312,6 +312,7 @@ export class EmployeesService {
       cargo: dto.cargo || current.cargo,
       salario: dto.salario,
       motivo: dto.motivo,
+      observacao: dto.observacao,
     });
     return updated;
   }

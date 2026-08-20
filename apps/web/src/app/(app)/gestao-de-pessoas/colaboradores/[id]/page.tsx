@@ -344,6 +344,7 @@ export default function EmployeeProfilePage() {
   const [novoSalario, setNovoSalario] = useState('');
   const [motivoPromocao, setMotivoPromocao] = useState<'Promoção' | 'Reajuste anual' | 'Dissídio coletivo' | 'Outro'>('Promoção');
   const [vigenciaPromocao, setVigenciaPromocao] = useState('');
+  const [anotacaoPromocao, setAnotacaoPromocao] = useState('');
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState<EditFields | null>(null);
   const [motivoSalario, setMotivoSalario] = useState('');
@@ -396,6 +397,7 @@ export default function EmployeeProfilePage() {
         salario: Number(novoSalario),
         motivo: motivoPromocao,
         vigenciaDesde: vigenciaPromocao || undefined,
+        observacao: anotacaoPromocao || undefined,
       }),
     onSuccess: () => {
       invalidate();
@@ -404,6 +406,7 @@ export default function EmployeeProfilePage() {
       setNovoSalario('');
       setMotivoPromocao('Promoção');
       setVigenciaPromocao('');
+      setAnotacaoPromocao('');
     },
   });
 
@@ -1246,6 +1249,15 @@ export default function EmployeeProfilePage() {
                     onChange={(ev) => setVigenciaPromocao(ev.target.value)}
                     required
                     className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  />
+                </label>
+                <label className="flex w-full flex-col gap-1.5 text-sm">
+                  <span className="text-text-secondary">Anotação (opcional — aparece ao lado do motivo no histórico)</span>
+                  <input
+                    value={anotacaoPromocao}
+                    onChange={(ev) => setAnotacaoPromocao(ev.target.value)}
+                    placeholder="Ex: equiparação salarial após promoção interna"
+                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <Button type="submit" disabled={promote.isPending}>
