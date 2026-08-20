@@ -780,7 +780,7 @@ export default function EmployeeProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="sticky top-0 z-10 -mx-8 -mt-6 flex flex-col gap-2 bg-page-bg px-8 pb-2 pt-3">
+      <div className="sticky -top-6 z-10 -mx-8 -mt-6 flex flex-col gap-2 bg-page-bg px-8 pb-2 pt-3">
         <Link href="/gestao-de-pessoas/colaboradores" className="text-xs text-text-secondary hover:text-text">
           ← Voltar para Colaboradores
         </Link>
