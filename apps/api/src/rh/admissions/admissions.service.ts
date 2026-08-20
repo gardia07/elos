@@ -9,6 +9,7 @@ import { getRequestContext } from '../../common/request-context';
 import { nextMatricula } from '../employees/matricula.util';
 import { SetChecklistConfigDto, ToggleDocDto } from './dto/admissions.dto';
 import { DocumentTemplatesService } from '../document-templates/document-templates.service';
+import { ComplianceEngineService } from '../../compliance-engine/compliance-engine.service';
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -22,6 +23,7 @@ export class AdmissionsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly documentTemplates: DocumentTemplatesService,
+    private readonly complianceEngine: ComplianceEngineService,
   ) {}
 
   private db() {
@@ -191,6 +193,12 @@ export class AdmissionsService {
     });
     await this.audit.log('admission', id, 'efetivada', {
       employeeId: employee.id,
+    });
+    await this.complianceEngine.registrarEvento({
+      employeeId: employee.id,
+      tipoEvento: 'ADMISSAO',
+      dataEvento: admission.dataInicio,
+      dadosNovos: { cargo: admission.cargo, filial: admission.filial },
     });
     return updated;
   }

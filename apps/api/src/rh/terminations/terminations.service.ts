@@ -13,6 +13,7 @@ import { calcularRescisao } from '../../dp/simulacoes/calculo-rescisao';
 import { FeriasService } from '../ferias/ferias.service';
 import { buildTerminationAlerts } from './terminations-lembretes.util';
 import { DocumentTemplatesService } from '../document-templates/document-templates.service';
+import { ComplianceEngineService } from '../../compliance-engine/compliance-engine.service';
 import {
   CreateTerminationDto,
   ExitInterviewDto,
@@ -63,6 +64,7 @@ export class TerminationsService {
     private readonly audit: AuditService,
     private readonly documentTemplates: DocumentTemplatesService,
     private readonly ferias: FeriasService,
+    private readonly complianceEngine: ComplianceEngineService,
   ) {}
 
   private db() {
@@ -155,6 +157,12 @@ export class TerminationsService {
     });
     await this.audit.log('termination', termination.id, 'criado', {
       tipo: dto.tipo,
+    });
+    await this.complianceEngine.registrarEvento({
+      employeeId: dto.employeeId,
+      tipoEvento: 'DESLIGAMENTO',
+      dataEvento: dataDesligamento,
+      dadosNovos: { tipo: dto.tipo },
     });
 
     return termination;

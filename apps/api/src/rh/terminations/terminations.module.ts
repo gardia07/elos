@@ -3,9 +3,10 @@ import { TerminationsController } from './terminations.controller';
 import { TerminationsService } from './terminations.service';
 import { DocumentTemplatesModule } from '../document-templates/document-templates.module';
 import { FeriasModule } from '../ferias/ferias.module';
+import { ComplianceEngineModule } from '../../compliance-engine/compliance-engine.module';
 
 @Module({
-  imports: [DocumentTemplatesModule, FeriasModule],
+  imports: [DocumentTemplatesModule, FeriasModule, ComplianceEngineModule],
   controllers: [TerminationsController],
   providers: [TerminationsService],
 })

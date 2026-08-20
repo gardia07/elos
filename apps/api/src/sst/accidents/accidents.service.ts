@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../audit/audit.service';
 import { getRequestContext } from '../../common/request-context';
 import { CloseAccidentDto, CreateAccidentDto, UpdateInvestigationDto } from './dto/accidents.dto';
+import { ComplianceEngineService } from '../../compliance-engine/compliance-engine.service';
 
 function addDays(date: Date, days: number): Date {
   const d = new Date(date);
@@ -15,6 +16,7 @@ export class AccidentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly complianceEngine: ComplianceEngineService,
   ) {}
 
   private db() {
@@ -105,6 +107,12 @@ export class AccidentsService {
     });
 
     await this.audit.log('accident', accident.id, 'criada');
+    await this.complianceEngine.registrarEvento({
+      employeeId: dto.employeeId,
+      tipoEvento: 'ACIDENTE_TRABALHO',
+      dataEvento: dataAcidente,
+      dadosNovos: { tipoAcidente: dto.tipoAcidente, comAfastamento: !!dto.comAfastamento },
+    });
     return accident;
   }
 

@@ -17,6 +17,7 @@ import { DEFAULT_DOCUMENT_TEMPLATES } from '../rh/document-templates/default-tem
 import { DEFAULT_AGENDA_CATEGORIAS } from '../agenda/default-categorias';
 import { DEFAULT_ATALHOS_EXTERNOS } from '../ferramentas/default-atalhos-externos';
 import { RISK_WEIGHT_DEFAULTS } from '../risk/risk-weights';
+import { COMPLIANCE_DOCUMENTOS_DEFAULTS, COMPLIANCE_REGRAS_DEFAULTS } from '../compliance-engine/compliance-rules-defaults';
 import { JwtPayload } from '../common/jwt-payload';
 
 // Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
@@ -171,6 +172,35 @@ export class AuthService {
         tipo: r.tipo,
         impacto: r.impacto,
         label: r.label,
+        sistema: true,
+      })),
+    });
+
+    const tiposDocumentoCriados = await Promise.all(
+      COMPLIANCE_DOCUMENTOS_DEFAULTS.map((d) =>
+        this.prisma.forTenant(tenantId).tipoDocumento.create({
+          data: {
+            tenantId,
+            nome: d.nome,
+            categoria: d.categoria,
+            requerAssinaturaColaborador: d.requerAssinaturaColaborador,
+            requerAssinaturaEmpresa: d.requerAssinaturaEmpresa,
+            validadeDias: d.validadeDias,
+            sistema: true,
+          },
+        }),
+      ),
+    );
+    const documentoIdPorNome = new Map(tiposDocumentoCriados.map((d) => [d.nome, d.id]));
+    await this.prisma.forTenant(tenantId).regraConformidade.createMany({
+      data: COMPLIANCE_REGRAS_DEFAULTS.map((r) => ({
+        tenantId,
+        tipoEventoGatilho: r.tipoEventoGatilho,
+        condicaoAdicional: r.condicaoAdicional,
+        documentoExigidoId: documentoIdPorNome.get(r.documentoNome)!,
+        prazoDias: r.prazoDias,
+        bloqueante: r.bloqueante,
+        baseLegal: r.baseLegal,
         sistema: true,
       })),
     });

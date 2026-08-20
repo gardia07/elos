@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DocumentsService } from '../documents/documents.service';
 import { FeriasService } from '../ferias/ferias.service';
+import { ComplianceEngineService } from '../../compliance-engine/compliance-engine.service';
 import { getRequestContext } from '../../common/request-context';
 import { downloadDocumento, uploadDocumento } from '../../common/blob-storage';
 import { nextMatricula } from './matricula.util';
@@ -45,6 +46,7 @@ export class EmployeesService {
     private readonly prisma: PrismaService,
     private readonly documents: DocumentsService,
     private readonly ferias: FeriasService,
+    private readonly complianceEngine: ComplianceEngineService,
   ) {}
 
   private db() {
@@ -251,6 +253,8 @@ export class EmployeesService {
     } = dto;
     const salarioMudou =
       salario != null && Number(salario) !== Number(current.salario);
+    const filialMudou =
+      dto.filial != null && dto.filial !== current.filial;
     const updated = await this.db().employee.update({
       where: { id },
       data: {
@@ -284,6 +288,14 @@ export class EmployeesService {
       });
     }
     await this.addHistorico(id, 'Dados cadastrais atualizados', 'Documento');
+    if (filialMudou) {
+      await this.complianceEngine.registrarEvento({
+        employeeId: id,
+        tipoEvento: 'TRANSFERENCIA_LOCAL',
+        dadosAnteriores: { filial: current.filial },
+        dadosNovos: { filial: dto.filial },
+      });
+    }
     return updated;
   }
 
@@ -296,10 +308,8 @@ export class EmployeesService {
         salario: dto.salario,
       },
     });
-    const cargoTxt =
-      dto.cargo && dto.cargo !== current.cargo
-        ? ` — novo cargo: ${dto.cargo}`
-        : '';
+    const cargoMudou = !!dto.cargo && dto.cargo !== current.cargo;
+    const cargoTxt = cargoMudou ? ` — novo cargo: ${dto.cargo}` : '';
     await this.addHistorico(
       id,
       `${dto.motivo}: salário de ${formatBRL(Number(current.salario))} para ${formatBRL(dto.salario)}${cargoTxt}`,
@@ -314,6 +324,20 @@ export class EmployeesService {
       motivo: dto.motivo,
       observacao: dto.observacao,
     });
+    await this.complianceEngine.registrarEvento({
+      employeeId: id,
+      tipoEvento: 'MUDANCA_SALARIAL',
+      dadosAnteriores: { salario: current.salario },
+      dadosNovos: { salario: dto.salario, motivo: dto.motivo },
+    });
+    if (cargoMudou) {
+      await this.complianceEngine.registrarEvento({
+        employeeId: id,
+        tipoEvento: 'MUDANCA_CARGO_FUNCAO',
+        dadosAnteriores: { cargo: current.cargo },
+        dadosNovos: { cargo: dto.cargo },
+      });
+    }
     return updated;
   }
 
@@ -467,7 +491,7 @@ export class EmployeesService {
   }
 
   async addOcorrencia(id: string, dto: AddOcorrenciaDto) {
-    const { tenantId, userName } = getRequestContext();
+    const { tenantId, userId, userName } = getRequestContext();
     await this.mustFind(id);
     const ocorrencia = await this.db().ocorrencia.create({
       data: {
@@ -484,6 +508,15 @@ export class EmployeesService {
       `Ocorrência registrada: ${dto.tipo}`,
       'Ocorrência',
     );
+    if (dto.tipo === 'Advertência verbal' || dto.tipo === 'Advertência escrita' || dto.tipo === 'Suspensão') {
+      await this.complianceEngine.registrarEvento({
+        employeeId: id,
+        tipoEvento: 'ADVERTENCIA_SUSPENSAO',
+        dataEvento: new Date(dto.data),
+        dadosNovos: { tipo: dto.tipo, descricao: dto.descricao },
+        usuarioResponsavelId: userId,
+      });
+    }
     return ocorrencia;
   }
 

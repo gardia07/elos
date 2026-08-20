@@ -125,6 +125,11 @@ model Tenant {
   atalhosExternos        AtalhoExterno[]
 
   riskImpactRules              RiskImpactRule[]
+  eventosColaborador           EventoColaborador[]
+  tiposDocumentoConformidade   TipoDocumento[]
+  regrasConformidade           RegraConformidade[]
+  pendenciasConformidade       Pendencia[]
+  alertasConformidade          AlertaConformidade[]
 
   metasPessoais               MetaPessoal[]
   habitosPessoais             HabitoPessoal[]
@@ -575,6 +580,8 @@ model Employee {
   terminations          Termination[]
   periodosAquisitivos   PeriodoAquisitivo[]
   faltasInjustificadas  FaltaInjustificada[]
+  eventosColaborador    EventoColaborador[]
+  pendenciasConformidade Pendencia[]
   jornadas              Jornada[]
   batidas               Batida[]
   ajustesPonto          AjustePonto[]
@@ -2190,6 +2197,198 @@ model RiskImpactRule {
   @@unique([tenantId, tipo])
   @@index([tenantId])
   @@map("risk_impact_rules")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Motor de Conformidade Documental -- toda alteracao relevante no
+// cadastro do colaborador (EventoColaborador) e confrontada contra uma
+// base de regras (RegraConformidade); todo match vira uma Pendencia
+// rastreada ate a resolucao. Ver ComplianceEngineService pro fluxo
+// completo (Evento -> Motor de Regras -> Pendencia -> Alerta -> resolucao).
+// ─────────────────────────────────────────────────────────────
+
+enum TipoEventoColaborador {
+  ADMISSAO
+  MUDANCA_CARGO_FUNCAO
+  MUDANCA_CARGA_HORARIA
+  MUDANCA_SALARIAL
+  INICIO_AFASTAMENTO
+  ACIDENTE_TRABALHO
+  RETORNO_AFASTAMENTO
+  LICENCA_MATERNIDADE
+  TRANSFERENCIA_LOCAL
+  MUDANCA_REGIME_TRABALHO
+  ADVERTENCIA_SUSPENSAO
+  ASO_PERIODICO_VENCIDO
+  TREINAMENTO_NR_VENCIDO
+  DESLIGAMENTO
+
+  @@map("tipo_evento_colaborador")
+}
+
+enum OrigemEventoColaborador {
+  MANUAL
+  IMPORTACAO
+  INTEGRACAO_ESOCIAL
+
+  @@map("origem_evento_colaborador")
+}
+
+/// Toda alteracao relevante feita no cadastro do colaborador -- o "fato" que
+/// o motor de regras confronta contra a base de conhecimento juridica.
+model EventoColaborador {
+  id                   String                   @id @default(uuid()) @db.Uuid
+  tenantId             String                   @db.Uuid
+  employeeId           String                   @db.Uuid
+  tipoEvento           TipoEventoColaborador
+  dataEvento           DateTime                 @db.Date
+  dadosAnteriores      Json?
+  dadosNovos           Json?
+  origem               OrigemEventoColaborador  @default(MANUAL)
+  usuarioResponsavelId String?                  @db.Uuid
+  createdAt            DateTime                 @default(now())
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  pendencias Pendencia[]
+
+  @@index([tenantId, employeeId])
+  @@map("eventos_colaborador")
+}
+
+enum CategoriaTipoDocumento {
+  ADMISSIONAL
+  CONTRATUAL
+  SAUDE_OCUPACIONAL
+  RESCISORIO
+  AFASTAMENTO
+
+  @@map("categoria_tipo_documento")
+}
+
+/// Catalogo de documentos exigiveis pelo motor de conformidade -- distinto
+/// de DocumentRequirement (que e estatico, por perfil do colaborador, sem
+/// prazo por ocorrencia): aqui cada tipo pode ser referenciado por uma ou
+/// mais RegraConformidade, cada match gerando uma Pendencia com prazo
+/// contado a partir do evento que a originou.
+model TipoDocumento {
+  id                          String                 @id @default(uuid()) @db.Uuid
+  tenantId                    String                 @db.Uuid
+  nome                        String
+  categoria                   CategoriaTipoDocumento
+  requerAssinaturaColaborador Boolean                @default(false)
+  requerAssinaturaEmpresa     Boolean                @default(false)
+  validadeDias                Int?
+  ativo                       Boolean                @default(true)
+  sistema                     Boolean                @default(false)
+  createdAt                   DateTime               @default(now())
+
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  regras     RegraConformidade[]
+  pendencias Pendencia[]
+
+  @@index([tenantId])
+  @@map("tipos_documento_conformidade")
+}
+
+/// Base de conhecimento juridica (cadastro mestre, nao por colaborador):
+/// que documento um tipo de evento exige, em quantos dias, e se bloqueia o
+/// colaborador (flag de irregularidade) enquanto nao resolvido.
+model RegraConformidade {
+  id                 String                @id @default(uuid()) @db.Uuid
+  tenantId           String                @db.Uuid
+  tipoEventoGatilho  TipoEventoColaborador
+  condicaoAdicional  String?
+  documentoExigidoId String                @db.Uuid
+  prazoDias          Int
+  bloqueante         Boolean               @default(false)
+  baseLegal          String?
+  ativo              Boolean               @default(true)
+  sistema            Boolean               @default(false)
+  createdAt          DateTime              @default(now())
+
+  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documentoExigido TipoDocumento @relation(fields: [documentoExigidoId], references: [id])
+  pendencias       Pendencia[]
+
+  @@index([tenantId])
+  @@index([tenantId, tipoEventoGatilho])
+  @@map("regras_conformidade")
+}
+
+enum StatusPendencia {
+  ABERTA
+  EM_ANDAMENTO
+  AGUARDANDO_ASSINATURA
+  CONCLUIDA
+  VENCIDA
+
+  @@map("status_pendencia")
+}
+
+/// A "NC" -- nao conformidade em aberto. Uma linha por match de
+/// EventoColaborador x RegraConformidade, rastreada ate a resolucao.
+model Pendencia {
+  id                String          @id @default(uuid()) @db.Uuid
+  tenantId          String          @db.Uuid
+  employeeId        String          @db.Uuid
+  eventoOrigemId    String          @db.Uuid
+  regraId           String          @db.Uuid
+  documentoId       String          @db.Uuid
+  status            StatusPendencia @default(ABERTA)
+  dataAbertura      DateTime        @default(now())
+  dataLimite        DateTime        @db.Date
+  dataConclusao     DateTime?
+  anexoDocumentoId  String?         @db.Uuid
+  responsavelId     String?         @db.Uuid
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee     Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  eventoOrigem EventoColaborador   @relation(fields: [eventoOrigemId], references: [id], onDelete: Cascade)
+  regra        RegraConformidade   @relation(fields: [regraId], references: [id])
+  documento    TipoDocumento       @relation(fields: [documentoId], references: [id])
+  alertas      AlertaConformidade[]
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, status])
+  @@map("pendencias_conformidade")
+}
+
+enum TipoAlertaConformidade {
+  LEMBRETE
+  VENCIMENTO_PROXIMO
+  VENCIDA
+
+  @@map("tipo_alerta_conformidade")
+}
+
+enum CanalAlertaConformidade {
+  SISTEMA
+  EMAIL
+  WHATSAPP
+
+  @@map("canal_alerta_conformidade")
+}
+
+/// O que alimenta a Agenda -- disparo programado em relacao a uma Pendencia.
+model AlertaConformidade {
+  id          String                   @id @default(uuid()) @db.Uuid
+  tenantId    String                   @db.Uuid
+  pendenciaId String                   @db.Uuid
+  tipo        TipoAlertaConformidade
+  dataDisparo DateTime                 @db.Date
+  canal       CanalAlertaConformidade  @default(SISTEMA)
+  disparadoEm DateTime?
+  createdAt   DateTime                 @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pendencia Pendencia @relation(fields: [pendenciaId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, dataDisparo])
+  @@map("alertas_conformidade")
 }
 
 model SstSettings {

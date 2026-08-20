@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { getRequestContext } from '../../common/request-context';
 import { CreateLeaveDto, CreateVacationRequestDto } from './dto/vacations.dto';
 import { computeFeriasStatus, inclusiveDays } from './vacation-cycles.util';
+import { ComplianceEngineService } from '../../compliance-engine/compliance-engine.service';
 
 function formatBr(date: Date): string {
   return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
@@ -10,7 +11,10 @@ function formatBr(date: Date): string {
 
 @Injectable()
 export class VacationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly complianceEngine: ComplianceEngineService,
+  ) {}
 
   private db() {
     return this.prisma.forCurrentTenant();
@@ -154,8 +158,8 @@ export class VacationsService {
     });
   }
 
-  createLeave(dto: CreateLeaveDto) {
-    return this.db().leaveRecord.create({
+  async createLeave(dto: CreateLeaveDto) {
+    const leave = await this.db().leaveRecord.create({
       data: {
         employeeId: dto.employeeId,
         tipo: dto.tipo,
@@ -164,11 +168,42 @@ export class VacationsService {
         tenantId: getRequestContext().tenantId,
       },
     });
+    await this.complianceEngine.registrarEvento({
+      employeeId: dto.employeeId,
+      tipoEvento: dto.tipo === 'Licença maternidade' ? 'LICENCA_MATERNIDADE' : 'INICIO_AFASTAMENTO',
+      dataEvento: leave.inicio,
+      dadosNovos: { tipo: dto.tipo },
+    });
+    return leave;
   }
 
   async sendLeaveEsocial(id: string) {
     const leave = await this.db().leaveRecord.findUnique({ where: { id } });
     if (!leave) throw new NotFoundException('Afastamento não encontrado.');
     return this.db().leaveRecord.update({ where: { id }, data: { esocialSent: true } });
+  }
+
+  /**
+   * Fecha um afastamento em aberto (não existia nenhum jeito de fazer isso
+   * antes do Motor de Conformidade Documental) e, quando durou 30 dias ou
+   * mais, dispara o evento RETORNO_AFASTAMENTO -- gera a pendência de ASO de
+   * retorno ao trabalho (NR-7).
+   */
+  async registrarRetorno(id: string, dataRetorno: string) {
+    const leave = await this.db().leaveRecord.findUnique({ where: { id } });
+    if (!leave) throw new NotFoundException('Afastamento não encontrado.');
+    const retorno = new Date(dataRetorno);
+    const updated = await this.db().leaveRecord.update({ where: { id }, data: { retorno } });
+    const diasAfastado = Math.round((retorno.getTime() - leave.inicio.getTime()) / 86_400_000);
+    if (diasAfastado >= 30) {
+      await this.complianceEngine.registrarEvento({
+        employeeId: leave.employeeId,
+        tipoEvento: 'RETORNO_AFASTAMENTO',
+        dataEvento: retorno,
+        dadosAnteriores: { inicio: leave.inicio },
+        dadosNovos: { retorno, diasAfastado },
+      });
+    }
+    return updated;
   }
 }

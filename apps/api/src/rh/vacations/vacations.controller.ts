@@ -55,4 +55,9 @@ export class VacationsController {
   sendLeaveEsocial(@Param('id') id: string) {
     return this.service.sendLeaveEsocial(id);
   }
+
+  @Post('leaves/:id/retorno')
+  registrarRetorno(@Param('id') id: string, @Body('dataRetorno') dataRetorno: string) {
+    return this.service.registrarRetorno(id, dataRetorno);
+  }
 }
