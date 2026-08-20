@@ -344,18 +344,26 @@ export function validarFracionamento(fracoesExistentesNormais: FracaoExistentePa
  * Valida o pedido de abono pecuniário contra o limite legal e a antecedência mínima
  * (art. 143, §1º, CLT: deve ser requerido até 15 dias antes do término do período
  * AQUISITIVO -- prazo decadencial, não se confunde com o fim do período concessivo).
+ *
+ * `ignorarPrazo` pula só a checagem de antecedência/decadência -- usado no lançamento
+ * de dado histórico (férias que já aconteceram de fato, cadastradas retroativamente
+ * a partir de registros antigos), onde a data de hoje não tem relação com quando o
+ * abono foi de fato concedido. O limite de dias (art. 143, caput) continua valendo
+ * sempre, porque é sobre a validade do próprio dia vendido, não sobre timing.
  */
-export function validarAbono(diasAbono: number, dataInicioFracao: Date, dataFimPeriodoAquisitivo: Date, hoje: Date): string[] {
+export function validarAbono(diasAbono: number, dataInicioFracao: Date, dataFimPeriodoAquisitivo: Date, hoje: Date, ignorarPrazo = false): string[] {
   const violacoes: string[] = [];
   if (diasAbono <= 0) return violacoes;
   if (diasAbono > ABONO_REGRAS.maxDias) {
     violacoes.push(`Abono pecuniário limitado a ${ABONO_REGRAS.maxDias} dias.`);
   }
-  const diasAteFimPeriodo = Math.round((dataFimPeriodoAquisitivo.getTime() - hoje.getTime()) / 86_400_000);
-  if (diasAteFimPeriodo < 0) {
-    violacoes.push('O prazo para requerer abono pecuniário deste período já se encerrou (até 15 dias antes do término do período aquisitivo) — o direito decaiu (art. 143, §1º, CLT).');
-  } else if (diasAteFimPeriodo < ABONO_REGRAS.antecedenciaMinDias) {
-    violacoes.push(`Abono pecuniário precisa ser solicitado até ${ABONO_REGRAS.antecedenciaMinDias} dias antes do término do período aquisitivo (art. 143, §1º, CLT) — prazo decadencial.`);
+  if (!ignorarPrazo) {
+    const diasAteFimPeriodo = Math.round((dataFimPeriodoAquisitivo.getTime() - hoje.getTime()) / 86_400_000);
+    if (diasAteFimPeriodo < 0) {
+      violacoes.push('O prazo para requerer abono pecuniário deste período já se encerrou (até 15 dias antes do término do período aquisitivo) — o direito decaiu (art. 143, §1º, CLT).');
+    } else if (diasAteFimPeriodo < ABONO_REGRAS.antecedenciaMinDias) {
+      violacoes.push(`Abono pecuniário precisa ser solicitado até ${ABONO_REGRAS.antecedenciaMinDias} dias antes do término do período aquisitivo (art. 143, §1º, CLT) — prazo decadencial.`);
+    }
   }
   void dataInicioFracao;
   return violacoes;

@@ -63,8 +63,15 @@ export class FeriasController {
     @Query('dataInicio') dataInicio?: string,
     @Query('dias') dias?: string,
     @Query('diasAbono') diasAbono?: string,
+    @Query('historico') historico?: string,
   ) {
-    return this.service.previewAlertas(periodoAquisitivoId, dataInicio, dias ? Number(dias) : undefined, diasAbono ? Number(diasAbono) : undefined);
+    return this.service.previewAlertas(
+      periodoAquisitivoId,
+      dataInicio,
+      dias ? Number(dias) : undefined,
+      diasAbono ? Number(diasAbono) : undefined,
+      historico === 'true',
+    );
   }
 
   @Patch('fracoes/:id/aprovar')

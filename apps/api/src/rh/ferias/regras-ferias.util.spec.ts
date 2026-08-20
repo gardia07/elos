@@ -209,6 +209,12 @@ describe('validarAbono (art. 143, §1º, CLT -- prazo conta do fim do período a
     const violacoes = validarAbono(5, d('2026-08-25'), d('2026-06-01'), d('2026-08-19'));
     expect(violacoes.some((v) => v.includes('decaiu'))).toBe(true);
   });
+  it('ignorarPrazo pula a checagem de decadência mas mantém o limite de 10 dias (lançamento histórico)', () => {
+    expect(validarAbono(5, d('2026-08-25'), d('2026-06-01'), d('2026-08-19'), true)).toEqual([]);
+    const violacoes = validarAbono(11, d('2026-08-25'), d('2026-06-01'), d('2026-08-19'), true);
+    expect(violacoes.some((v) => v.includes('10 dias'))).toBe(true);
+    expect(violacoes.some((v) => v.includes('decaiu'))).toBe(false);
+  });
 });
 
 describe('valorExposicaoDobra', () => {

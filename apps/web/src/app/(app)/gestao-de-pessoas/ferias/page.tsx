@@ -187,6 +187,7 @@ export default function FeriasPage() {
   const [progDiasAbono, setProgDiasAbono] = useState('');
   const [progAntecipa13, setProgAntecipa13] = useState(false);
   const [progColetiva, setProgColetiva] = useState(false);
+  const [progHistorico, setProgHistorico] = useState(false);
   const [progJustificativa, setProgJustificativa] = useState('');
   const [programarError, setProgramarError] = useState('');
 
@@ -250,11 +251,11 @@ export default function FeriasPage() {
   }, [tab, employees, histEmployeeId]);
 
   const { data: alertasPreview } = useQuery({
-    queryKey: ['rh', 'ferias', 'preview-alertas', progPeriodoId, progInicio, progDias, progDiasAbono],
+    queryKey: ['rh', 'ferias', 'preview-alertas', progPeriodoId, progInicio, progDias, progDiasAbono, progHistorico],
     queryFn: async () =>
       (
         await api.get<{ alertas: string[]; saldoDisponivel: number }>(`/rh/ferias/periodos/${progPeriodoId}/preview-alertas`, {
-          params: { dataInicio: progInicio || undefined, dias: progDias || undefined, diasAbono: progDiasAbono || undefined },
+          params: { dataInicio: progInicio || undefined, dias: progDias || undefined, diasAbono: progDiasAbono || undefined, historico: progHistorico || undefined },
         })
       ).data,
     enabled: showProgramar && !!progPeriodoId,
@@ -270,6 +271,7 @@ export default function FeriasPage() {
     setProgDiasAbono('');
     setProgAntecipa13(false);
     setProgColetiva(false);
+    setProgHistorico(false);
     setProgJustificativa('');
     setProgramarError('');
   };
@@ -291,6 +293,7 @@ export default function FeriasPage() {
         diasAbono: venderDias && progDiasAbono ? Number(progDiasAbono) : undefined,
         antecipa13: progAntecipa13 || undefined,
         justificativa: progJustificativa || undefined,
+        historico: progHistorico || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rh', 'ferias'] });
@@ -457,6 +460,16 @@ export default function FeriasPage() {
             <input type="checkbox" checked={progColetiva} onChange={(ev) => setProgColetiva(ev.target.checked)} />
             <span className="text-text-secondary">Fração de férias coletivas</span>
           </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={progHistorico} onChange={(ev) => setProgHistorico(ev.target.checked)} />
+            <span className="text-text-secondary">Lançamento histórico (já aconteceu — sem validar aviso de 30 dias nem prazo do abono)</span>
+          </label>
+          {progHistorico && (
+            <p className="w-full rounded-[10px] border border-accent bg-tint-blue p-3 text-xs text-text-secondary">
+              Registra o fato já ocorrido: pula a validação de antecedência de aviso e de decadência do abono, e a fração já nasce aprovada. Continuam valendo saldo
+              disponível, fracionamento e o limite de 10 dias de abono.
+            </p>
+          )}
 
           <label className="flex w-full flex-col gap-1.5 text-sm">
             <span className="text-text-secondary">Justificativa</span>
@@ -464,12 +477,14 @@ export default function FeriasPage() {
               rows={3}
               value={progJustificativa}
               onChange={(ev) => setProgJustificativa(ev.target.value)}
-              placeholder="Obrigatória para solicitações fora da janela recomendada"
+              placeholder={progHistorico ? 'Opcional' : 'Obrigatória para solicitações fora da janela recomendada'}
               className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
             />
           </label>
 
-          <p className="text-xs text-text-tertiary">Aviso de férias gerado automaticamente ao programar — precisa de 30 dias de antecedência até o início.</p>
+          {!progHistorico && (
+            <p className="text-xs text-text-tertiary">Aviso de férias gerado automaticamente ao programar — precisa de 30 dias de antecedência até o início.</p>
+          )}
 
           <Button type="submit" disabled={programarFerias.isPending}>
             Programar férias

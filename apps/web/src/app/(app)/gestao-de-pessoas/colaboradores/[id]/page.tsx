@@ -364,6 +364,7 @@ export default function EmployeeProfilePage() {
   const [progDias, setProgDias] = useState('');
   const [progDiasAbono, setProgDiasAbono] = useState('');
   const [progAntecipa13, setProgAntecipa13] = useState(false);
+  const [progHistorico, setProgHistorico] = useState(false);
   const [progJustificativa, setProgJustificativa] = useState('');
   const [programarError, setProgramarError] = useState('');
   const [leaveTipo, setLeaveTipo] = useState(TIPOS_AFASTAMENTO[0]);
@@ -528,6 +529,7 @@ export default function EmployeeProfilePage() {
         diasAbono: progDiasAbono ? Number(progDiasAbono) : undefined,
         antecipa13: progAntecipa13 || undefined,
         justificativa: progJustificativa || undefined,
+        historico: progHistorico || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rh', 'ferias'] });
@@ -535,6 +537,7 @@ export default function EmployeeProfilePage() {
       setProgDias('');
       setProgDiasAbono('');
       setProgAntecipa13(false);
+      setProgHistorico(false);
       setProgJustificativa('');
       setProgramarError('');
     },
@@ -1524,8 +1527,12 @@ export default function EmployeeProfilePage() {
                   <input type="checkbox" checked={progAntecipa13} onChange={(ev) => setProgAntecipa13(ev.target.checked)} />
                   <span className="text-text-secondary">Antecipar 1ª parcela do 13º salário</span>
                 </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={progHistorico} onChange={(ev) => setProgHistorico(ev.target.checked)} />
+                  <span className="text-text-secondary">Lançamento histórico (já aconteceu — sem validar aviso de 30 dias nem prazo do abono)</span>
+                </label>
                 <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Justificativa (obrigatória se fora da janela de 30 dias de aviso)</span>
+                  <span className="text-text-secondary">{progHistorico ? 'Justificativa (opcional)' : 'Justificativa (obrigatória se fora da janela de 30 dias de aviso)'}</span>
                   <input
                     value={progJustificativa}
                     onChange={(ev) => setProgJustificativa(ev.target.value)}

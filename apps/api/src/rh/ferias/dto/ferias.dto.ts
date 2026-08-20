@@ -11,6 +11,10 @@ export class ProgramarFeriasDto {
   @IsOptional() @IsInt() @Min(0) diasAbono?: number;
   @IsOptional() @IsBoolean() antecipa13?: boolean;
   @IsOptional() @IsString() justificativa?: string;
+  /** Lançamento de dado histórico (já aconteceu de fato) -- pula aviso de 30 dias e
+   * prazo/decadência do abono, mantém saldo/fracionamento/limite de dias, e a fração
+   * já nasce aprovada em vez de pendente. */
+  @IsOptional() @IsBoolean() historico?: boolean;
 }
 
 export class ReprovarFracaoDto {

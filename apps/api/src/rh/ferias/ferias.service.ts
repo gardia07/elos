@@ -321,7 +321,7 @@ export class FeriasService {
     }
 
     if (dto.diasAbono) {
-      const violacoesAbono = validarAbono(dto.diasAbono, dataInicio, periodo.dataFim, hoje);
+      const violacoesAbono = validarAbono(dto.diasAbono, dataInicio, periodo.dataFim, hoje, dto.historico);
       if (violacoesAbono.length > 0) throw new BadRequestException(violacoesAbono.join(' '));
     }
 
@@ -338,9 +338,13 @@ export class FeriasService {
 
     // Aviso de 30 dias é recomendação operacional, não trava estrutural (mesmo
     // padrão do mockup: alerta exige justificativa preenchida, mas não bloqueia).
-    const alertas = validarAvisoEInicio(dataInicio, hoje);
-    if (alertas.length > 0 && !dto.justificativa?.trim()) {
-      throw new BadRequestException(`Justificativa obrigatória para esta solicitação (fora da janela recomendada): ${alertas.join(' ')}`);
+    // Não se aplica a lançamento histórico -- não há "aviso de antecedência" pra
+    // algo que já aconteceu, a data de hoje não tem relação com o fato registrado.
+    if (!dto.historico) {
+      const alertas = validarAvisoEInicio(dataInicio, hoje);
+      if (alertas.length > 0 && !dto.justificativa?.trim()) {
+        throw new BadRequestException(`Justificativa obrigatória para esta solicitação (fora da janela recomendada): ${alertas.join(' ')}`);
+      }
     }
 
     const { tenantId } = getRequestContext();
@@ -356,15 +360,27 @@ export class FeriasService {
         antecipa13: dto.antecipa13 ?? false,
         justificativa: dto.justificativa,
         solicitadoPorId: userId,
-        avisoFormalizadoEm: new Date(),
+        avisoFormalizadoEm: dto.historico ? null : new Date(),
+        ...(dto.historico ? { status: 'APROVADA' as const, aprovadoPorId: userId, dataAprovacao: new Date() } : {}),
       },
     });
-    await this.audit.log('fracao_de_ferias', fracao.id, 'criada', { employeeId, dataInicio: dto.dataInicio, dias: dto.dias, diasAbono: dto.diasAbono });
+    await this.audit.log('fracao_de_ferias', fracao.id, dto.historico ? 'lancada_como_historico' : 'criada', {
+      employeeId,
+      dataInicio: dto.dataInicio,
+      dias: dto.dias,
+      diasAbono: dto.diasAbono,
+    });
     return fracao;
   }
 
   /** Preview de alertas pro modal "Programar férias" -- não cria nada, só antecipa o que a validação real vai acusar. */
-  async previewAlertas(periodoAquisitivoId: string, dataInicioIso: string | undefined, dias: number | undefined, diasAbono: number | undefined) {
+  async previewAlertas(
+    periodoAquisitivoId: string,
+    dataInicioIso: string | undefined,
+    dias: number | undefined,
+    diasAbono: number | undefined,
+    historico = false,
+  ) {
     const periodo = await this.mustFindPeriodo(periodoAquisitivoId);
     const hoje = hojeUtc();
     const alertas: string[] = [];
@@ -386,7 +402,7 @@ export class FeriasService {
 
     if (dataInicioIso && dias) {
       const dataInicio = startOfDayUtc(dataInicioIso);
-      alertas.push(...validarAvisoEInicio(dataInicio, hoje));
+      if (!historico) alertas.push(...validarAvisoEInicio(dataInicio, hoje));
       if (dias + (diasAbono ?? 0) > resumo.saldoDisponivel) {
         alertas.push(`Saldo insuficiente — este período tem ${resumo.saldoDisponivel} dia(s) disponível(is).`);
       }
@@ -395,7 +411,7 @@ export class FeriasService {
     }
 
     if (diasAbono) {
-      alertas.push(...validarAbono(diasAbono, hoje, periodo.dataFim, hoje));
+      alertas.push(...validarAbono(diasAbono, hoje, periodo.dataFim, hoje, historico));
     }
 
     return { alertas, saldoDisponivel: resumo.saldoDisponivel };
