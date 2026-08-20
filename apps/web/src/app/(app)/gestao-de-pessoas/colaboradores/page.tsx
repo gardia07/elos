@@ -81,7 +81,7 @@ function DocumentRequirementsConfig() {
 
       <ul className="flex flex-col gap-2">
         {requirements?.map((r) => (
-          <li key={r.id} className="flex items-center justify-between rounded-[10px] border border-border p-2.5 text-sm">
+          <li key={r.id} className="flex items-center justify-between rounded-container border border-border p-2.5 text-sm">
             <div>
               <div className="font-medium">
                 {r.nome} {r.sistema && <span className="text-xs text-text-tertiary">(exigido pela CLT)</span>}
@@ -122,19 +122,19 @@ function DocumentRequirementsConfig() {
       >
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Nome</span>
-          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ASO Admissional" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ASO Admissional" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Categoria</span>
-          <input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Saúde, Contratual…" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+          <input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Saúde, Contratual…" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Validade (dias)</span>
-          <input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(e.target.value)} placeholder="Sem validade" className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+          <input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(e.target.value)} placeholder="Sem validade" className="w-32 rounded-control border border-border-strong bg-surface px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Departamentos (opcional)</span>
-          <input value={aplicaDepartamento} onChange={(e) => setAplicaDepartamento(e.target.value)} placeholder="Financeiro, Operações…" className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+          <input value={aplicaDepartamento} onChange={(e) => setAplicaDepartamento(e.target.value)} placeholder="Financeiro, Operações…" className="rounded-control border border-border-strong bg-surface px-3 py-2" />
         </label>
         <div className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Aplica a</span>
@@ -307,12 +307,12 @@ export default function ColaboradoresPage() {
             placeholder="Buscar por nome…"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           >
             <option value="">Todos os status</option>
             <option value="ATIVO">Ativo</option>
@@ -338,7 +338,7 @@ export default function ColaboradoresPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Departamento</span>
-              <select value={departamento} onChange={(e) => setDepartamento(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={departamento} onChange={(e) => setDepartamento(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Todos</option>
                 {filterOptions?.departamentos.map((d) => (
                   <option key={d} value={d}>
@@ -349,7 +349,7 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Cargo</span>
-              <select value={cargoFiltro} onChange={(e) => setCargoFiltro(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={cargoFiltro} onChange={(e) => setCargoFiltro(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Todos</option>
                 {filterOptions?.cargos.map((c) => (
                   <option key={c} value={c}>
@@ -360,7 +360,7 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Filial</span>
-              <select value={filial} onChange={(e) => setFilial(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={filial} onChange={(e) => setFilial(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Todas</option>
                 {filterOptions?.filiais.map((f) => (
                   <option key={f} value={f}>
@@ -371,7 +371,7 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tipo de contrato</span>
-              <select value={tipoContrato} onChange={(e) => setTipoContrato(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={tipoContrato} onChange={(e) => setTipoContrato(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Todos</option>
                 <option value="CLT">CLT</option>
                 <option value="ESTAGIO">Estágio</option>
@@ -381,7 +381,7 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tipo de salário</span>
-              <select value={tipoSalario} onChange={(e) => setTipoSalario(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={tipoSalario} onChange={(e) => setTipoSalario(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="">Todos</option>
                 <option value="MENSALISTA">Mensalista</option>
                 <option value="HORISTA">Horista</option>
@@ -390,15 +390,15 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Admissão de</span>
-              <input type="date" value={admissaoDe} onChange={(e) => setAdmissaoDe(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={admissaoDe} onChange={(e) => setAdmissaoDe(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Admissão até</span>
-              <input type="date" value={admissaoAte} onChange={(e) => setAdmissaoAte(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={admissaoAte} onChange={(e) => setAdmissaoAte(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tempo de casa</span>
-              <select value={tempoDeCasaMinAnos} onChange={(e) => setTempoDeCasaMinAnos(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={tempoDeCasaMinAnos} onChange={(e) => setTempoDeCasaMinAnos(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 {TENURE_OPTIONS.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
@@ -434,32 +434,32 @@ export default function ColaboradoresPage() {
                 value={novaMatricula}
                 onChange={(e) => setNovaMatricula(e.target.value)}
                 placeholder="Automática"
-                className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="w-32 rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Nome</span>
-              <input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Cargo</span>
-              <input value={cargo} onChange={(e) => setCargo(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={cargo} onChange={(e) => setCargo(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Departamento</span>
-              <input value={novoDepartamento} onChange={(e) => setNovoDepartamento(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={novoDepartamento} onChange={(e) => setNovoDepartamento(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Admissão</span>
-              <input type="date" value={dataAdmissao} onChange={(e) => setDataAdmissao(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={dataAdmissao} onChange={(e) => setDataAdmissao(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Salário</span>
-              <input type="number" min={0} step="0.01" value={salario} onChange={(e) => setSalario(e.target.value)} required className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" min={0} step="0.01" value={salario} onChange={(e) => setSalario(e.target.value)} required className="w-32 rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tipo de contrato</span>
-              <select value={novoTipoContrato} onChange={(e) => setNovoTipoContrato(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={novoTipoContrato} onChange={(e) => setNovoTipoContrato(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="CLT">CLT</option>
                 <option value="ESTAGIO">Estágio</option>
                 <option value="PJ">PJ</option>
@@ -468,7 +468,7 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Tipo de salário</span>
-              <select value={novoTipoSalario} onChange={(e) => setNovoTipoSalario(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={novoTipoSalario} onChange={(e) => setNovoTipoSalario(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 <option value="MENSALISTA">Mensalista</option>
                 <option value="HORISTA">Horista</option>
                 <option value="DIARISTA">Diarista</option>
@@ -476,7 +476,7 @@ export default function ColaboradoresPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">E-mail</span>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Salvar
@@ -532,7 +532,7 @@ export default function ColaboradoresPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-[10px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
+                className="rounded-control border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
               >
                 Anterior
               </button>
@@ -542,7 +542,7 @@ export default function ColaboradoresPage() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-[10px] border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
+                className="rounded-control border border-border-strong px-2.5 py-1 text-xs disabled:opacity-40"
               >
                 Próxima
               </button>

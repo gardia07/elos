@@ -93,7 +93,7 @@ export default function CanalEticaPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Categoria</span>
-              <select value={categoria} onChange={(e) => setCategoria(e.target.value as EthicsCase['categoria'])} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+              <select value={categoria} onChange={(e) => setCategoria(e.target.value as EthicsCase['categoria'])} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                 {Object.entries(CATEGORIA_LABEL).map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
                 ))}
@@ -101,7 +101,7 @@ export default function CanalEticaPage() {
             </label>
             <label className="flex w-full flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Descrição do relato</span>
-              <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex items-center gap-2 pb-2 text-sm">
               <input type="checkbox" checked={anonimo} onChange={(e) => setAnonimo(e.target.checked)} />
@@ -110,7 +110,7 @@ export default function CanalEticaPage() {
             {!anonimo && (
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Nome do denunciante</span>
-                <input value={denuncianteNome} onChange={(e) => setDenuncianteNome(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input value={denuncianteNome} onChange={(e) => setDenuncianteNome(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
             )}
             <Button type="submit" disabled={create.isPending}>
@@ -167,7 +167,7 @@ export default function CanalEticaPage() {
                 )}
                 <label className="flex flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Conclusão</span>
-                  <textarea value={conclusao} onChange={(e) => setConclusao(e.target.value)} rows={3} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                  <textarea value={conclusao} onChange={(e) => setConclusao(e.target.value)} rows={3} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
                 </label>
                 <Button className="self-start" onClick={() => updateStatus.mutate('CONCLUIDO')} disabled={updateStatus.isPending}>
                   Encerrar caso
@@ -175,7 +175,7 @@ export default function CanalEticaPage() {
               </div>
             )}
             {detail.conclusao && (
-              <div className="rounded-[10px] bg-surface-alt p-3 text-sm">
+              <div className="rounded-container bg-surface-alt p-3 text-sm">
                 <div className="text-xs text-text-tertiary">Conclusão</div>
                 {detail.conclusao}
               </div>

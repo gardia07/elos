@@ -83,7 +83,7 @@ export default function LicencaPage() {
             <div className="flex flex-wrap items-end gap-3">
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Plano comercial</span>
-                <select value={planCode} onChange={(e) => setPlanCode(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+                <select value={planCode} onChange={(e) => setPlanCode(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                   <option value="">Manter atual</option>
                   {plans?.map((p) => (
                     <option key={p.code} value={p.code}>
@@ -94,7 +94,7 @@ export default function LicencaPage() {
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Status</span>
-                <select value={status} onChange={(e) => setStatus(e.target.value as License['status'])} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+                <select value={status} onChange={(e) => setStatus(e.target.value as License['status'])} className="rounded-control border border-border-strong bg-surface px-3 py-2">
                   <option value="TRIAL">Em teste</option>
                   <option value="ATIVA">Ativa</option>
                   <option value="SUSPENSA">Suspensa</option>

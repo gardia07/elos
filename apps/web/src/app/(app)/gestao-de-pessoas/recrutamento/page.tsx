@@ -80,7 +80,7 @@ export default function RecrutamentoPage() {
               <select
                 value={contrato}
                 onChange={(e) => setContrato(e.target.value as 'CLT' | 'ESTAGIO')}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               >
                 <option value="CLT">CLT</option>
                 <option value="ESTAGIO">Estágio</option>
@@ -123,7 +123,7 @@ function TextField({ label, value, onChange }: { label: string; value: string; o
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required
-        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+        className="rounded-control border border-border-strong bg-surface px-3 py-2"
       />
     </label>
   );

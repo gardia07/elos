@@ -132,7 +132,7 @@ export default function JobKanbanPage() {
               value={newCandidateNome}
               onChange={(e) => setNewCandidateNome(e.target.value)}
               required
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
@@ -141,7 +141,7 @@ export default function JobKanbanPage() {
               value={newCandidateOrigem}
               onChange={(e) => setNewCandidateOrigem(e.target.value)}
               placeholder="LinkedIn, Indicação…"
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <Button type="submit" disabled={addCandidate.isPending}>

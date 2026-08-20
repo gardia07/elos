@@ -92,16 +92,16 @@ export default function PoliticasPage() {
             <div className="flex flex-wrap items-end gap-3">
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Título</span>
-                <input value={titulo} onChange={(e) => setTitulo(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input value={titulo} onChange={(e) => setTitulo(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Categoria</span>
-                <input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Ética, LGPD…" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Ética, LGPD…" required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
             </div>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Conteúdo</span>
-              <textarea value={conteudo} onChange={(e) => setConteudo(e.target.value)} rows={5} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <textarea value={conteudo} onChange={(e) => setConteudo(e.target.value)} rows={5} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending} className="self-start">
               Publicar
@@ -156,7 +156,7 @@ export default function PoliticasPage() {
                   if (ackEmployeeId) acknowledge.mutate();
                 }}
               >
-                <select value={ackEmployeeId} onChange={(e) => setAckEmployeeId(e.target.value)} className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm">
+                <select value={ackEmployeeId} onChange={(e) => setAckEmployeeId(e.target.value)} className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm">
                   <option value="">Selecione o colaborador…</option>
                   {employees?.map((e) => (
                     <option key={e.id} value={e.id}>{e.nome}</option>

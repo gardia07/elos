@@ -353,7 +353,7 @@ export default function TerminationDetailPage() {
               <select
                 value={esocialEvento}
                 onChange={(e) => setEsocialEvento(e.target.value)}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               >
                 <option value="S-2299">S-2299 (desligamento)</option>
                 <option value="S-2399">S-2399 (fim de TAC/experiência)</option>
@@ -365,7 +365,7 @@ export default function TerminationDetailPage() {
                 value={esocialProtocolo}
                 onChange={(e) => setEsocialProtocolo(e.target.value)}
                 placeholder="Número recebido do contador"
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             <Button onClick={() => sendEsocial.mutate()}>Marcar como enviado</Button>
@@ -442,7 +442,7 @@ export default function TerminationDetailPage() {
               <input
                 value={entrevista.fatores?.outros ?? ''}
                 onChange={(e) => setFator('outros', e.target.value)}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
           </div>
@@ -504,7 +504,7 @@ export default function TerminationDetailPage() {
                 value={entrevista.voltariaPorque ?? ''}
                 onChange={(e) => setEntrevista((ent) => ({ ...ent, voltariaPorque: e.target.value }))}
                 rows={2}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
           </div>
@@ -519,7 +519,7 @@ export default function TerminationDetailPage() {
                 value={entrevista.pontosPositivos?.[i] ?? ''}
                 onChange={(e) => setPontoPositivo(i, e.target.value)}
                 placeholder={`${i + 1}º`}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
               />
             ))}
           </div>
@@ -534,7 +534,7 @@ export default function TerminationDetailPage() {
                 value={entrevista.pontosNegativos?.[i] ?? ''}
                 onChange={(e) => setPontoNegativo(i, e.target.value)}
                 placeholder={`${i + 1}º`}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
               />
             ))}
           </div>
@@ -547,7 +547,7 @@ export default function TerminationDetailPage() {
               value={entrevista.comentarios ?? ''}
               onChange={(e) => setEntrevista((ent) => ({ ...ent, comentarios: e.target.value }))}
               rows={4}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
 

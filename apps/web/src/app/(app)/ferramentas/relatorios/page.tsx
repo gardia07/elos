@@ -76,7 +76,7 @@ export default function RelatoriosPage() {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Relatório</span>
-          <select value={key} onChange={(e) => setKey(e.target.value as ReportKey)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2">
+          <select value={key} onChange={(e) => setKey(e.target.value as ReportKey)} className="rounded-control border border-border-strong bg-surface px-3 py-2">
             {REPORTS.map((r) => (
               <option key={r.key} value={r.key}>{r.label}</option>
             ))}

@@ -47,7 +47,7 @@ export default function ComunicacaoPage() {
             onChange={(e) => setTitulo(e.target.value)}
             placeholder="Título do comunicado"
             required
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
           <textarea
             value={corpo}
@@ -55,7 +55,7 @@ export default function ComunicacaoPage() {
             placeholder="Escreva o comunicado…"
             rows={3}
             required
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
           <Button type="submit" disabled={create.isPending} className="self-start">
             Publicar

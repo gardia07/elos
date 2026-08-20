@@ -77,11 +77,11 @@ export default function PortalFeriasPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Início</span>
-              <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Fim</span>
-              <input type="date" value={fim} onChange={(e) => setFim(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={fim} onChange={(e) => setFim(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit" disabled={create.isPending}>
               Enviar solicitação

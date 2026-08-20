@@ -66,7 +66,7 @@ export function AtalhoDrawer({
             onChange={(e) => setValues((v) => ({ ...v, nome: e.target.value }))}
             required
             autoFocus
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
 
@@ -78,7 +78,7 @@ export function AtalhoDrawer({
             onChange={(e) => setValues((v) => ({ ...v, url: e.target.value }))}
             placeholder="https://…"
             required
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
 
@@ -90,7 +90,7 @@ export function AtalhoDrawer({
                 key={icone}
                 type="button"
                 onClick={() => setValues((v) => ({ ...v, icone }))}
-                className={`flex h-9 w-9 items-center justify-center rounded-[10px] border transition ${
+                className={`flex h-9 w-9 items-center justify-center rounded-control border transition ${
                   values.icone === icone ? 'border-accent bg-tint-blue text-accent' : 'border-border-strong bg-surface text-text-secondary'
                 }`}
               >

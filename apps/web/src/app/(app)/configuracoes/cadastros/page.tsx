@@ -127,7 +127,7 @@ export default function ConfiguracoesCadastrosPage() {
 
         {showNewCompany && (
           <form
-            className="flex flex-wrap items-end gap-3 rounded-[10px] border border-border p-3"
+            className="flex flex-wrap items-end gap-3 rounded-container border border-border p-3"
             onSubmit={(e) => {
               e.preventDefault();
               createCompany.mutate();
@@ -140,7 +140,7 @@ export default function ConfiguracoesCadastrosPage() {
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
                 minLength={2}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
               />
             </label>
             <Button type="submit" disabled={createCompany.isPending}>
@@ -155,7 +155,7 @@ export default function ConfiguracoesCadastrosPage() {
             <Link
               key={c.id}
               href={`/configuracoes/cadastros/empresas/${c.id}`}
-              className="flex items-center justify-between rounded-[10px] border border-border px-3 py-2.5 transition hover:border-accent"
+              className="flex items-center justify-between rounded-container border border-border px-3 py-2.5 transition hover:border-accent"
             >
               <div className="flex items-center gap-2.5">
                 {c.logoUrl ? (
@@ -198,16 +198,16 @@ export default function ConfiguracoesCadastrosPage() {
 
         {showNewUser && (
           <form
-            className="flex flex-wrap items-end gap-3 rounded-[10px] border border-border p-3"
+            className="flex flex-wrap items-end gap-3 rounded-container border border-border p-3"
             onSubmit={(e) => {
               e.preventDefault();
               createUser.mutate();
             }}
           >
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="E-mail" required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Senha inicial" required minLength={8} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-            <select value={role} onChange={(e) => setRole(e.target.value as typeof role)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm">
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="E-mail" required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Senha inicial" required minLength={8} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+            <select value={role} onChange={(e) => setRole(e.target.value as typeof role)} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm">
               {ROLES.map((r) => (
                 <option key={r} value={r}>{ROLE_LABEL[r]}</option>
               ))}
@@ -235,7 +235,7 @@ export default function ConfiguracoesCadastrosPage() {
                   <select
                     value={u.role}
                     onChange={(e) => updateRole.mutate({ id: u.id, role: e.target.value })}
-                    className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                    className="rounded-control border border-border-strong bg-surface px-2 py-1 text-xs"
                   >
                     {ROLES.map((r) => (
                       <option key={r} value={r}>{ROLE_LABEL[r]}</option>

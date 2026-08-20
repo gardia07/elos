@@ -90,7 +90,7 @@ export default function DesligamentoPage() {
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               >
                 <option value="">Selecione…</option>
                 {employees?.map((e) => (
@@ -105,7 +105,7 @@ export default function DesligamentoPage() {
               <select
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value as TerminationTipo)}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               >
                 {Object.entries(TERMINATION_TIPO_LABEL).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -116,14 +116,14 @@ export default function DesligamentoPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Data</span>
-              <input type="date" value={data} onChange={(e) => setData(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={data} onChange={(e) => setData(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Aviso prévio</span>
               <select
                 value={avisoPrevioTipo}
                 onChange={(e) => setAvisoPrevioTipo(e.target.value)}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               >
                 <option value="">Não informado</option>
                 <option value="TRABALHADO">Trabalhado</option>
@@ -139,7 +139,7 @@ export default function DesligamentoPage() {
                   value={dataBeneficioInss}
                   onChange={(e) => setDataBeneficioInss(e.target.value)}
                   required
-                  className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="rounded-control border border-border-strong bg-surface px-3 py-2"
                 />
               </label>
             )}
@@ -151,7 +151,7 @@ export default function DesligamentoPage() {
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
                 required={motivoObrigatorio}
-                className="w-64 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="w-64 rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             <Button type="submit" disabled={create.isPending}>
