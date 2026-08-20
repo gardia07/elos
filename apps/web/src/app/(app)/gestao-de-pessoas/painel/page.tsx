@@ -44,9 +44,11 @@ function formatTempoDeCasa(meses: number): string {
   const totalMeses = Math.round(meses);
   const anos = Math.floor(totalMeses / 12);
   const mesesRestantes = totalMeses % 12;
-  if (anos === 0) return `${mesesRestantes} mês(es)`;
-  if (mesesRestantes === 0) return `${anos} ano(s)`;
-  return `${anos} ano(s) e ${mesesRestantes} mês(es)`;
+  const anoTxt = anos === 1 ? '1 ano' : `${anos} anos`;
+  const mesTxt = mesesRestantes === 1 ? '1 mês' : `${mesesRestantes} meses`;
+  if (anos === 0) return mesTxt;
+  if (mesesRestantes === 0) return anoTxt;
+  return `${anoTxt} e ${mesTxt}`;
 }
 
 function DistribuicaoList({ items }: { items: GroupItem[] | undefined }) {

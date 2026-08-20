@@ -59,7 +59,7 @@ function formatPrazo(prazoIso: string): string {
   if (prazoDiaIso === hojeIso) return 'Hoje';
   const dias = Math.round((parseIsoUtc(prazoDiaIso).getTime() - parseIsoUtc(hojeIso).getTime()) / 86_400_000);
   if (dias === 1) return 'Amanhã';
-  if (dias < 0) return `Atrasado há ${Math.abs(dias)}d`;
+  if (dias < 0) return `Atrasado há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'dia' : 'dias'}`;
   return parseIsoUtc(prazoDiaIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
 }
 

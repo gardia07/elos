@@ -42,15 +42,17 @@ export function Button({
   variant = 'primary',
   className = '',
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'cancel' }) {
   const variants: Record<string, string> = {
-    primary: 'bg-accent text-on-accent hover:opacity-90',
-    secondary: 'border border-border-strong bg-surface text-text hover:border-accent',
-    danger: 'bg-danger text-white hover:opacity-90',
+    primary: 'px-3.5 py-2 text-sm font-medium bg-accent text-on-accent hover:opacity-90',
+    secondary: 'px-3.5 py-2 text-sm font-medium border border-border-strong bg-surface text-text hover:border-accent',
+    danger: 'px-3.5 py-2 text-sm font-medium bg-danger text-white hover:opacity-90',
+    // Mesmo formato do botão "Anexar" (outline pequeno) -- só a cor do texto muda pra sinalizar cancelamento.
+    cancel: 'px-2 py-1 text-xs border border-border-strong bg-surface text-[#DC2626] hover:bg-[#FEF2F2]',
   };
   return (
     <button
-      className={`rounded-[10px] px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`rounded-[10px] transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

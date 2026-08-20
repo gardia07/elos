@@ -354,7 +354,7 @@ export default function ProjetoDetalhePage() {
             As tarefas e marcos atuais do projeto são salvos como modelo, guardando a distância em dias até o início do projeto — para recriar tudo com datas novas da próxima vez.
           </p>
           <div className="mt-2 flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setModeloOpen(false)}>
+            <Button type="button" variant="cancel" onClick={() => setModeloOpen(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={salvarModelo.isPending}>

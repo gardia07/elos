@@ -29,6 +29,27 @@ export function formatDate(v: string): string {
   return new Date(v).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
+/** Nunca abrevia unidade de tempo (d/m/a/h) -- sempre escreve por extenso com singular/plural corretos. */
+export function pluralize(n: number, singular: string, plural: string): string {
+  return `${n} ${n === 1 ? singular : plural}`;
+}
+
+export function formatDias(n: number): string {
+  return pluralize(n, 'dia', 'dias');
+}
+
+export function formatMeses(n: number): string {
+  return pluralize(n, 'mês', 'meses');
+}
+
+export function formatAnos(n: number): string {
+  return pluralize(n, 'ano', 'anos');
+}
+
+export function formatHoras(n: number): string {
+  return pluralize(n, 'hora', 'horas');
+}
+
 /** Formats digits as a Brazilian phone number while typing: (11) 91234-5678 / (11) 1234-5678. */
 export function maskPhoneBR(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);

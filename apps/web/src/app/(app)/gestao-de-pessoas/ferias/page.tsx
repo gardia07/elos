@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatDias } from '@/lib/format';
 import { Badge, Button, Card, Drawer, EmptyState, KpiCard } from '@/components/ui';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
@@ -34,22 +34,22 @@ const STATUS_PERIODO_LABEL: Record<StatusPeriodoAquisitivo, string> = {
 };
 
 const STATUS_PERIODO_TONE: Record<StatusPeriodoAquisitivo, 'green' | 'blue' | 'amber' | 'red' | 'grey'> = {
-  EM_AQUISICAO: 'grey',
+  EM_AQUISICAO: 'amber',
   DISPONIVEL: 'green',
   A_VENCER: 'amber',
   VENCIDA: 'red',
   PARCIALMENTE_GOZADA: 'blue',
-  QUITADA: 'grey',
+  QUITADA: 'green',
   PERDIDO_POR_AFASTAMENTO: 'red',
 };
 
 const STATUS_PERIODO_DOT: Record<StatusPeriodoAquisitivo, string> = {
-  EM_AQUISICAO: 'bg-text-tertiary',
+  EM_AQUISICAO: 'bg-warning',
   DISPONIVEL: 'bg-success',
   A_VENCER: 'bg-warning',
   VENCIDA: 'bg-danger',
   PARCIALMENTE_GOZADA: 'bg-accent',
-  QUITADA: 'bg-text-tertiary',
+  QUITADA: 'bg-success',
   PERDIDO_POR_AFASTAMENTO: 'bg-danger',
 };
 
@@ -67,7 +67,7 @@ const STATUS_FRACAO_TONE: Record<StatusFracaoFerias, 'green' | 'blue' | 'amber' 
   APROVADA: 'blue',
   REPROVADA: 'red',
   EM_ANDAMENTO: 'green',
-  CONCLUIDA: 'grey',
+  CONCLUIDA: 'green',
   CANCELADA: 'red',
 };
 
@@ -795,8 +795,8 @@ export default function FeriasPage() {
                         <div key={f.id} className="flex flex-wrap items-center gap-3 border-b border-dashed border-divider py-2 text-sm last:border-0">
                           <span className="min-w-[130px] font-medium">{f.tipo === 'COLETIVA' ? 'Férias coletivas' : 'Férias normais'}</span>
                           <span className="text-text-secondary">
-                            {formatDate(f.dataInicio)} a {formatDate(f.dataFim)} · {f.dias} dias
-                            {f.diasAbono > 0 ? ` · ${f.diasAbono}d abono` : ''}
+                            {formatDate(f.dataInicio)} a {formatDate(f.dataFim)} · {formatDias(f.dias)}
+                            {f.diasAbono > 0 ? ` · ${formatDias(f.diasAbono)} de abono` : ''}
                           </span>
                           <Badge tone={STATUS_FRACAO_TONE[f.statusEfetivo]}>{STATUS_FRACAO_LABEL[f.statusEfetivo]}</Badge>
                           <div className="ml-auto flex gap-3">

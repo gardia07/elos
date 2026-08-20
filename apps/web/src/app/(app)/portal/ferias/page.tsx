@@ -28,7 +28,7 @@ const STATUS_TONE = {
   APROVADA: 'blue',
   REPROVADA: 'red',
   EM_ANDAMENTO: 'green',
-  CONCLUIDA: 'grey',
+  CONCLUIDA: 'green',
   CANCELADA: 'red',
 } as const;
 

@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import {
   complianceTone,
+  formatDias,
   maskCPF,
   maskPhoneBR,
   statusColaboradorLabel,
@@ -112,12 +113,12 @@ const STATUS_PERIODO_LABEL: Record<StatusPeriodoAquisitivo, string> = {
 };
 
 const STATUS_PERIODO_TONE: Record<StatusPeriodoAquisitivo, 'green' | 'blue' | 'amber' | 'red' | 'grey'> = {
-  EM_AQUISICAO: 'grey',
+  EM_AQUISICAO: 'amber',
   DISPONIVEL: 'green',
   A_VENCER: 'amber',
   VENCIDA: 'red',
   PARCIALMENTE_GOZADA: 'blue',
-  QUITADA: 'grey',
+  QUITADA: 'green',
   PERDIDO_POR_AFASTAMENTO: 'red',
 };
 
@@ -137,7 +138,7 @@ const STATUS_FRACAO_TONE: Record<StatusFracaoFerias, 'green' | 'blue' | 'amber' 
   APROVADA: 'blue',
   REPROVADA: 'red',
   EM_ANDAMENTO: 'green',
-  CONCLUIDA: 'grey',
+  CONCLUIDA: 'green',
   CANCELADA: 'red',
 };
 
@@ -330,6 +331,13 @@ function formatBRL(v: number) {
 function formatDate(v: string) {
   return new Date(v).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
+function formatTempoDeCasa(anos: number, meses: number): string {
+  const anoTxt = anos === 1 ? '1 ano' : `${anos} anos`;
+  const mesTxt = meses === 1 ? '1 mês' : `${meses} meses`;
+  if (anos === 0) return mesTxt;
+  if (meses === 0) return anoTxt;
+  return `${anoTxt} e ${mesTxt}`;
+}
 
 export default function EmployeeProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -379,6 +387,7 @@ export default function EmployeeProfilePage() {
   const [docNome, setDocNome] = useState('');
   const [docTipo, setDocTipo] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
+  const [docFileInputKey, setDocFileInputKey] = useState(0);
 
   const { data: e } = useQuery({
     queryKey: ['employee', id],
@@ -645,6 +654,7 @@ export default function EmployeeProfilePage() {
       setDocNome('');
       setDocTipo('');
       setDocFile(null);
+      setDocFileInputKey((k) => k + 1);
     },
   });
 
@@ -834,7 +844,7 @@ export default function EmployeeProfilePage() {
       {tab === 'geral' && (
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-4 gap-4">
-            <KpiCard label="Tempo de casa" value={`${e.tempoDeCasa.anos}a ${e.tempoDeCasa.meses}m`} />
+            <KpiCard label="Tempo de casa" value={formatTempoDeCasa(e.tempoDeCasa.anos, e.tempoDeCasa.meses)} />
             <KpiCard label="Férias disponíveis" value={`${e.feriasSaldo} dias`} />
             <KpiCard label="Admissão" value={formatDate(e.dataAdmissao)} />
             <KpiCard label="Salário" value={formatBRL(Number(e.salario))} />
@@ -848,7 +858,7 @@ export default function EmployeeProfilePage() {
               {saveEditError && <p className="text-xs text-danger">{saveEditError}</p>}
               <div className="flex gap-2">
                 <Button
-                  variant="secondary"
+                  variant="cancel"
                   onClick={() => {
                     setEditing(false);
                     setMotivoSalario('');
@@ -1271,7 +1281,7 @@ export default function EmployeeProfilePage() {
                 <Button type="submit" disabled={promote.isPending} className="flex-none">
                   Confirmar
                 </Button>
-                <Button type="button" variant="secondary" onClick={() => setShowPromote(false)} className="flex-none">
+                <Button type="button" variant="cancel" onClick={() => setShowPromote(false)} className="flex-none">
                   Cancelar
                 </Button>
               </form>
@@ -1333,7 +1343,7 @@ export default function EmployeeProfilePage() {
                       <Button type="submit" disabled={updateHistorico.isPending}>
                         Salvar correção
                       </Button>
-                      <Button type="button" variant="secondary" onClick={() => setEditingHistoricoId(null)}>
+                      <Button type="button" variant="cancel" onClick={() => setEditingHistoricoId(null)}>
                         Cancelar
                       </Button>
                     </form>
@@ -1361,7 +1371,7 @@ export default function EmployeeProfilePage() {
                       <Button type="submit" variant="danger" disabled={removeHistorico.isPending}>
                         Confirmar exclusão
                       </Button>
-                      <Button type="button" variant="secondary" onClick={() => setDeletingHistoricoId(null)}>
+                      <Button type="button" variant="cancel" onClick={() => setDeletingHistoricoId(null)}>
                         Cancelar
                       </Button>
                     </form>
@@ -1562,7 +1572,7 @@ export default function EmployeeProfilePage() {
                     <li key={f.id} className="flex flex-col gap-1.5 rounded-[10px] border border-border p-2.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-text-secondary">
-                          {formatDate(f.dataInicio)} a {formatDate(f.dataFim)} ({f.dias}d{f.diasAbono > 0 ? ` · ${f.diasAbono}d de abono` : ''}
+                          {formatDate(f.dataInicio)} a {formatDate(f.dataFim)} ({formatDias(f.dias)}{f.diasAbono > 0 ? ` · ${formatDias(f.diasAbono)} de abono` : ''}
                           {f.antecipa13 ? ' · antecipa 13º' : ''})
                         </span>
                         <Badge tone={STATUS_FRACAO_TONE[f.statusEfetivo]}>{STATUS_FRACAO_LABEL[f.statusEfetivo]}</Badge>
@@ -1606,7 +1616,7 @@ export default function EmployeeProfilePage() {
                           </>
                         )}
                         {(f.status === 'PENDENTE' || f.status === 'APROVADA') && (
-                          <Button variant="secondary" onClick={() => cancelarFracao.mutate(f.id)}>
+                          <Button variant="cancel" onClick={() => cancelarFracao.mutate(f.id)}>
                             Cancelar
                           </Button>
                         )}
@@ -1869,6 +1879,7 @@ export default function EmployeeProfilePage() {
               <label className="flex w-full flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Arquivo</span>
                 <input
+                  key={docFileInputKey}
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   onChange={(ev) => setDocFile(ev.target.files?.[0] ?? null)}
@@ -3014,7 +3025,7 @@ function BeneficioLinha({
           <Button onClick={salvar} disabled={!podeSalvar}>
             Salvar
           </Button>
-          <Button variant="secondary" onClick={fechar}>
+          <Button variant="cancel" onClick={fechar}>
             Cancelar
           </Button>
         </div>

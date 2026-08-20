@@ -528,7 +528,7 @@ export function ProjetoDrawer({
             <span />
           )}
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button type="button" variant="cancel" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={saving}>
