@@ -2148,13 +2148,13 @@ export default function EmployeeProfilePage() {
             </Button>
           </div>
 
-          <div id="registro-empregado-print" className="flex flex-col gap-4">
+          <div id="registro-empregado-print" className="flex flex-col gap-4 rounded-[10px] bg-white p-6 text-[#2B2B2B]">
             <div className="text-center">
-              <h3 className="text-lg font-bold tracking-wide">REGISTRO DE EMPREGADO</h3>
-              <p className="text-xs text-text-tertiary">Matrícula {e.matricula}</p>
+              <h3 className="text-lg font-bold tracking-wide text-[#1F2430]">REGISTRO DE EMPREGADO</h3>
+              <p className="text-xs text-[#8B8B8B]">Matrícula {e.matricula}</p>
             </div>
 
-            <Card className="border-[#E2E0DA]">
+            <Card className="border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Empregador</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Razão social" value={tenant?.razaoSocial ?? tenant?.name} className="sm:col-span-2" />
@@ -2163,7 +2163,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA]">
+            <Card className="border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Empregado</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Nome" value={e.nome} className="sm:col-span-2" />
@@ -2177,7 +2177,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA]">
+            <Card className="border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Documentos</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="CPF" value={e.cpf} />
@@ -2195,7 +2195,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA]">
+            <Card className="border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Cargo, admissão e remuneração</h4>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 print:grid-cols-3">
                 <FormBox label="Cargo" value={e.cargo} />
@@ -2209,7 +2209,7 @@ export default function EmployeeProfilePage() {
               </div>
             </Card>
 
-            <Card className="border-[#E2E0DA]">
+            <Card className="border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Contatos de emergência</h4>
               {e.contatosEmergencia.length === 0 ? (
                 <p className="text-sm text-text-tertiary">Nenhum contato cadastrado.</p>
@@ -2228,7 +2228,7 @@ export default function EmployeeProfilePage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 print:grid-cols-3">
               <div>
                 <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Período Aquisitivo</h4>
-                <Card className="border-[#E2E0DA]">
+                <Card className="border-[#E2E0DA] bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2267,7 +2267,7 @@ export default function EmployeeProfilePage() {
 
               <div>
                 <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Usufruto</h4>
-                <Card className="border-[#E2E0DA]">
+                <Card className="border-[#E2E0DA] bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2299,7 +2299,7 @@ export default function EmployeeProfilePage() {
 
               <div>
                 <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias — Abono Pecuniário</h4>
-                <Card className="border-[#E2E0DA]">
+                <Card className="border-[#E2E0DA] bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2332,7 +2332,7 @@ export default function EmployeeProfilePage() {
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Alterações de salário, cargo e/ou função</h4>
-              <Card className="border-[#E2E0DA]">
+              <Card className="border-[#E2E0DA] bg-white">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2368,7 +2368,7 @@ export default function EmployeeProfilePage() {
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Afastamentos</h4>
-              <Card className="border-[#E2E0DA]">
+              <Card className="border-[#E2E0DA] bg-white">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2400,7 +2400,7 @@ export default function EmployeeProfilePage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 print:grid-cols-2">
               <div>
                 <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Acidentes de trabalho e doenças ocupacionais</h4>
-                <Card className="border-[#E2E0DA]">
+                <Card className="border-[#E2E0DA] bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2433,7 +2433,7 @@ export default function EmployeeProfilePage() {
 
               <div>
                 <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Rescisão de contrato de trabalho</h4>
-                <Card className="border-[#E2E0DA]">
+                <Card className="border-[#E2E0DA] bg-white">
                   {e.terminations.length === 0 ? (
                     <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
                   ) : (
@@ -2451,7 +2451,7 @@ export default function EmployeeProfilePage() {
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Ocorrências</h4>
-              <Card className="border-[#E2E0DA]">
+              <Card className="border-[#E2E0DA] bg-white">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left font-bold text-[#8B8B8B]">
@@ -2484,7 +2484,7 @@ export default function EmployeeProfilePage() {
 
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Observações</h4>
-              <Card className="border-[#E2E0DA]">
+              <Card className="border-[#E2E0DA] bg-white">
                 <EmptyState>Sem observações registradas.</EmptyState>
               </Card>
             </div>
