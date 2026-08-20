@@ -326,7 +326,7 @@ export default function FeriasPage() {
     ? [
         { valor: visaoGeral.distribuicao.vencida, className: 'text-danger' },
         { valor: visaoGeral.distribuicao.aVencer, className: 'text-warning' },
-        { valor: visaoGeral.distribuicao.dentroDoPrazo, className: 'text-success' },
+        { valor: visaoGeral.distribuicao.dentroDoPrazo, className: 'text-olive' },
       ]
     : [];
   let donutOffsetAcumulado = 0;
@@ -562,7 +562,7 @@ export default function FeriasPage() {
                       <span className="ml-auto font-semibold">{visaoGeral.distribuicao.aVencer}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-sm bg-success" /> Dentro do prazo
+                      <span className="h-2.5 w-2.5 rounded-sm bg-olive" /> Dentro do prazo
                       <span className="ml-auto font-semibold">{visaoGeral.distribuicao.dentroDoPrazo}</span>
                     </div>
                   </div>

@@ -1340,7 +1340,7 @@ export default function EmployeeProfilePage() {
                           className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                         />
                       </label>
-                      <Button type="submit" disabled={updateHistorico.isPending}>
+                      <Button type="submit" variant="confirm" disabled={updateHistorico.isPending}>
                         Salvar correção
                       </Button>
                       <Button type="button" variant="cancel" onClick={() => setEditingHistoricoId(null)}>

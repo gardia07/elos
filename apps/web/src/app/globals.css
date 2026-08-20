@@ -21,6 +21,7 @@
   --danger-deep: #8a2e2e;
   --info: #c9857a;
   --purple: #8a7fb0;
+  --olive: #6d8a3d;
 }
 
 :root[data-theme="dark"] {
@@ -78,6 +79,7 @@
   --color-danger-deep: var(--danger-deep);
   --color-info: var(--info);
   --color-purple: var(--purple);
+  --color-olive: var(--olive);
   --font-sans: var(--font-work-sans);
 }
 

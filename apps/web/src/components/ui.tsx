@@ -42,13 +42,16 @@ export function Button({
   variant = 'primary',
   className = '',
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'cancel' }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'cancel' | 'confirm' }) {
   const variants: Record<string, string> = {
     primary: 'px-3.5 py-2 text-sm font-medium bg-accent text-on-accent hover:opacity-90',
     secondary: 'px-3.5 py-2 text-sm font-medium border border-border-strong bg-surface text-text hover:border-accent',
     danger: 'px-3.5 py-2 text-sm font-medium bg-danger text-white hover:opacity-90',
     // Mesmo formato do botão "Anexar" (outline pequeno) -- só a cor do texto muda pra sinalizar cancelamento.
-    cancel: 'px-2 py-1 text-xs border border-border-strong bg-surface text-[#DC2626] hover:bg-[#FEF2F2]',
+    // Reaproveita --danger (mesmo tom do badge "Conformidade" vermelho) em vez de uma cor nova.
+    cancel: 'px-2 py-1 text-xs border border-border-strong bg-surface text-danger hover:bg-danger/10',
+    // Mesmo formato de outline pequeno do "cancel", mas com a cor de accent (o azul-acinzentado do botão "primary").
+    confirm: 'px-2 py-1 text-xs border border-border-strong bg-surface text-accent hover:bg-tint-blue',
   };
   return (
     <button
