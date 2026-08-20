@@ -146,7 +146,7 @@ export class FeriasService {
   }
 
   private async todosOsResumos(): Promise<
-    { employee: { id: string; nome: string; filial: string | null; salario: unknown }; resumo: PeriodoResumo }[]
+    { periodoId: string; employee: { id: string; nome: string; filial: string | null; salario: unknown }; resumo: PeriodoResumo }[]
   > {
     const { employees, hoje } = await this.garantirPeriodosDeTodos();
     if (employees.length === 0) return [];
@@ -171,7 +171,7 @@ export class FeriasService {
         hoje,
       );
       const employee = employeeById.get(p.employeeId)!;
-      return { employee, resumo };
+      return { periodoId: p.id, employee, resumo };
     });
   }
 
@@ -241,6 +241,7 @@ export class FeriasService {
 
     return itens
       .map((r) => ({
+        periodoId: r.periodoId,
         employeeId: r.employee.id,
         nome: r.employee.nome,
         filial: r.employee.filial,

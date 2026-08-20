@@ -229,7 +229,7 @@ export default function ColaboradoresPage() {
 
   const filters = {
     nome: nome || undefined,
-    status: status || undefined,
+    status: status === 'AFASTADO' ? 'ATIVO' : status || undefined,
     departamento: departamento || undefined,
     cargo: cargoFiltro || undefined,
     filial: filial || undefined,
@@ -241,14 +241,15 @@ export default function ColaboradoresPage() {
     feriasVencendo: feriasVencendo || undefined,
   };
 
-  const { data: employees, isLoading } = useQuery({
+  const { data: employeesFetched, isLoading } = useQuery({
     queryKey: ['employees', filters],
     queryFn: async () => (await api.get<Employee[]>('/rh/employees', { params: filters })).data,
   });
+  const employees = status === 'AFASTADO' ? employeesFetched?.filter((e) => e.afastadoAtual) : employeesFetched;
 
   useEffect(() => {
     setPage(1);
-  }, [JSON.stringify(filters)]);
+  }, [JSON.stringify(filters), status]);
 
   const totalPages = Math.max(1, Math.ceil((employees?.length ?? 0) / PAGE_SIZE));
   const pageEmployees = (employees ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -316,6 +317,7 @@ export default function ColaboradoresPage() {
             <option value="">Todos os status</option>
             <option value="ATIVO">Ativo</option>
             <option value="INATIVO">Inativo</option>
+            <option value="AFASTADO">Afastado</option>
           </select>
           <Button variant="secondary" onClick={() => setShowFilters((s) => !s)}>
             Mais filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
@@ -514,10 +516,7 @@ export default function ColaboradoresPage() {
                   <Badge tone={complianceTone(e.conformidadeDocumental)}>{e.conformidadeDocumental}%</Badge>
                 </td>
                 <td className="px-5 py-3">
-                  <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>
-                    {statusColaboradorLabel(e.status, e.afastadoAtual)}
-                    {e.status === 'ATIVO' && e.afastadoAtual && e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}
-                  </Badge>
+                  <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>{statusColaboradorLabel(e.status, e.afastadoAtual)}</Badge>
                 </td>
               </tr>
             ))}

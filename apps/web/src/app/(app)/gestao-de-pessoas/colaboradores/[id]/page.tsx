@@ -778,10 +778,7 @@ export default function EmployeeProfilePage() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{e.nome}</h2>
-            <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>
-              {statusColaboradorLabel(e.status, e.afastadoAtual)}
-              {e.status === 'ATIVO' && e.afastadoAtual && e.afastamentoAtivoTipo ? ` — ${e.afastamentoAtivoTipo}` : ''}
-            </Badge>
+            <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>{statusColaboradorLabel(e.status, e.afastadoAtual)}</Badge>
             <Badge tone={complianceTone(e.conformidadeDocumental)}>Conformidade: {e.conformidadeDocumental}%</Badge>
           </div>
           <p className="text-sm text-text-secondary">
