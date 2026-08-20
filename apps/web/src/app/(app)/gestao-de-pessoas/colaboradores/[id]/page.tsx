@@ -780,8 +780,8 @@ export default function EmployeeProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="sticky top-0 z-10 -mx-8 flex flex-col gap-3 bg-page-bg px-8 pb-3 pt-1">
-        <Link href="/gestao-de-pessoas/colaboradores" className="text-sm text-text-secondary hover:text-text">
+      <div className="sticky top-0 z-10 -mx-8 -mt-6 flex flex-col gap-2 bg-page-bg px-8 pb-2 pt-3">
+        <Link href="/gestao-de-pessoas/colaboradores" className="text-xs text-text-secondary hover:text-text">
           ← Voltar para Colaboradores
         </Link>
 
@@ -823,7 +823,7 @@ export default function EmployeeProfilePage() {
             <button
               key={t}
               onClick={() => changeTab(t)}
-              className={`px-3 py-2 text-sm ${tab === t ? 'border-b-2 border-accent font-medium text-text' : 'text-text-secondary'}`}
+              className={`px-3 py-1.5 text-sm ${tab === t ? 'border-b-2 border-accent font-medium text-text' : 'text-text-secondary'}`}
             >
               {TAB_LABEL[t]}
             </button>
