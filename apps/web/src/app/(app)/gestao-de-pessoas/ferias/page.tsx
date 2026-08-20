@@ -242,6 +242,13 @@ export default function FeriasPage() {
     }
   }, [progPeriodoAlvo, periodosParaProgramar]);
 
+  // aba Histórico já abre com a linha do tempo de alguém, em vez de exigir seleção antes de mostrar qualquer coisa
+  useEffect(() => {
+    if (tab === 'HISTORICO' && !histEmployeeId && employees && employees.length > 0) {
+      setHistEmployeeId(employees[0].id);
+    }
+  }, [tab, employees, histEmployeeId]);
+
   const { data: alertasPreview } = useQuery({
     queryKey: ['rh', 'ferias', 'preview-alertas', progPeriodoId, progInicio, progDias, progDiasAbono],
     queryFn: async () =>
