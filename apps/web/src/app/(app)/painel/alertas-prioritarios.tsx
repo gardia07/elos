@@ -18,7 +18,7 @@ interface AlertaTask {
   prioridade: TarefaPrioridade;
   origem: string;
   prazo: string | null;
-  detalhes: { href?: string } | null;
+  detalhes: { href?: string; score?: number; impacto?: number; probabilidade?: number } | null;
 }
 
 interface TarefaDoDiaResponse {
@@ -104,6 +104,7 @@ export function AlertasPrioritarios() {
       <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {alertas.map((t) => {
           const href = t.detalhes?.href;
+          const score = t.detalhes?.score;
           const fixado = fixadoSet.has(t.id);
           return (
             <li key={t.id} className="rounded-container border border-border p-2.5">
@@ -112,6 +113,11 @@ export function AlertasPrioritarios() {
                   <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
                     <Badge tone={PRIORIDADE_TONE[t.prioridade]}>{t.modulo}</Badge>
                     {t.prazo && <span className="text-xs text-text-tertiary">{formatPrazo(t.prazo)}</span>}
+                    {score != null && (
+                      <span className="text-xs text-text-tertiary" title={`Impacto ${t.detalhes?.impacto} × Probabilidade ${t.detalhes?.probabilidade}`}>
+                        score {score}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-text">{t.titulo}</p>
                 </div>

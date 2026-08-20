@@ -5,9 +5,10 @@ import { ComplianceModule } from '../compliance/compliance.module';
 import { DocumentsModule } from '../rh/documents/documents.module';
 import { FeriasModule } from '../rh/ferias/ferias.module';
 import { LicenseModule } from '../license/license.module';
+import { RiskModule } from '../risk/risk.module';
 
 @Module({
-  imports: [ComplianceModule, DocumentsModule, FeriasModule, LicenseModule],
+  imports: [ComplianceModule, DocumentsModule, FeriasModule, LicenseModule, RiskModule],
   controllers: [DashboardController],
   providers: [DashboardService],
   exports: [DashboardService],

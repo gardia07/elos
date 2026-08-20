@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/cn';
 
 export function Card({ children, className = '', onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
@@ -11,20 +12,29 @@ export function Card({ children, className = '', onClick }: { children: ReactNod
   );
 }
 
-export function KpiCard({ label, value, delta }: { label: string; value: ReactNode; delta?: ReactNode }) {
-  return (
-    <Card className="flex flex-col gap-1">
+export function KpiCard({ label, value, delta, href }: { label: string; value: ReactNode; delta?: ReactNode; href?: string }) {
+  const content = (
+    <>
       <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">{label}</span>
       <span className="text-[26px] font-semibold text-text">{value}</span>
       {delta && <span className="text-xs">{delta}</span>}
-    </Card>
+    </>
   );
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        <Card className="flex flex-col gap-1 transition hover:border-accent">{content}</Card>
+      </Link>
+    );
+  }
+  return <Card className="flex flex-col gap-1">{content}</Card>;
 }
 
 const BADGE_COLORS: Record<string, string> = {
   green: 'bg-success-bg text-success',
   amber: 'bg-warning-bg text-warning',
   red: 'bg-danger/10 text-danger',
+  darkred: 'bg-danger-deep/10 text-danger-deep',
   blue: 'bg-tint-blue text-accent',
   grey: 'bg-surface-alt text-text-secondary',
 };

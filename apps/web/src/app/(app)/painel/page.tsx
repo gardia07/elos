@@ -32,11 +32,13 @@ interface Kpis {
   pendenciasAbertasDelta: number | null;
   conformidadeGeral: number;
   conformidadeGeralDelta: number | null;
-  riscoGeral: 'Baixo' | 'Médio' | 'Alto';
+  riscoGeral: 'Baixo' | 'Médio' | 'Alto' | 'Crítico';
+  riscoGeralCategoria: 'DP' | 'SST' | 'Compliance' | 'Psicologia' | null;
+  riscoGeralHref: string | null;
   alertasCriticosAtivos: number;
 }
 
-const RISCO_TONE = { Baixo: 'green', Médio: 'amber', Alto: 'red' } as const;
+const RISCO_TONE = { Baixo: 'green', Médio: 'amber', Alto: 'red', Crítico: 'darkred' } as const;
 
 function Delta({ value, unidade, favoravel }: { value: number | null; unidade: string; favoravel: 'alto' | 'baixo' }) {
   if (value == null) return <span className="text-text-tertiary">Sem histórico suficiente</span>;
@@ -99,7 +101,13 @@ export default function PainelPage() {
             <KpiCard
               label="Risco geral"
               value={kpis && <Badge tone={RISCO_TONE[kpis.riscoGeral]}>{kpis.riscoGeral}</Badge>}
-              delta={<span className="text-text-tertiary">{kpis?.alertasCriticosAtivos ?? 0} alerta(s) crítico(s) ativo(s)</span>}
+              delta={
+                <span className="text-text-tertiary">
+                  {kpis?.alertasCriticosAtivos ?? 0} alerta(s) crítico(s) ativo(s)
+                  {kpis?.riscoGeralCategoria && ` — puxado por ${kpis.riscoGeralCategoria}`}
+                </span>
+              }
+              href={kpis?.riscoGeralHref ?? undefined}
             />
           </div>
 

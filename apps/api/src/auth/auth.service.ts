@@ -16,6 +16,7 @@ import { CLT_DOCUMENT_REQUIREMENTS } from '../rh/documents/clt-requirements';
 import { DEFAULT_DOCUMENT_TEMPLATES } from '../rh/document-templates/default-templates';
 import { DEFAULT_AGENDA_CATEGORIAS } from '../agenda/default-categorias';
 import { DEFAULT_ATALHOS_EXTERNOS } from '../ferramentas/default-atalhos-externos';
+import { RISK_WEIGHT_DEFAULTS } from '../risk/risk-weights';
 import { JwtPayload } from '../common/jwt-payload';
 
 // Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
@@ -159,6 +160,17 @@ export class AuthService {
         url: a.url,
         icone: a.icone,
         ordem: a.ordem,
+        sistema: true,
+      })),
+    });
+
+    await this.prisma.forTenant(tenantId).riskImpactRule.createMany({
+      data: RISK_WEIGHT_DEFAULTS.map((r) => ({
+        tenantId,
+        categoria: r.categoria,
+        tipo: r.tipo,
+        impacto: r.impacto,
+        label: r.label,
         sistema: true,
       })),
     });

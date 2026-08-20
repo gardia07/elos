@@ -30,6 +30,7 @@ import { PayrollModule } from './dp/payroll/payroll.module';
 import { SimulacoesModule } from './dp/simulacoes/simulacoes.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { RiskModule } from './risk/risk.module';
 import { TarefasDoDiaModule } from './tarefas-do-dia/tarefas-do-dia.module';
 import { AccidentsModule } from './sst/accidents/accidents.module';
 import { ExamsModule } from './sst/exams/exams.module';
@@ -75,6 +76,7 @@ import { SearchModule } from './search/search.module';
     SimulacoesModule,
     AgendaModule,
     DashboardModule,
+    RiskModule,
     TarefasDoDiaModule,
     AccidentsModule,
     ExamsModule,

@@ -26,13 +26,14 @@ export class ComplianceOverviewService {
     // Sem políticas ativas ou sem colaboradores para aceitar = nada foi
     // verificado ainda, não "totalmente coberto" — 0, não 100.
     let coberturaMedia = 0;
+    let politicasAceitesTotais = 0;
+    const politicasItensAuditaveis = politicas.length * totalAtivos;
     if (politicas.length > 0) {
-      const coberturas = await Promise.all(
-        politicas.map(async (p) => {
-          const aceites = await db.policyAcknowledgment.count({ where: { policyId: p.id } });
-          return totalAtivos ? (100 * aceites) / totalAtivos : 0;
-        }),
+      const aceitesPorPolitica = await Promise.all(
+        politicas.map((p) => db.policyAcknowledgment.count({ where: { policyId: p.id } })),
       );
+      politicasAceitesTotais = aceitesPorPolitica.reduce((a, b) => a + b, 0);
+      const coberturas = aceitesPorPolitica.map((aceites) => (totalAtivos ? (100 * aceites) / totalAtivos : 0));
       coberturaMedia = Math.round(coberturas.reduce((a, b) => a + b, 0) / coberturas.length);
     }
 
@@ -49,6 +50,11 @@ export class ComplianceOverviewService {
       casosConcluidosMes,
       politicasAtivas: politicas.length,
       coberturaMediaPoliticas: coberturaMedia,
+      // Itens auditáveis "brutos", pra Conformidade Geral do painel poder somar
+      // uma única razão ponderada (itens conformes / itens auditáveis) em vez
+      // de fazer média de percentuais de populações de tamanhos diferentes.
+      itensAuditaveis: politicasItensAuditaveis + totalCasos,
+      itensConformes: politicasAceitesTotais + casosConcluidos,
     };
   }
 }

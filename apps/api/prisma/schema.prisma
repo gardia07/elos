@@ -109,6 +109,11 @@ model Tenant {
   periodosAquisitivos  PeriodoAquisitivo[]
   fracoesDeFerias      FracaoDeFerias[]
   faltasInjustificadas FaltaInjustificada[]
+  jornadas             Jornada[]
+  batidas              Batida[]
+  ajustesPonto         AjustePonto[]
+  certificadosDigitais CertificadoDigital[]
+  afdGeracoes          AfdGeracao[]
   license              TenantLicense?
 
   ethicsCases            EthicsCase[]
@@ -118,6 +123,8 @@ model Tenant {
   announcements          Announcement[]
   metricSnapshots        MetricSnapshot[]
   atalhosExternos        AtalhoExterno[]
+
+  riskImpactRules              RiskImpactRule[]
 
   metasPessoais               MetaPessoal[]
   habitosPessoais             HabitoPessoal[]
@@ -568,6 +575,9 @@ model Employee {
   terminations          Termination[]
   periodosAquisitivos   PeriodoAquisitivo[]
   faltasInjustificadas  FaltaInjustificada[]
+  jornadas              Jornada[]
+  batidas               Batida[]
+  ajustesPonto          AjustePonto[]
 
   adesoesValeDiario    AdesaoValeDiario[]
   adesoesAcademia      AdesaoAcademia[]
@@ -1396,6 +1406,155 @@ model TimeJustification {
   @@map("time_justifications")
 }
 
+// ─────────────────────────────────────────────────────────────
+// Ponto Eletrônico (REP-P, Portaria 671/2021) — substitui TimeJustification
+// ─────────────────────────────────────────────────────────────
+
+enum TipoBatida {
+  ENTRADA
+  SAIDA
+  INTERVALO_INICIO
+  INTERVALO_FIM
+
+  @@map("tipo_batida")
+}
+
+enum OrigemBatida {
+  APP
+  WEB
+  MANUAL_RH
+
+  @@map("origem_batida")
+}
+
+enum TipoAjustePonto {
+  OMISSAO
+  CORRECAO_HORARIO
+  ABONO
+
+  @@map("tipo_ajuste_ponto")
+}
+
+enum StatusAjustePonto {
+  PENDENTE
+  APROVADA
+  REPROVADA
+
+  @@map("status_ajuste_ponto")
+}
+
+/// Jornada esperada de um colaborador -- vigência permite trocar de escala sem apagar histórico.
+model Jornada {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @db.Uuid
+  employeeId        String    @db.Uuid
+  diasSemana        Int[] // 0=domingo .. 6=sábado
+  entrada           String // "HH:mm"
+  saida             String // "HH:mm"
+  intervaloInicio   String? // "HH:mm"
+  intervaloFim      String? // "HH:mm"
+  toleranciaMinutos Int       @default(5)
+  vigenciaDesde     DateTime  @db.Date
+  vigenciaAte       DateTime? @db.Date
+  createdAt         DateTime  @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, employeeId])
+  @@map("jornadas")
+}
+
+/// Marcação de ponto -- imutável (nunca editada/apagada após criada). Correções
+/// entram como AjustePonto separado, nunca alterando o registro original (Portaria
+/// 671/2021, art. 82 §único: PTRP só complementa omissão, nunca muda o horário real).
+model Batida {
+  id              String       @id @default(uuid()) @db.Uuid
+  tenantId        String       @db.Uuid
+  employeeId      String       @db.Uuid
+  dataHora        DateTime
+  tipo            TipoBatida
+  origem          OrigemBatida
+  latitude        Decimal?     @db.Decimal(9, 6)
+  longitude       Decimal?     @db.Decimal(9, 6)
+  nsr             Int // sequencial por tenant, nunca reaproveitado (Portaria 671/2021)
+  registradoPorId String?      @db.Uuid
+  createdAt       DateTime     @default(now())
+
+  tenant            Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee          Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  ajustesComoOrigem AjustePonto[] @relation("BatidaOrigemAjuste")
+
+  @@unique([tenantId, nsr])
+  @@index([tenantId, employeeId, dataHora])
+  @@map("batidas")
+}
+
+/// Solicitação de ajuste (omissão, correção de horário ou abono) -- nunca altera
+/// a Batida original, só complementa o cálculo do espelho quando aprovada.
+model AjustePonto {
+  id              String            @id @default(uuid()) @db.Uuid
+  tenantId        String            @db.Uuid
+  employeeId      String            @db.Uuid
+  data            DateTime          @db.Date
+  tipoAjuste      TipoAjustePonto
+  horarioProposto DateTime?
+  batidaOrigemId  String?           @db.Uuid
+  justificativa   String
+  status          StatusAjustePonto @default(PENDENTE)
+  solicitadoPorId String?           @db.Uuid
+  aprovadoPorId   String?           @db.Uuid
+  dataAprovacao   DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  batidaOrigem Batida?  @relation("BatidaOrigemAjuste", fields: [batidaOrigemId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, employeeId])
+  @@map("ajustes_ponto")
+}
+
+/// Certificado ICP-Brasil (e-CNPJ) do tenant, usado pra assinar AFD (CAdES) e
+/// comprovante de marcação (PAdES). Nunca exposto via endpoint de download --
+/// só lido server-side no momento de assinar. Senha nunca em texto puro (ver
+/// common/secret-vault.util.ts).
+model CertificadoDigital {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @db.Uuid
+  blobPathname       String
+  senhaCriptografada String
+  titular            String
+  validade           DateTime @db.Date
+  uploadEm           DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("certificados_digitais")
+}
+
+/// Trilha de auditoria de cada AFD assinado gerado -- nunca regenerado
+/// silenciosamente, cada geração é um novo registro imutável.
+model AfdGeracao {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  periodoInicio DateTime @db.Date
+  periodoFim    DateTime @db.Date
+  blobPathname  String
+  hash          String
+  nsrInicial    Int
+  nsrFinal      Int
+  geradoPorId   String?  @db.Uuid
+  geradoEm      DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("afd_geracoes")
+}
+
 enum PayrollRunStatus {
   ABERTO
   PROCESSADA
@@ -2007,6 +2166,30 @@ model RiskMapEntry {
 
   @@index([tenantId])
   @@map("risk_map_entries")
+}
+
+/// Peso de impacto (1-5) por tipo de nao conformidade, usado pelo motor de
+/// calculo de Risco Geral (RiskEngineService). Semeado por tenant a partir de
+/// risk-weights.ts no signup (mesmo padrao de CLT_DOCUMENT_REQUIREMENTS), mas
+/// vive na tabela -- nao no codigo -- para poder ser editado sem deploy e,
+/// futuramente, configurado por cliente (apetite de risco varia por setor).
+model RiskImpactRule {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  categoria String // DP | SST | Compliance | Psicologia
+  tipo      String // chave estavel, ex: 'documentacao_cadastro_zero_conforme'
+  impacto   Int // 1-5 -- peso fixo por tipo, nao calculado
+  label     String
+  ativo     Boolean  @default(true)
+  sistema   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, tipo])
+  @@index([tenantId])
+  @@map("risk_impact_rules")
 }
 
 model SstSettings {

@@ -5,7 +5,8 @@ import { ComplianceOverviewService } from '../compliance/overview.service';
 import { DocumentsService } from '../rh/documents/documents.service';
 import { FeriasService } from '../rh/ferias/ferias.service';
 import { LicenseService } from '../license/license.service';
-import { buildTerminationAlerts, PRAZO_DIAS } from '../rh/terminations/terminations-lembretes.util';
+import { buildTerminationAlerts } from '../rh/terminations/terminations-lembretes.util';
+import { RiskEngineService, RiskItem } from '../risk/risk-engine.service';
 
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
@@ -32,6 +33,31 @@ export interface Alert {
   alertKey: string;
   prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   href: string;
+  /** Só presente quando o alerta corresponde a um item do motor de Risco (RiskEngineService) — auditabilidade do que gerou a severidade. */
+  score?: number;
+  impacto?: number;
+  probabilidade?: number;
+}
+
+/** Nivel de risco (RiskEngineService) → prioridade de Alert, mapeamento 1:1. */
+const NIVEL_PARA_PRIORIDADE: Record<string, Alert['prioridade']> = {
+  Baixo: 'BAIXA',
+  Médio: 'MEDIA',
+  Alto: 'ALTA',
+  Crítico: 'CRITICA',
+};
+
+function riskItemToAlert(item: RiskItem): Alert {
+  return {
+    hub: item.hub,
+    mensagem: item.mensagem,
+    alertKey: item.alertKey,
+    prioridade: NIVEL_PARA_PRIORIDADE[item.nivel],
+    href: item.href,
+    score: item.score,
+    impacto: item.impacto,
+    probabilidade: item.probabilidade,
+  };
 }
 
 @Injectable()
@@ -42,6 +68,7 @@ export class DashboardService {
     private readonly documents: DocumentsService,
     private readonly ferias: FeriasService,
     private readonly license: LicenseService,
+    private readonly riskEngine: RiskEngineService,
   ) {}
 
   private db() {
@@ -67,7 +94,7 @@ export class DashboardService {
     const pendenciasAbertas =
       pontoPendente + feriasPendente + admissoesAbertas + desligamentosAbertos;
 
-    const { conformidadeDocumental } = await this.refreshTasks();
+    const { conformidadeDocumental, totalItems: docTotalItems, totalCompliant: docTotalCompliant } = await this.refreshTasks();
     const complianceOverview = await this.compliance.get();
     const { modulos } = await this.license.publicLicense(getRequestContext().tenantId);
     const [sst, dp] = await Promise.all([
@@ -75,20 +102,30 @@ export class DashboardService {
       modulos.includes('dp') ? this.dpSignals() : null,
     ]);
 
-    // Um único índice para "a empresa inteira", só com os módulos que a
-    // empresa realmente contratou — um módulo não habilitado não entra na
-    // conta (nem pra cima nem pra baixo).
-    const componentesConformidade = [
-      modulos.includes('rh') ? conformidadeDocumental : null,
-      sst?.conformidade ?? null,
-      dp?.conformidade ?? null,
-      modulos.includes('compliance') ? complianceOverview.maturidade : null,
-    ].filter((v): v is number => v != null);
-    const conformidadeGeral = componentesConformidade.length
-      ? Math.round(componentesConformidade.reduce((a, b) => a + b, 0) / componentesConformidade.length)
-      : Math.round((conformidadeDocumental + complianceOverview.maturidade) / 2);
+    // Conformidade Geral: NÃO é média de percentuais por módulo (isso pesa
+    // igual um módulo com 500 itens auditáveis e um com 5). É uma única razão
+    // ponderada -- soma de itens conformes / soma de itens auditáveis -- só
+    // com os módulos que a empresa realmente contratou. Cálculo
+    // deliberadamente independente do Risco Geral (RiskEngineService,
+    // abaixo): nenhum dos dois deriva do outro.
+    const itensAuditaveis = [
+      modulos.includes('rh') ? { total: docTotalItems, conformes: docTotalCompliant } : null,
+      sst ? { total: sst.totalItens, conformes: sst.itensConformes } : null,
+      dp ? { total: dp.totalItens, conformes: dp.itensConformes } : null,
+      modulos.includes('compliance') ? { total: complianceOverview.itensAuditaveis, conformes: complianceOverview.itensConformes } : null,
+    ].filter((v): v is { total: number; conformes: number } => v != null);
+    const totalGeral = itensAuditaveis.reduce((a, b) => a + b.total, 0);
+    const conformesGeral = itensAuditaveis.reduce((a, b) => a + b.conformes, 0);
+    const conformidadeGeral = totalGeral > 0 ? Math.round((100 * conformesGeral) / totalGeral) : 100;
 
-    const { riscoGeral, alertasCriticosAtivos } = await this.calcRisco(colaboradoresAtivos, modulos, sst, dp);
+    // Risco Geral: motor único (RiskEngineService), nunca derivado da
+    // Conformidade Geral acima -- ver regras de negócio no cabeçalho de
+    // risk-engine.service.ts.
+    const avaliacaoRisco = await this.riskEngine.evaluate();
+    const riscoGeral = avaliacaoRisco.riscoGeral.nivel;
+    const riscoGeralCategoria = avaliacaoRisco.riscoGeral.categoria;
+    const riscoGeralHref = avaliacaoRisco.riscoGeral.item?.href ?? null;
+    const alertasCriticosAtivos = avaliacaoRisco.items.filter((i) => i.nivel === 'Crítico').length;
 
     await Promise.all([
       this.captureSnapshot('COLABORADORES_ATIVOS', colaboradoresAtivos),
@@ -124,6 +161,8 @@ export class DashboardService {
           ? conformidadeGeral - conformidadeAnterior
           : null,
       riscoGeral,
+      riscoGeralCategoria,
+      riscoGeralHref,
       alertasCriticosAtivos,
     };
   }
@@ -136,15 +175,19 @@ export class DashboardService {
   private async refreshTasks(): Promise<{
     alerts: Alert[];
     conformidadeDocumental: number;
+    totalItems: number;
+    totalCompliant: number;
   }> {
-    const { alerts, conformidadeDocumental } = await this.buildAlerts();
-    await this.syncTasksFromAlerts(alerts);
-    return { alerts, conformidadeDocumental };
+    const result = await this.buildAlerts();
+    await this.syncTasksFromAlerts(result.alerts);
+    return result;
   }
 
   private async buildAlerts(): Promise<{
     alerts: Alert[];
     conformidadeDocumental: number;
+    totalItems: number;
+    totalCompliant: number;
   }> {
     const db = this.db();
     const hoje = new Date();
@@ -342,6 +385,8 @@ export class DashboardService {
     const {
       overall: conformidadeDocumental,
       byEmployee: conformidadePorEmployee,
+      totalItems,
+      totalCompliant,
     } = await this.documents.complianceOverview(
       empregadosAtivos.map((e) => e.id),
     );
@@ -357,7 +402,22 @@ export class DashboardService {
       });
     }
 
-    return { alerts, conformidadeDocumental };
+    // Funde os itens do motor de Risco (RiskEngineService) na lista de
+    // alertas: quando um item bate por alertKey com um alerta já gerado
+    // acima (documentação zero conforme, férias vencida, ponto pendente,
+    // EPI vencido, treinamento vencido — ver nota de acoplamento no topo de
+    // risk-engine.service.ts), o motor de risco passa a ser a fonte
+    // autoritativa de prioridade/score desse alerta. Os demais tipos do
+    // motor (exames, PGR, políticas, ética) não tinham alerta individual
+    // antes e entram como novos.
+    const riskItems = await this.riskEngine.collectItems();
+    const alertsByKey = new Map(alerts.map((a) => [a.alertKey, a] as const));
+    for (const item of riskItems) {
+      alertsByKey.set(item.alertKey, riskItemToAlert(item));
+    }
+    const alertsComRisco = [...alertsByKey.values()];
+
+    return { alerts: alertsComRisco, conformidadeDocumental, totalItems, totalCompliant };
   }
 
   /**
@@ -376,7 +436,7 @@ export class DashboardService {
       const existing = await db.task.findUnique({
         where: { tenantId_alertKey: { tenantId, alertKey: alert.alertKey } },
       });
-      const detalhes = { href: alert.href };
+      const detalhes = { href: alert.href, score: alert.score, impacto: alert.impacto, probabilidade: alert.probabilidade };
       if (!existing) {
         await db.task.create({
           data: {
@@ -392,7 +452,8 @@ export class DashboardService {
       } else if (
         existing.titulo !== alert.mensagem ||
         existing.prioridade !== alert.prioridade ||
-        existing.status === 'CONCLUIDA'
+        existing.status === 'CONCLUIDA' ||
+        JSON.stringify(existing.detalhes) !== JSON.stringify(detalhes)
       ) {
         await db.task.update({
           where: { id: existing.id },
@@ -473,7 +534,16 @@ export class DashboardService {
     const pendentes = examesAtrasados + treinamentosVencidos + pgrAtrasadas;
     const conformidade = totalItens === 0 ? 100 : Math.round((1 - pendentes / totalItens) * 100);
 
-    return { conformidade, examesAtrasados, treinamentosVencidos, pgrAtrasadas, riscosAltoMapa, acidentesAbertos };
+    return {
+      conformidade,
+      totalItens,
+      itensConformes: totalItens - pendentes,
+      examesAtrasados,
+      treinamentosVencidos,
+      pgrAtrasadas,
+      riscosAltoMapa,
+      acidentesAbertos,
+    };
   }
 
   /** Idem, para prazos trabalhistas de DP (LaborDeadline). */
@@ -487,61 +557,7 @@ export class DashboardService {
     ]);
     const conformidade = total === 0 ? 100 : Math.round((1 - vencidos / total) * 100);
 
-    return { conformidade, vencidos };
-  }
-
-  /**
-   * Risco geral: heurística simplificada (não um score atuarial formal)
-   * combinando sinais de SST, Compliance (casos éticos graves em aberto), DP
-   * (prazos trabalhistas vencidos) e RH (rescisão com eSocial/pagamento em
-   * atraso) — cada categoria só entra na conta se o módulo correspondente
-   * estiver contratado. O limiar escala com o porte da empresa: a mesma
-   * quantidade de pendências pesa mais numa empresa pequena do que numa com
-   * centenas de colaboradores.
-   */
-  private async calcRisco(
-    colaboradoresAtivos: number,
-    modulos: string[],
-    sst: Awaited<ReturnType<DashboardService['sstSignals']>> | null,
-    dp: Awaited<ReturnType<DashboardService['dpSignals']>> | null,
-  ) {
-    const db = this.db();
-    const hoje = new Date();
-    const prazoRescisaoLimite = new Date(hoje.getTime() - PRAZO_DIAS * 86_400_000);
-
-    const [alertasCriticosAtivos, casosEticaGravesAbertos, rescisoesVencidas] = await Promise.all([
-      db.task.count({
-        where: { status: 'ABERTA', prioridade: { in: ['ALTA', 'CRITICA'] } },
-      }),
-      modulos.includes('compliance')
-        ? db.ethicsCase.count({
-            where: {
-              status: { in: ['ABERTO', 'EM_INVESTIGACAO'] },
-              categoria: { in: ['ASSEDIO', 'FRAUDE', 'DISCRIMINACAO'] },
-            },
-          })
-        : 0,
-      modulos.includes('rh')
-        ? db.termination.count({
-            where: {
-              status: { in: ['EFETIVADO', 'EM_HOMOLOGACAO'] },
-              data: { lt: prazoRescisaoLimite },
-              esocialSent: false,
-            },
-          })
-        : 0,
-    ]);
-
-    const score =
-      (sst ? sst.riscosAltoMapa + sst.acidentesAbertos * 2 + sst.examesAtrasados + sst.treinamentosVencidos + sst.pgrAtrasadas : 0) +
-      casosEticaGravesAbertos * 2 +
-      (dp ? dp.vencidos * 2 : 0) +
-      rescisoesVencidas * 3;
-
-    const sizeFactor = Math.max(1, Math.ceil(colaboradoresAtivos / 50));
-    const scoreNormalizado = score / sizeFactor;
-    const riscoGeral = scoreNormalizado === 0 ? 'Baixo' : scoreNormalizado <= 3 ? 'Médio' : 'Alto';
-    return { riscoGeral, alertasCriticosAtivos };
+    return { conformidade, totalItens: total, itensConformes: total - vencidos, vencidos };
   }
 
   private async captureSnapshot(metrica: string, valor: number) {

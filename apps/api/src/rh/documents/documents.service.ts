@@ -436,7 +436,7 @@ export class DocumentsService {
     const overall = totalItems
       ? Math.round((100 * totalCompliant) / totalItems)
       : 100;
-    return { overall, byEmployee };
+    return { overall, byEmployee, totalItems, totalCompliant };
   }
 
   /** Tenant-wide aggregation across every active employee — for Ferramentas > Documentos. */
