@@ -67,13 +67,13 @@ export function EmpresaFormFields({
       <div className="flex items-center gap-4">
         {value.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={value.logoUrl} alt="Logo da empresa" className="h-16 w-16 rounded-[10px] border border-border object-contain" />
+          <img src={value.logoUrl} alt="Logo da empresa" className="h-16 w-16 rounded-container border border-border object-contain" />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-[10px] border border-dashed border-border-strong text-xs text-text-tertiary">
+          <div className="flex h-16 w-16 items-center justify-center rounded-container border border-dashed border-border-strong text-xs text-text-tertiary">
             Sem logo
           </div>
         )}
-        <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm text-text hover:border-accent">
+        <label className="cursor-pointer rounded-control border border-border-strong bg-surface px-3 py-2 text-sm text-text hover:border-accent">
           {value.logoUrl ? 'Trocar logo' : 'Enviar logo'}
           <input
             type="file"
@@ -113,7 +113,7 @@ export function EmpresaFormFields({
           <select
             value={value.regimeTributario}
             onChange={(e) => onChange({ ...value, regimeTributario: e.target.value as EmpresaForm['regimeTributario'] })}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text"
           >
             <option value="">Não informado</option>
             {Object.entries(REGIME_TRIBUTARIO_LABEL).map(([v, label]) => (
@@ -164,7 +164,7 @@ function EmpresaField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+        className="rounded-control border border-border-strong bg-surface px-3 py-2"
       />
     </label>
   );

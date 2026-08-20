@@ -106,7 +106,7 @@ export function AlertasPrioritarios() {
           const href = t.detalhes?.href;
           const fixado = fixadoSet.has(t.id);
           return (
-            <li key={t.id} className="rounded-[10px] border border-border p-2.5">
+            <li key={t.id} className="rounded-container border border-border p-2.5">
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
@@ -157,7 +157,7 @@ export function AlertasPrioritarios() {
                       type="button"
                       onClick={() => adiar.mutate({ id: t.id, dias: op.dias })}
                       disabled={adiar.isPending}
-                      className="rounded-[10px] border border-border-strong px-2.5 py-1 text-xs text-text-secondary transition hover:border-accent hover:text-accent"
+                      className="rounded-control border border-border-strong px-2.5 py-1 text-xs text-text-secondary transition hover:border-accent hover:text-accent"
                     >
                       {op.label}
                     </button>

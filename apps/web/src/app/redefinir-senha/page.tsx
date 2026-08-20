@@ -31,7 +31,7 @@ function RedefinirSenhaForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-accent px-4">
-      <div className="w-full max-w-sm rounded-[10px] border border-border bg-surface p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-container border border-border bg-surface p-8 shadow-lg">
         <div className="mb-8 flex justify-center">
           <Image src="/logo-elos.png" alt="elos" width={966} height={562} priority className="h-12 w-auto" />
         </div>
@@ -41,7 +41,7 @@ function RedefinirSenhaForm() {
         ) : success ? (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-success">Senha redefinida com sucesso.</p>
-            <Link href="/login" className="rounded-[10px] bg-accent px-4 py-2.5 text-center text-sm font-semibold text-on-accent">
+            <Link href="/login" className="rounded-control bg-accent px-4 py-2.5 text-center text-sm font-semibold text-on-accent">
               Ir para o login
             </Link>
           </div>
@@ -67,7 +67,7 @@ function RedefinirSenhaForm() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={8}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
@@ -78,14 +78,14 @@ function RedefinirSenhaForm() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={8}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
               />
             </label>
             {error && <p className="text-sm text-danger">{error}</p>}
             <button
               type="submit"
               disabled={reset.isPending}
-              className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
+              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
             >
               {reset.isPending ? 'Salvando…' : 'Redefinir senha'}
             </button>

@@ -29,7 +29,7 @@ export default function CadastroPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-accent px-4">
-      <div className="w-full max-w-sm rounded-[10px] border border-border bg-surface p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-container border border-border bg-surface p-8 shadow-lg">
         <div className="mb-8 flex justify-center">
           <Image src="/logo-elos.png" alt="elos" width={966} height={562} priority className="h-12 w-auto" />
         </div>
@@ -50,7 +50,7 @@ export default function CadastroPage() {
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
+              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
             >
               {registerMutation.isPending ? 'Criando…' : 'Criar empresa'}
             </button>
@@ -63,10 +63,10 @@ export default function CadastroPage() {
             <p className="text-sm text-text-secondary">
               Empresa criada. Guarde este código — é ele que você (e sua equipe) vai usar para entrar:
             </p>
-            <p className="rounded-[10px] bg-tint-blue px-3 py-2 text-center text-lg font-semibold tracking-[0.15em] text-text">{tenantSlug}</p>
+            <p className="rounded-container bg-tint-blue px-3 py-2 text-center text-lg font-semibold tracking-[0.15em] text-text">{tenantSlug}</p>
             <Link
               href="/login"
-              className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-center text-sm font-semibold text-on-accent transition"
+              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-center text-sm font-semibold text-on-accent transition"
             >
               Ir para o login
             </Link>
@@ -99,7 +99,7 @@ function Field({
         minLength={minLength}
         onChange={(e) => onChange(e.target.value)}
         required
-        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
+        className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
       />
     </label>
   );

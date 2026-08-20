@@ -115,7 +115,7 @@ export default function PainelPage() {
                 <Link
                   key={nome}
                   href={href}
-                  className="flex flex-col items-start gap-2 rounded-[10px] border border-border p-3 transition hover:border-accent"
+                  className="flex flex-col items-start gap-2 rounded-container border border-border p-3 transition hover:border-accent"
                 >
                   <Icon className="h-4 w-4 text-accent" />
                   <span className="text-xs font-medium text-text">{nome}</span>
@@ -137,7 +137,7 @@ export default function PainelPage() {
                   <Link
                     key={tool.nome}
                     href={tool.href}
-                    className="flex flex-col items-start gap-2 rounded-[10px] border border-border p-3 transition hover:border-accent"
+                    className="flex flex-col items-start gap-2 rounded-container border border-border p-3 transition hover:border-accent"
                   >
                     <ToolIcon nome={tool.nome} className="h-4 w-4 text-accent" />
                     <span className="text-xs font-medium text-text">{tool.nome}</span>
@@ -161,7 +161,7 @@ export default function PainelPage() {
                     href={a.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex flex-col items-start gap-2 rounded-[10px] border border-border p-3 transition hover:border-accent"
+                    className="flex flex-col items-start gap-2 rounded-container border border-border p-3 transition hover:border-accent"
                   >
                     <ExternalIcon nome={a.icone} className="h-4 w-4 text-accent" />
                     <span className="text-xs font-medium text-text">{a.nome}</span>

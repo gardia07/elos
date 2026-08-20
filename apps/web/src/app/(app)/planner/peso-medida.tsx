@@ -149,33 +149,33 @@ export function PesoMedidaSection({ ano, tema }: { ano: number; tema: SecaoTema 
               value={data}
               onChange={(e) => setData(e.target.value)}
               max={localIso(new Date())}
-              className="w-44 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="w-44 rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Peso (kg)</span>
-              <input type="number" step="0.1" value={pesoKg} onChange={(e) => setPesoKg(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" step="0.1" value={pesoKg} onChange={(e) => setPesoKg(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Altura (cm)</span>
-              <input type="number" step="0.1" value={alturaCm} onChange={(e) => setAlturaCm(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" step="0.1" value={alturaCm} onChange={(e) => setAlturaCm(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Cintura (cm)</span>
-              <input type="number" step="0.1" value={cinturaCm} onChange={(e) => setCinturaCm(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" step="0.1" value={cinturaCm} onChange={(e) => setCinturaCm(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Quadril (cm)</span>
-              <input type="number" step="0.1" value={quadrilCm} onChange={(e) => setQuadrilCm(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" step="0.1" value={quadrilCm} onChange={(e) => setQuadrilCm(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Braço (cm)</span>
-              <input type="number" step="0.1" value={bracoCm} onChange={(e) => setBracoCm(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" step="0.1" value={bracoCm} onChange={(e) => setBracoCm(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Água (ml)</span>
-              <input type="number" step="50" value={aguaMl} onChange={(e) => setAguaMl(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="number" step="50" value={aguaMl} onChange={(e) => setAguaMl(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
           </div>
           <Button type="submit" disabled={salvar.isPending} className="self-start">

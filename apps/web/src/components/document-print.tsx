@@ -21,7 +21,7 @@ export function DocumentoImpressao({ texto, tenant }: { texto: string; tenant?: 
         </Button>
       </div>
 
-      <div id="documento-gerado-print" className="mx-auto flex w-full max-w-2xl flex-col gap-5 rounded-[10px] border border-border bg-surface p-8">
+      <div id="documento-gerado-print" className="mx-auto flex w-full max-w-2xl flex-col gap-5 rounded-container border border-border bg-surface p-8">
         <div className="flex items-center gap-3 border-b border-divider pb-4">
           {tenant?.logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element

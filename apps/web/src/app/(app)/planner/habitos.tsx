@@ -76,7 +76,7 @@ export function HabitosSection({ ano, tema }: { ano: number; tema: SecaoTema }) 
               key={s}
               type="button"
               onClick={() => criar.mutate(s)}
-              className="rounded-full border px-3 py-1.5 text-xs transition"
+              className="rounded-control border px-3 py-1.5 text-xs transition"
               style={{ borderColor: `${tema.cor}55`, color: tema.cor }}
             >
               + {s}
@@ -94,7 +94,7 @@ export function HabitosSection({ ano, tema }: { ano: number; tema: SecaoTema }) 
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             placeholder="Outro hábito…"
-            className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
           <Button type="submit" disabled={criar.isPending || !nome.trim()} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Adicionar
@@ -148,7 +148,7 @@ export function HabitosSection({ ano, tema }: { ano: number; tema: SecaoTema }) 
                       type="button"
                       onClick={() => toggle.mutate({ id: h.id, data: iso })}
                       className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-[10px] border text-xs transition',
+                        'flex h-8 w-8 items-center justify-center rounded-control border text-xs transition',
                         marcado ? 'border-transparent text-on-accent' : 'border-border-strong bg-surface text-text-tertiary hover:border-accent',
                       )}
                       style={marcado ? { backgroundColor: h.cor } : undefined}

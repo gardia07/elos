@@ -24,7 +24,7 @@ function CategoriaLinha({
   const [valor, setValor] = useState(String(categoria.valoresPorMes[mes + 1] ?? ''));
 
   return (
-    <div className="flex items-center gap-3 rounded-[10px] border border-border p-3">
+    <div className="flex items-center gap-3 rounded-container border border-border p-3">
       <span className="flex-1 text-sm text-text">{categoria.nome}</span>
       <span className="text-xs text-text-tertiary">R$</span>
       <input
@@ -36,7 +36,7 @@ function CategoriaLinha({
           const n = Number(valor);
           if (!Number.isNaN(n)) onSetValor(n);
         }}
-        className="w-28 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-right text-sm"
+        className="w-28 rounded-control border border-border-strong bg-surface px-2 py-1.5 text-right text-sm"
       />
       <button type="button" onClick={onExcluir} className="text-text-tertiary hover:text-danger">
         <Trash2 className="h-3.5 w-3.5" />
@@ -143,7 +143,7 @@ export function FinancasSection({ ano, tema }: { ano: number; tema: SecaoTema })
             value={novoNomeReceita}
             onChange={(e) => setNovoNomeReceita(e.target.value)}
             placeholder="Ex.: salário, freelance…"
-            className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
           <Button type="submit" variant="secondary" disabled={!novoNomeReceita.trim()} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Categoria
@@ -176,7 +176,7 @@ export function FinancasSection({ ano, tema }: { ano: number; tema: SecaoTema })
             value={novoNomeDespesa}
             onChange={(e) => setNovoNomeDespesa(e.target.value)}
             placeholder="Ex.: aluguel, mercado…"
-            className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
           <Button type="submit" variant="secondary" disabled={!novoNomeDespesa.trim()} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Categoria

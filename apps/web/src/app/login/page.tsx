@@ -64,7 +64,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-accent px-4">
-      <div className="w-full max-w-sm rounded-[10px] border border-border bg-surface p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-container border border-border bg-surface p-8 shadow-lg">
         <div className="mb-8 flex justify-center">
           <Image src="/logo-elos.png" alt="elos" width={966} height={562} priority className="h-12 w-auto" />
         </div>
@@ -84,7 +84,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
+              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
             >
               {loginMutation.isPending ? 'Entrando…' : 'Entrar'}
             </button>
@@ -118,7 +118,7 @@ export default function LoginPage() {
               Digite o código de 6 dígitos enviado para o seu e-mail.
             </p>
             {devCode && (
-              <p className="rounded-[10px] bg-tint-blue px-3 py-2 text-xs text-text-secondary">
+              <p className="rounded-container bg-tint-blue px-3 py-2 text-xs text-text-secondary">
                 Modo dev: código gerado <strong>{devCode}</strong> (sem provedor de e-mail configurado).
               </p>
             )}
@@ -127,7 +127,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={mfaMutation.isPending}
-              className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
+              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
             >
               {mfaMutation.isPending ? 'Verificando…' : 'Verificar'}
             </button>
@@ -150,7 +150,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={forgotMutation.isPending}
-                  className="mt-2 rounded-[10px] bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
+                  className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
                 >
                   {forgotMutation.isPending ? 'Enviando…' : 'Enviar link de recuperação'}
                 </button>
@@ -159,7 +159,7 @@ export default function LoginPage() {
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-text-secondary">{forgotMessage}</p>
                 {devResetUrl && (
-                  <p className="rounded-[10px] bg-tint-blue px-3 py-2 text-xs text-text-secondary">
+                  <p className="rounded-container bg-tint-blue px-3 py-2 text-xs text-text-secondary">
                     Modo dev: <Link href={devResetUrl} className="text-accent underline">{devResetUrl}</Link> (sem provedor de e-mail configurado).
                   </p>
                 )}
@@ -203,7 +203,7 @@ function Field({
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
         required
-        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
+        className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text outline-none focus:border-accent"
       />
     </label>
   );

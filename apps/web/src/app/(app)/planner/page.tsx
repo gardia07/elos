@@ -35,7 +35,7 @@ export default function PlannerPage() {
                 key={s.id}
                 type="button"
                 onClick={() => setSecaoId(s.id)}
-                className={cn('flex shrink-0 items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-medium transition', !active && 'text-text-secondary hover:bg-surface-alt')}
+                className={cn('flex shrink-0 items-center gap-2 rounded-control px-3 py-2 text-sm font-medium transition', !active && 'text-text-secondary hover:bg-surface-alt')}
                 style={active ? { backgroundColor: `${s.cor}25`, color: s.cor } : undefined}
               >
                 <Icon className="h-4 w-4" style={active ? { color: s.cor } : undefined} />

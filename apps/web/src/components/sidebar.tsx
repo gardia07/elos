@@ -113,7 +113,7 @@ export function Sidebar() {
           </button>
 
           {showSwitcher && (
-            <div className="absolute bottom-full left-4 right-4 z-40 mb-2 rounded-[10px] border border-border bg-surface text-text shadow-lg">
+            <div className="absolute bottom-full left-4 right-4 z-40 mb-2 rounded-container border border-border bg-surface text-text shadow-lg">
               <div className="max-h-64 overflow-y-auto py-1">
                 {companies?.map((c) => (
                   <button
@@ -166,7 +166,7 @@ function NavItem({
   enabled: boolean;
   active?: boolean;
 }) {
-  const base = 'rounded-[10px] px-3 py-2 text-sm transition';
+  const base = 'rounded-control px-3 py-2 text-sm transition';
   if (!enabled) {
     return (
       <span className={`${base} cursor-not-allowed text-on-accent/40`} title="Em breve">

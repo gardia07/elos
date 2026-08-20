@@ -81,7 +81,7 @@ export function CicloSection({ tema }: { tema: SecaoTema }) {
                 value={dataInicio}
                 onChange={(e) => setDataInicio(e.target.value)}
                 required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             <label className="flex flex-1 flex-col gap-1.5 text-sm">
@@ -92,7 +92,7 @@ export function CicloSection({ tema }: { tema: SecaoTema }) {
                 max={15}
                 value={duracaoDias}
                 onChange={(e) => setDuracaoDias(e.target.value)}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
           </div>
@@ -101,7 +101,7 @@ export function CicloSection({ tema }: { tema: SecaoTema }) {
             <input
               value={sintomas}
               onChange={(e) => setSintomas(e.target.value)}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <Button type="submit" disabled={criar.isPending} className="flex items-center gap-1.5 self-start">

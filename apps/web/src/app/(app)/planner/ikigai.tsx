@@ -52,19 +52,19 @@ export function IkigaiSection({ tema }: { tema: SecaoTema }) {
         </p>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">O que você ama fazer?</span>
-          <textarea value={campos.oQueAma} onChange={set('oQueAma')} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+          <textarea value={campos.oQueAma} onChange={set('oQueAma')} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">No que você é bom?</span>
-          <textarea value={campos.noQueEBom} onChange={set('noQueEBom')} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+          <textarea value={campos.noQueEBom} onChange={set('noQueEBom')} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Do que o mundo (ou as pessoas ao seu redor) precisa?</span>
-          <textarea value={campos.oMundoPrecisa} onChange={set('oMundoPrecisa')} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+          <textarea value={campos.oMundoPrecisa} onChange={set('oMundoPrecisa')} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Pelo que você pode ser pago ou reconhecido?</span>
-          <textarea value={campos.peloQuePodeSerPago} onChange={set('peloQuePodeSerPago')} rows={2} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+          <textarea value={campos.peloQuePodeSerPago} onChange={set('peloQuePodeSerPago')} rows={2} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-text-secondary">Juntando tudo — qual sua síntese hoje?</span>
@@ -73,7 +73,7 @@ export function IkigaiSection({ tema }: { tema: SecaoTema }) {
             onChange={set('sintese')}
             rows={2}
             placeholder="Meu ikigai é…"
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <Button type="button" onClick={() => salvar.mutate()} disabled={salvar.isPending} className="self-start">

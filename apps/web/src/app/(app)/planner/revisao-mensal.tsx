@@ -77,7 +77,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
             onChange={set('desejo')}
             rows={2}
             placeholder="Um objetivo desafiador, mas alcançável…"
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -86,7 +86,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
             value={campos.resultado}
             onChange={set('resultado')}
             rows={2}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -96,7 +96,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
             onChange={set('obstaculo')}
             rows={2}
             placeholder="Ex.: procrastinação, cansaço no fim do dia, ansiedade…"
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -106,7 +106,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
             onChange={set('plano')}
             rows={2}
             placeholder="Se [obstáculo] acontecer, então eu vou…"
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
       </Card>
@@ -131,7 +131,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
             value={campos.conquistas}
             onChange={set('conquistas')}
             rows={2}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -140,7 +140,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
             value={campos.oQueNaoFuncionou}
             onChange={set('oQueNaoFuncionou')}
             rows={2}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -149,7 +149,7 @@ export function RevisaoMensalSection({ ano, tema }: { ano: number; tema: SecaoTe
             value={campos.proximoPasso}
             onChange={set('proximoPasso')}
             placeholder="Só uma — foco em uma coisa é mais eficaz que uma lista grande…"
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
       </Card>

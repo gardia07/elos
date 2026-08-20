@@ -60,7 +60,7 @@ export function SwotPessoalSection({ tema }: { tema: SecaoTema }) {
                 value={campos[q.key]}
                 onChange={(e) => setCampos((c) => ({ ...c, [q.key]: e.target.value }))}
                 rows={4}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
               />
             </label>
           ))}

@@ -38,7 +38,7 @@ export function PriorityAlerts({
   onResolver?: (id: string) => void;
 }) {
   return (
-    <div className="flex max-h-[420px] flex-col rounded-[10px] border border-border bg-surface p-4 shadow-sm">
+    <div className="flex max-h-[420px] flex-col rounded-container border border-border bg-surface p-4 shadow-sm">
       <h3 className="mb-3 shrink-0 text-sm font-bold text-text">Alertas prioritários</h3>
       <div className="flex flex-col gap-2 overflow-y-auto">
         {alertas.map((alerta) => {
@@ -65,11 +65,11 @@ export function PriorityAlerts({
             </>
           );
           return alerta.href ? (
-            <Link key={alerta.id} href={alerta.href} className="flex items-start gap-2 rounded-[10px] bg-surface-alt p-2.5 transition hover:bg-border">
+            <Link key={alerta.id} href={alerta.href} className="flex items-start gap-2 rounded-container bg-surface-alt p-2.5 transition hover:bg-border">
               {content}
             </Link>
           ) : (
-            <div key={alerta.id} className="flex items-start gap-2 rounded-[10px] bg-surface-alt p-2.5">
+            <div key={alerta.id} className="flex items-start gap-2 rounded-container bg-surface-alt p-2.5">
               {content}
             </div>
           );

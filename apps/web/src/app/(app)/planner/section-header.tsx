@@ -6,7 +6,7 @@ import type { SecaoTema } from './theme';
 export function SectionHeader({ tema, stat }: { tema: SecaoTema; stat?: ReactNode }) {
   const Icon = tema.icon;
   return (
-    <div className="mb-5 flex items-center gap-4 rounded-[10px] p-5" style={{ backgroundColor: `${tema.cor}17` }}>
+    <div className="mb-5 flex items-center gap-4 rounded-container p-5" style={{ backgroundColor: `${tema.cor}17` }}>
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${tema.cor}30` }}>
         <Icon className="h-6 w-6" style={{ color: tema.cor }} />
       </div>

@@ -92,7 +92,7 @@ export function HumorSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
             value={data}
             onChange={(e) => setData(e.target.value)}
             max={hojeIso}
-            className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-2 py-1 text-sm"
           />
         </label>
         <div className="flex justify-between gap-2">
@@ -104,7 +104,7 @@ export function HumorSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
                 type="button"
                 onClick={() => salvar.mutate(n.valor)}
                 title={n.label}
-                className={cn('flex flex-1 flex-col items-center gap-1 rounded-[10px] border py-3 text-2xl transition', !ativo && 'border-border-strong bg-surface hover:border-accent')}
+                className={cn('flex flex-1 flex-col items-center gap-1 rounded-control border py-3 text-2xl transition', !ativo && 'border-border-strong bg-surface hover:border-accent')}
                 style={ativo ? { borderColor: tema.cor, backgroundColor: `${tema.cor}18` } : undefined}
               >
                 {n.emoji}
@@ -118,7 +118,7 @@ export function HumorSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
           onChange={(e) => setNota(e.target.value)}
           placeholder="Alguma nota sobre o dia (opcional)…"
           rows={2}
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
       </Card>
 
@@ -133,19 +133,19 @@ export function HumorSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
           value={gratidao1}
           onChange={(e) => setGratidao1(e.target.value)}
           placeholder="1. Ex.: almoço com um amigo, porque…"
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <input
           value={gratidao2}
           onChange={(e) => setGratidao2(e.target.value)}
           placeholder="2."
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <input
           value={gratidao3}
           onChange={(e) => setGratidao3(e.target.value)}
           placeholder="3."
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <Button type="button" onClick={() => salvar.mutate(nivel ?? 3)} disabled={salvar.isPending} className="self-start">
           {salvar.isPending ? 'Salvando…' : 'Salvar'}

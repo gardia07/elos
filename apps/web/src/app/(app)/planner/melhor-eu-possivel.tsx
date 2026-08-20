@@ -40,7 +40,7 @@ export function MelhorEuPossivelSection({ tema }: { tema: SecaoTema }) {
           onChange={(e) => setTexto(e.target.value)}
           rows={8}
           placeholder="Daqui a alguns anos, eu…"
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <Button type="button" onClick={() => texto.trim() && salvar.mutate()} disabled={salvar.isPending || !texto.trim()} className="self-start">
           {salvar.isPending ? 'Salvando…' : 'Salvar'}

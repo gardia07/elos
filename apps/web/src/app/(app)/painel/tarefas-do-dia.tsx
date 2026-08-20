@@ -137,7 +137,7 @@ export function TarefasDoDia() {
 
       <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {itens.map((item) => (
-          <li key={item.id} className="rounded-[10px] border border-border p-2.5">
+          <li key={item.id} className="rounded-container border border-border p-2.5">
             <div className="flex items-start gap-2">
               <button
                 type="button"
@@ -204,7 +204,7 @@ export function TarefasDoDia() {
                     type="button"
                     onClick={() => adiar.mutate({ item, dias: op.dias })}
                     disabled={adiar.isPending}
-                    className="rounded-[10px] border border-border-strong px-2.5 py-1 text-xs text-text-secondary transition hover:border-accent hover:text-accent"
+                    className="rounded-control border border-border-strong px-2.5 py-1 text-xs text-text-secondary transition hover:border-accent hover:text-accent"
                   >
                     {op.label}
                   </button>
@@ -220,7 +220,7 @@ export function TarefasDoDia() {
                     type="button"
                     onClick={() => delegar.mutate({ item, userId: u.id })}
                     disabled={delegar.isPending}
-                    className="rounded-[10px] px-2 py-1 text-left text-xs text-text-secondary transition hover:bg-surface-alt hover:text-text"
+                    className="rounded-control px-2 py-1 text-left text-xs text-text-secondary transition hover:bg-surface-alt hover:text-text"
                   >
                     {u.name}
                   </button>
@@ -244,12 +244,12 @@ export function TarefasDoDia() {
           value={novoTitulo}
           onChange={(e) => setNovoTitulo(e.target.value)}
           placeholder="Adicionar tarefa…"
-          className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-1.5 text-sm"
+          className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-1.5 text-sm"
         />
         <button
           type="submit"
           disabled={criarManual.isPending || !novoTitulo.trim()}
-          className="flex items-center justify-center rounded-[10px] bg-accent px-3 py-1.5 text-on-accent transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center justify-center rounded-control bg-accent px-3 py-1.5 text-on-accent transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
         </button>
