@@ -101,7 +101,7 @@ function TimedBlock({
         zIndex: resizing ? 20 : 1,
       }}
       className={cn(
-        'absolute left-0.5 right-0.5 overflow-hidden rounded-[10px] border-l-[3px] bg-surface px-1.5 py-1 text-left text-[11px] leading-tight text-text shadow-sm',
+        'absolute left-0.5 right-0.5 overflow-hidden rounded-container border-l-[3px] bg-surface px-1.5 py-1 text-left text-[11px] leading-tight text-text shadow-sm',
         dragId ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
         event.concluida && 'opacity-50 line-through',
       )}
@@ -173,7 +173,7 @@ export function TimelineView({
                     key={e.id}
                     type="button"
                     onClick={() => onEventClick(e)}
-                    className="mb-1 flex w-full items-center gap-1.5 rounded-[10px] border-l-[3px] bg-surface px-1.5 py-1 text-left text-[11px] text-text"
+                    className="mb-1 flex w-full items-center gap-1.5 rounded-container border-l-[3px] bg-surface px-1.5 py-1 text-left text-[11px] text-text"
                     style={{ borderLeftColor: cor }}
                   >
                     {e.titulo}

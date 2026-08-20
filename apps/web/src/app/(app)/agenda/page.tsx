@@ -353,7 +353,7 @@ export default function AgendaPage() {
                     const dayEvents = eventsByDay.get(iso) ?? [];
                     if (d.getMonth() !== anchorDate.getMonth() && dayEvents.length === 0) return null;
                     return (
-                      <div key={iso} className="rounded-[10px] border border-border p-2.5">
+                      <div key={iso} className="rounded-container border border-border p-2.5">
                         <div className="mb-1 text-xs font-semibold text-text-tertiary">{formatDiaLongo(d)}</div>
                         {dayEvents.length === 0 ? (
                           <p className="text-xs text-text-tertiary">Sem itens.</p>

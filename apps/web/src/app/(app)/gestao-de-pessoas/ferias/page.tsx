@@ -365,7 +365,7 @@ export default function FeriasPage() {
                 setProgPeriodoId('');
               }}
               required
-              className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
             >
               <option value="">Selecione…</option>
               {employees?.map((e) => (
@@ -377,7 +377,7 @@ export default function FeriasPage() {
           </label>
 
           {employeeSelecionado && (
-            <div className="flex w-full items-center gap-3 rounded-[10px] bg-surface-alt p-3">
+            <div className="flex w-full items-center gap-3 rounded-container bg-surface-alt p-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-on-accent">
                 {initials(employeeSelecionado.nome)}
               </div>
@@ -397,7 +397,7 @@ export default function FeriasPage() {
               onChange={(ev) => setProgPeriodoId(ev.target.value)}
               required
               disabled={!progEmployeeId}
-              className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
             >
               <option value="">Selecione…</option>
               {(periodosParaProgramar ?? [])
@@ -413,7 +413,7 @@ export default function FeriasPage() {
           </label>
 
           {alertasPreview && alertasPreview.alertas.length > 0 && (
-            <div className="w-full rounded-[10px] border border-warning bg-warning-bg p-3 text-xs text-warning">
+            <div className="w-full rounded-container border border-warning bg-warning-bg p-3 text-xs text-warning">
               <b>Atenção — </b>
               {alertasPreview.alertas.join(' ')}
             </div>
@@ -422,7 +422,7 @@ export default function FeriasPage() {
           <div className="grid w-full grid-cols-2 gap-3">
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Data de início</span>
-              <input type="date" value={progInicio} onChange={(ev) => setProgInicio(ev.target.value)} required className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={progInicio} onChange={(ev) => setProgInicio(ev.target.value)} required className="w-full rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Quantidade de dias</span>
@@ -432,7 +432,7 @@ export default function FeriasPage() {
                 value={progDias}
                 onChange={(ev) => setProgDias(ev.target.value)}
                 required
-                className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
           </div>
@@ -449,7 +449,7 @@ export default function FeriasPage() {
               value={progDiasAbono}
               onChange={(ev) => setProgDiasAbono(ev.target.value)}
               placeholder="Dias de abono"
-              className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              className="w-full rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
             />
           )}
           <label className="flex items-center gap-2 text-sm">
@@ -465,7 +465,7 @@ export default function FeriasPage() {
             <span className="text-text-secondary">Lançamento histórico (cadastro de dado antigo — sem validações)</span>
           </label>
           {progHistorico && (
-            <p className="w-full rounded-[10px] border border-accent bg-tint-blue p-3 text-xs text-text-secondary">
+            <p className="w-full rounded-container border border-accent bg-tint-blue p-3 text-xs text-text-secondary">
               Registra o fato já ocorrido: pula saldo, fracionamento, limite/decadência do abono e aviso de 30 dias, e a fração já nasce aprovada. A única checagem que
               continua valendo é a de período que perdeu o direito por afastamento (art. 133 CLT).
             </p>
@@ -478,7 +478,7 @@ export default function FeriasPage() {
               value={progJustificativa}
               onChange={(ev) => setProgJustificativa(ev.target.value)}
               placeholder={progHistorico ? 'Opcional' : 'Obrigatória para solicitações fora da janela recomendada'}
-              className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
 
@@ -605,9 +605,9 @@ export default function FeriasPage() {
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             placeholder="Buscar colaborador…"
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
-          <select value={filial} onChange={(e) => setFilial(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm">
+          <select value={filial} onChange={(e) => setFilial(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm">
             <option value="">Todas as filiais</option>
             {filterOptions?.filiais.map((f) => (
               <option key={f} value={f}>
@@ -721,7 +721,7 @@ export default function FeriasPage() {
             <select
               value={histEmployeeId}
               onChange={(ev) => setHistEmployeeId(ev.target.value)}
-              className="min-w-[280px] rounded-[10px] border border-border-strong bg-surface px-3 py-2.5 text-sm"
+              className="min-w-[280px] rounded-control border border-border-strong bg-surface px-3 py-2.5 text-sm"
             >
               <option value="">Selecione um colaborador…</option>
               {employees?.map((e) => (
@@ -745,7 +745,7 @@ export default function FeriasPage() {
               {historico.periodos.map((p) => (
                 <div key={p.id} className="relative">
                   <span className={`absolute -left-6 top-5 h-3 w-3 rounded-full border-2 border-page-bg ${STATUS_PERIODO_DOT[p.resumo.status]}`} />
-                  <details className="rounded-[10px] border border-border bg-surface" open={p.resumo.status === 'VENCIDA' || p.resumo.status === 'A_VENCER'}>
+                  <details className="rounded-container border border-border bg-surface" open={p.resumo.status === 'VENCIDA' || p.resumo.status === 'A_VENCER'}>
                     <summary className="flex cursor-pointer list-none items-center gap-4 p-4">
                       <div>
                         <div className="text-sm font-semibold">

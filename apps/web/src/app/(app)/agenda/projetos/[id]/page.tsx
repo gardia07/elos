@@ -212,7 +212,7 @@ export default function ProjetoDetalhePage() {
         </div>
 
         {metricas && metricas.total > 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-4 rounded-[10px] border border-border bg-surface-alt px-3 py-2 text-xs text-text-secondary">
+          <div className="mb-4 flex flex-wrap items-center gap-4 rounded-container border border-border bg-surface-alt px-3 py-2 text-xs text-text-secondary">
             <span className="flex items-center gap-1.5 font-medium text-text">
               <ActivitySquare className="h-3.5 w-3.5" /> Fluxo
             </span>
@@ -347,7 +347,7 @@ export default function ProjetoDetalhePage() {
               onChange={(e) => setModeloNome(e.target.value)}
               required
               autoFocus
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <p className="text-xs text-text-tertiary">

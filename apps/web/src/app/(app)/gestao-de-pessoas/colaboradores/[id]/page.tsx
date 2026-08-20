@@ -910,9 +910,9 @@ export default function EmployeeProfilePage() {
                           addContatoEmergencia.mutate();
                         }}
                       >
-                        <input placeholder="Nome" value={contatoNome} onChange={(ev) => setContatoNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-                        <input placeholder="Parentesco" value={contatoParentesco} onChange={(ev) => setContatoParentesco(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-                        <input placeholder="Telefone" value={contatoTelefone} onChange={(ev) => setContatoTelefone(maskPhoneBR(ev.target.value))} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                        <input placeholder="Nome" value={contatoNome} onChange={(ev) => setContatoNome(ev.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+                        <input placeholder="Parentesco" value={contatoParentesco} onChange={(ev) => setContatoParentesco(ev.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+                        <input placeholder="Telefone" value={contatoTelefone} onChange={(ev) => setContatoTelefone(maskPhoneBR(ev.target.value))} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
                         <Button type="submit" disabled={addContatoEmergencia.isPending}>
                           Adicionar
                         </Button>
@@ -954,16 +954,16 @@ export default function EmployeeProfilePage() {
                             addDependente.mutate();
                           }}
                         >
-                          <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-                          <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
-                          <input placeholder="CPF" value={depCpf} onChange={(ev) => setDepCpf(maskCPF(ev.target.value))} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+                          <input placeholder="Nome" value={depNome} onChange={(ev) => setDepNome(ev.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+                          <input placeholder="Parentesco" value={depParentesco} onChange={(ev) => setDepParentesco(ev.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
+                          <input placeholder="CPF" value={depCpf} onChange={(ev) => setDepCpf(maskCPF(ev.target.value))} required className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
                           <label className="flex flex-col gap-1 text-xs text-text-secondary">
                             Data de nascimento
                             <input
                               type="date"
                               value={depDataNascimento}
                               onChange={(ev) => setDepDataNascimento(ev.target.value)}
-                              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                              className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
                             />
                           </label>
                           <Button type="submit" disabled={addDependente.isPending}>
@@ -1087,7 +1087,7 @@ export default function EmployeeProfilePage() {
                     <select
                       value={edit.tipoContrato}
                       onChange={(ev) => setEdit({ ...edit, tipoContrato: ev.target.value as EditFields['tipoContrato'] })}
-                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                      className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text"
                     >
                       <option value="CLT">CLT</option>
                       <option value="ESTAGIO">Estágio</option>
@@ -1100,7 +1100,7 @@ export default function EmployeeProfilePage() {
                     <select
                       value={edit.tipoSalario}
                       onChange={(ev) => setEdit({ ...edit, tipoSalario: ev.target.value as EditFields['tipoSalario'] })}
-                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                      className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text"
                     >
                       <option value="MENSALISTA">Mensalista</option>
                       <option value="HORISTA">Horista</option>
@@ -1112,7 +1112,7 @@ export default function EmployeeProfilePage() {
                     <select
                       value={edit.gestorDireto}
                       onChange={(ev) => setEdit({ ...edit, gestorDireto: ev.target.value })}
-                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                      className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text"
                     >
                       <option value="">Não atribuído</option>
                       {edit.gestorDireto && !managers?.some((m) => m.nome === edit.gestorDireto) && (
@@ -1135,7 +1135,7 @@ export default function EmployeeProfilePage() {
                         onChange={(ev) => setMotivoSalario(ev.target.value)}
                         placeholder="Ex.: erro de digitação no cadastro inicial"
                         required
-                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                        className="rounded-control border border-border-strong bg-surface px-3 py-2"
                       />
                     </label>
                     <label className="flex flex-col gap-1.5 text-sm">
@@ -1145,7 +1145,7 @@ export default function EmployeeProfilePage() {
                         value={salarioVigenciaDesde}
                         onChange={(ev) => setSalarioVigenciaDesde(ev.target.value)}
                         required
-                        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                        className="rounded-control border border-border-strong bg-surface px-3 py-2"
                       />
                     </label>
                     <span className="w-full text-xs text-text-tertiary">
@@ -1165,7 +1165,7 @@ export default function EmployeeProfilePage() {
                     <select
                       value={edit.tipoConta}
                       onChange={(ev) => setEdit({ ...edit, tipoConta: ev.target.value as EditFields['tipoConta'] })}
-                      className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+                      className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text"
                     >
                       <option value="CORRENTE">Conta corrente</option>
                       <option value="POUPANCA">Conta poupança</option>
@@ -1238,7 +1238,7 @@ export default function EmployeeProfilePage() {
                   <select
                     value={motivoPromocao}
                     onChange={(ev) => setMotivoPromocao(ev.target.value as typeof motivoPromocao)}
-                    className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="rounded-control border border-border-strong bg-surface px-3 py-2"
                   >
                     <option value="Promoção">Promoção</option>
                     <option value="Reajuste anual">Reajuste anual</option>
@@ -1253,12 +1253,12 @@ export default function EmployeeProfilePage() {
                     onChange={(ev) => setNovoCargo(ev.target.value)}
                     placeholder={e.cargo}
                     required={promoteMode === 'cargo'}
-                    className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <label className="flex flex-none flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">{promoteMode === 'cargo' ? 'Salário (mantido)' : 'Novo salário'}</span>
-                  <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                  <input type="number" min={0} step="0.01" value={novoSalario} onChange={(ev) => setNovoSalario(ev.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
                 </label>
                 <label className="flex flex-none flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Vigente desde</span>
@@ -1267,7 +1267,7 @@ export default function EmployeeProfilePage() {
                     value={vigenciaPromocao}
                     onChange={(ev) => setVigenciaPromocao(ev.target.value)}
                     required
-                    className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <label className="flex flex-1 flex-col gap-1.5 text-sm">
@@ -1275,7 +1275,7 @@ export default function EmployeeProfilePage() {
                   <input
                     value={anotacaoPromocao}
                     onChange={(ev) => setAnotacaoPromocao(ev.target.value)}
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <Button type="submit" disabled={promote.isPending} className="flex-none">
@@ -1293,7 +1293,7 @@ export default function EmployeeProfilePage() {
             {e.cargoSalarioHistorico.length === 0 && <p className="text-sm text-text-tertiary">Nenhum registro ainda.</p>}
             <ul className="flex flex-col gap-2">
               {e.cargoSalarioHistorico.map((h) => (
-                <li key={h.id} className="rounded-[10px] border border-border p-2.5">
+                <li key={h.id} className="rounded-container border border-border p-2.5">
                   {editingHistoricoId === h.id ? (
                     <form
                       className="flex flex-wrap items-end gap-3"
@@ -1308,7 +1308,7 @@ export default function EmployeeProfilePage() {
                           type="date"
                           value={historicoVigencia}
                           onChange={(ev) => setHistoricoVigencia(ev.target.value)}
-                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                          className="rounded-control border border-border-strong bg-surface px-3 py-2"
                         />
                       </label>
                       <label className="flex flex-col gap-1.5 text-sm">
@@ -1316,7 +1316,7 @@ export default function EmployeeProfilePage() {
                         <input
                           value={historicoCargo}
                           onChange={(ev) => setHistoricoCargo(ev.target.value)}
-                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                          className="rounded-control border border-border-strong bg-surface px-3 py-2"
                         />
                       </label>
                       <label className="flex flex-col gap-1.5 text-sm">
@@ -1327,7 +1327,7 @@ export default function EmployeeProfilePage() {
                           step="0.01"
                           value={historicoSalario}
                           onChange={(ev) => setHistoricoSalario(ev.target.value)}
-                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                          className="rounded-control border border-border-strong bg-surface px-3 py-2"
                         />
                       </label>
                       <label className="flex min-w-[220px] flex-1 flex-col gap-1.5 text-sm">
@@ -1337,7 +1337,7 @@ export default function EmployeeProfilePage() {
                           onChange={(ev) => setHistoricoMotivoCorrecao(ev.target.value)}
                           placeholder="Por que este registro está sendo corrigido?"
                           required
-                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                          className="rounded-control border border-border-strong bg-surface px-3 py-2"
                         />
                       </label>
                       <Button type="submit" variant="confirm" disabled={updateHistorico.isPending}>
@@ -1365,7 +1365,7 @@ export default function EmployeeProfilePage() {
                           onChange={(ev) => setHistoricoMotivoExclusao(ev.target.value)}
                           placeholder="Por que este registro está sendo removido?"
                           required
-                          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                          className="rounded-control border border-border-strong bg-surface px-3 py-2"
                         />
                       </label>
                       <Button type="submit" variant="danger" disabled={removeHistorico.isPending}>
@@ -1501,7 +1501,7 @@ export default function EmployeeProfilePage() {
                     value={progPeriodoId}
                     onChange={(ev) => setProgPeriodoId(ev.target.value)}
                     required
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                   >
                     <option value="">Selecione…</option>
                     {(feriasHistorico?.periodos ?? [])
@@ -1515,7 +1515,7 @@ export default function EmployeeProfilePage() {
                 </label>
                 <label className="flex w-full flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Início</span>
-                  <input type="date" value={progInicio} onChange={(ev) => setProgInicio(ev.target.value)} required className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                  <input type="date" value={progInicio} onChange={(ev) => setProgInicio(ev.target.value)} required className="w-full rounded-control border border-border-strong bg-surface px-3 py-2" />
                 </label>
                 <label className="flex w-full flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Dias de gozo</span>
@@ -1525,7 +1525,7 @@ export default function EmployeeProfilePage() {
                     value={progDias}
                     onChange={(ev) => setProgDias(ev.target.value)}
                     required
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <label className="flex w-full flex-col gap-1.5 text-sm">
@@ -1536,7 +1536,7 @@ export default function EmployeeProfilePage() {
                     max={10}
                     value={progDiasAbono}
                     onChange={(ev) => setProgDiasAbono(ev.target.value)}
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <label className="flex items-center gap-2 text-sm">
@@ -1552,7 +1552,7 @@ export default function EmployeeProfilePage() {
                   <input
                     value={progJustificativa}
                     onChange={(ev) => setProgJustificativa(ev.target.value)}
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <Button type="submit" disabled={programarFerias.isPending}>
@@ -1569,7 +1569,7 @@ export default function EmployeeProfilePage() {
                   .flatMap((p) => p.fracoes.map((f) => ({ ...f, periodoNumero: p.numero })))
                   .sort((a, b) => b.dataInicio.localeCompare(a.dataInicio))
                   .map((f) => (
-                    <li key={f.id} className="flex flex-col gap-1.5 rounded-[10px] border border-border p-2.5">
+                    <li key={f.id} className="flex flex-col gap-1.5 rounded-container border border-border p-2.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-text-secondary">
                           {formatDate(f.dataInicio)} a {formatDate(f.dataFim)} ({formatDias(f.dias)}{f.diasAbono > 0 ? ` · ${formatDias(f.diasAbono)} de abono` : ''}
@@ -1590,7 +1590,7 @@ export default function EmployeeProfilePage() {
                             {d.nome}
                           </a>
                         ))}
-                        <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                        <label className="cursor-pointer rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                           {uploadingFracaoId === f.id ? 'Enviando…' : 'Anexar aviso/recibo'}
                           <input
                             type="file"
@@ -1645,7 +1645,7 @@ export default function EmployeeProfilePage() {
                 <select
                   value={leaveTipo}
                   onChange={(ev) => setLeaveTipo(ev.target.value)}
-                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                 >
                   {TIPOS_AFASTAMENTO.map((t) => (
                     <option key={t} value={t}>
@@ -1661,7 +1661,7 @@ export default function EmployeeProfilePage() {
                     value={leaveTipoOutro}
                     onChange={(ev) => setLeaveTipoOutro(ev.target.value)}
                     required
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
               )}
@@ -1672,7 +1672,7 @@ export default function EmployeeProfilePage() {
                   value={leaveInicio}
                   onChange={(ev) => setLeaveInicio(ev.target.value)}
                   required
-                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                 />
               </label>
               <label className="flex w-full flex-col gap-1.5 text-sm">
@@ -1681,7 +1681,7 @@ export default function EmployeeProfilePage() {
                   type="date"
                   value={leaveRetorno}
                   onChange={(ev) => setLeaveRetorno(ev.target.value)}
-                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                 />
               </label>
               <Button type="submit" disabled={createLeave.isPending}>
@@ -1697,7 +1697,7 @@ export default function EmployeeProfilePage() {
               {e.leaveRecords.map((l) => {
                 const docs = e.documentos.filter((d) => d.leaveRecordId === l.id);
                 return (
-                  <li key={l.id} className="flex flex-col gap-1.5 rounded-[10px] border border-border p-2.5">
+                  <li key={l.id} className="flex flex-col gap-1.5 rounded-container border border-border p-2.5">
                     <span className="text-text-secondary">
                       {l.tipo} — {formatDate(l.inicio)} {l.retorno ? `a ${formatDate(l.retorno)}` : '(em andamento)'}
                     </span>
@@ -1713,7 +1713,7 @@ export default function EmployeeProfilePage() {
                           {d.nome}
                         </a>
                       ))}
-                      <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                      <label className="cursor-pointer rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                         {uploadingLeaveId === l.id ? 'Enviando…' : 'Anexar atestado'}
                         <input
                           type="file"
@@ -1766,7 +1766,7 @@ export default function EmployeeProfilePage() {
               </Badge>
             </div>
             {!!compliance?.missingFields.length && (
-              <div className="mb-3 rounded-[10px] border border-danger/30 bg-danger/5 p-3">
+              <div className="mb-3 rounded-container border border-danger/30 bg-danger/5 p-3">
                 <p className="mb-1 text-xs font-semibold text-danger">Informações cadastrais obrigatórias pendentes:</p>
                 <p className="text-xs text-text-secondary">{compliance.missingFields.join(', ')}</p>
               </div>
@@ -1776,7 +1776,7 @@ export default function EmployeeProfilePage() {
             )}
             <ul className="flex flex-col gap-2">
               {compliance?.documentos.map((d) => (
-                <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-border p-2.5 text-sm">
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-container border border-border p-2.5 text-sm">
                   <div>
                     <div className="font-medium">
                       {d.requirement.nome}
@@ -1794,7 +1794,7 @@ export default function EmployeeProfilePage() {
                     <select
                       value={d.status}
                       onChange={(ev) => setDocStatus.mutate({ requirementId: d.requirementId, status: ev.target.value as DocumentRequirementStatus['status'] })}
-                      className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                      className="rounded-control border border-border-strong bg-surface px-2 py-1 text-xs"
                     >
                       <option value="MISSING">Faltante</option>
                       <option value="PENDING">Em análise</option>
@@ -1807,12 +1807,12 @@ export default function EmployeeProfilePage() {
                         href={`${apiBaseUrl}/rh/documents/employees/${id}/requirements/${d.requirementId}/arquivo`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent"
+                        className="rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent"
                       >
                         Visualizar
                       </a>
                     )}
-                    <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                    <label className="cursor-pointer rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                       {uploadingRequirementId === d.requirementId ? 'Enviando…' : 'Anexar'}
                       <input
                         type="file"
@@ -1843,7 +1843,7 @@ export default function EmployeeProfilePage() {
             {e.documentos.length === 0 && <p className="text-sm text-text-tertiary">Sem documentos.</p>}
             <ul className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               {e.documentos.map((d) => (
-                <li key={d.id} className="flex items-center justify-between rounded-[10px] border border-border p-3">
+                <li key={d.id} className="flex items-center justify-between rounded-container border border-border p-3">
                   <div>
                     <div className="font-medium">{d.nome}</div>
                     <div className="text-xs text-text-tertiary">
@@ -1884,16 +1884,16 @@ export default function EmployeeProfilePage() {
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   onChange={(ev) => setDocFile(ev.target.files?.[0] ?? null)}
                   required
-                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                 />
               </label>
               <label className="flex w-full flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Nome (opcional, padrão é o nome do arquivo)</span>
-                <input value={docNome} onChange={(ev) => setDocNome(ev.target.value)} className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input value={docNome} onChange={(ev) => setDocNome(ev.target.value)} className="w-full rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <label className="flex w-full flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">Tipo</span>
-                <input value={docTipo} onChange={(ev) => setDocTipo(ev.target.value)} placeholder="Contrato, Documento pessoal…" required className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+                <input value={docTipo} onChange={(ev) => setDocTipo(ev.target.value)} placeholder="Contrato, Documento pessoal…" required className="w-full rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
               <Button type="submit" disabled={addDocumento.isPending || !docFile}>
                 {addDocumento.isPending ? 'Enviando…' : 'Anexar arquivo'}
@@ -1912,7 +1912,7 @@ export default function EmployeeProfilePage() {
               {e.ocorrencias.map((o) => {
                 const docs = e.documentos.filter((d) => d.ocorrenciaId === o.id);
                 return (
-                  <li key={o.id} className="flex flex-col gap-2 rounded-[10px] border border-border p-3 text-sm">
+                  <li key={o.id} className="flex flex-col gap-2 rounded-container border border-border p-3 text-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="font-medium">{o.tipo}</div>
@@ -1937,7 +1937,7 @@ export default function EmployeeProfilePage() {
                           {d.nome}
                         </a>
                       ))}
-                      <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                      <label className="cursor-pointer rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                         {uploadingOcorrenciaId === o.id ? 'Enviando…' : 'Anexar arquivo'}
                         <input
                           type="file"
@@ -1975,7 +1975,7 @@ export default function EmployeeProfilePage() {
                 <select
                   value={ocorTipo}
                   onChange={(ev) => setOcorTipo(ev.target.value as (typeof OCORRENCIA_TIPOS)[number])}
-                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                 >
                   {OCORRENCIA_TIPOS.map((t) => (
                     <option key={t} value={t}>
@@ -1991,7 +1991,7 @@ export default function EmployeeProfilePage() {
                     value={ocorTipoOutro}
                     onChange={(ev) => setOcorTipoOutro(ev.target.value)}
                     required
-                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
               )}
@@ -2002,7 +2002,7 @@ export default function EmployeeProfilePage() {
                   value={ocorData}
                   onChange={(ev) => setOcorData(ev.target.value)}
                   required
-                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                 />
               </label>
               <label className="flex w-full flex-col gap-1.5 text-sm">
@@ -2012,7 +2012,7 @@ export default function EmployeeProfilePage() {
                   onChange={(ev) => setOcorDescricao(ev.target.value)}
                   required
                   rows={4}
-                  className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
                 />
               </label>
               <Button type="submit" disabled={addOcorrencia.isPending}>
@@ -2077,7 +2077,7 @@ export default function EmployeeProfilePage() {
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Documentos do desligamento</h4>
-                    <label className="cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
+                    <label className="cursor-pointer rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
                       {uploadingTerminationId === t.id ? 'Enviando…' : 'Anexar documento'}
                       <input
                         type="file"
@@ -2101,7 +2101,7 @@ export default function EmployeeProfilePage() {
                   ) : (
                     <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {docs.map((d) => (
-                        <li key={d.id} className="flex items-center justify-between rounded-[10px] border border-border p-2.5 text-sm">
+                        <li key={d.id} className="flex items-center justify-between rounded-container border border-border p-2.5 text-sm">
                           <div>
                             <div className="font-medium">{d.nome}</div>
                             <div className="text-xs text-text-tertiary">
@@ -2148,7 +2148,7 @@ export default function EmployeeProfilePage() {
             </Button>
           </div>
 
-          <div id="registro-empregado-print" className="flex flex-col gap-4 rounded-[10px] bg-white p-6 text-[#2B2B2B]">
+          <div id="registro-empregado-print" className="flex flex-col gap-4 rounded-container bg-white p-6 text-[#2B2B2B]">
             <div className="text-center">
               <h3 className="text-lg font-bold tracking-wide text-[#1F2430]">REGISTRO DE EMPREGADO</h3>
               <p className="text-xs text-[#8B8B8B]">Matrícula {e.matricula}</p>
@@ -2787,12 +2787,12 @@ function BeneficiosTab({ employeeId, dataNascimento }: { employeeId: string; dat
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar benefício…"
-          className="w-64 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="w-64 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <select
           value={filtroCategoria}
           onChange={(e) => setFiltroCategoria(e.target.value as typeof filtroCategoria)}
-          className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         >
           <option value="">Todas as categorias</option>
           {(Object.keys(CATEGORIA_BENEFICIO_LABEL) as BeneficioTipoOption['categoria'][]).map((c) => (
@@ -2974,7 +2974,7 @@ function BeneficioLinha({
             ) : opcaoUnica ? (
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="text-text-secondary">{opcaoUnica.nome}</span>
-                <span className="rounded-[10px] border border-border-strong bg-surface-alt px-3 py-2 text-text-tertiary">
+                <span className="rounded-control border border-border-strong bg-surface-alt px-3 py-2 text-text-tertiary">
                   {opcaoUnica.valor != null ? `${formatBRL(opcaoUnica.valor)}${unidadeLabel}` : 'calculado na apuração'}
                 </span>
               </label>
@@ -2988,7 +2988,7 @@ function BeneficioLinha({
                     const opcao = opcoes.find((o) => o.id === e.target.value);
                     onDraftChange(opcao?.valor ?? 0);
                   }}
-                  className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                  className="rounded-control border border-border-strong bg-surface px-3 py-2"
                 >
                   <option value="">Selecione…</option>
                   {opcoes.map((o) => (
@@ -3016,7 +3016,7 @@ function BeneficioLinha({
                   setFormValor(e.target.value);
                   onDraftChange(e.target.value ? Number(e.target.value) : 0);
                 }}
-                className="w-32 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="w-32 rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
           )}
@@ -3028,7 +3028,7 @@ function BeneficioLinha({
               value={formDataInicio}
               onChange={(e) => setFormDataInicio(e.target.value)}
               disabled={editando && !opcoes}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 disabled:opacity-60"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2 disabled:opacity-60"
             />
           </label>
 
@@ -3068,20 +3068,20 @@ function BeneficioLinha({
                 value={dependentesForm.nome}
                 onChange={(ev) => dependentesForm.setNome(ev.target.value)}
                 required
-                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs"
+                className="rounded-control border border-border-strong bg-surface px-2 py-1.5 text-xs"
               />
               <input
                 type="date"
                 value={dependentesForm.dataNascimento}
                 onChange={(ev) => dependentesForm.setDataNascimento(ev.target.value)}
                 required
-                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs"
+                className="rounded-control border border-border-strong bg-surface px-2 py-1.5 text-xs"
               />
               <input
                 placeholder="Parentesco"
                 value={dependentesForm.parentesco}
                 onChange={(ev) => dependentesForm.setParentesco(ev.target.value)}
-                className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5 text-xs"
+                className="rounded-control border border-border-strong bg-surface px-2 py-1.5 text-xs"
               />
               <Button type="submit" variant="secondary" disabled={dependentesForm.salvando}>
                 Adicionar
@@ -3154,7 +3154,7 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-text"
+        className="rounded-control border border-border-strong bg-surface px-3 py-2 text-text"
       >
         <option value="">Não informado</option>
         {value && !options.includes(value) && <option value={value}>{value}</option>}
@@ -3195,7 +3195,7 @@ function EditField({
         step={step}
         min={type === 'number' ? 0 : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+        className="rounded-control border border-border-strong bg-surface px-3 py-2"
       />
     </label>
   );

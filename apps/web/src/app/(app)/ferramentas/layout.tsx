@@ -25,7 +25,7 @@ export default function FerramentasLayout({ children }: { children: React.ReactN
             <Link
               key={sp.href}
               href={sp.href}
-              className={`rounded-full border px-4 py-2 text-sm transition ${
+              className={`rounded-control border px-4 py-2 text-sm transition ${
                 active
                   ? 'border-accent bg-accent text-on-accent font-medium'
                   : 'border-border-strong bg-surface text-text hover:border-accent'

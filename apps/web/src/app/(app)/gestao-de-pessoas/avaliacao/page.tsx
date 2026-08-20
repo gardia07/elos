@@ -83,7 +83,7 @@ export default function AvaliacaoPage() {
           <button
             key={c.id}
             onClick={() => setCycleId(c.id)}
-            className={`rounded-full border px-4 py-2 text-sm ${
+            className={`rounded-control border px-4 py-2 text-sm ${
               cycleId === c.id ? 'border-accent bg-accent text-on-accent' : 'border-border-strong bg-surface'
             }`}
           >
@@ -106,15 +106,15 @@ export default function AvaliacaoPage() {
           >
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Nome</span>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input value={nome} onChange={(e) => setNome(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Início</span>
-              <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-text-secondary">Fim</span>
-              <input type="date" value={periodoFim} onChange={(e) => setPeriodoFim(e.target.value)} required className="rounded-[10px] border border-border-strong bg-surface px-3 py-2" />
+              <input type="date" value={periodoFim} onChange={(e) => setPeriodoFim(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
             <Button type="submit">Criar ciclo</Button>
           </form>
@@ -158,7 +158,7 @@ export default function AvaliacaoPage() {
                       const v = Number(e.target.value);
                       if (!Number.isNaN(v)) upsertRecord.mutate({ employeeId: r.employeeId, gestorNota: v });
                     }}
-                    className="w-16 rounded-[10px] border border-border-strong bg-surface px-2 py-1"
+                    className="w-16 rounded-control border border-border-strong bg-surface px-2 py-1"
                   />
                 </td>
                 <td className="py-2">

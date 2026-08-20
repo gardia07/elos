@@ -78,7 +78,7 @@ export default function AprovacoesPage() {
               <button
                 key={f}
                 onClick={() => setFiltro(f)}
-                className={`rounded-full border px-4 py-2 text-sm transition ${
+                className={`rounded-control border px-4 py-2 text-sm transition ${
                   filtro === f ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
                 }`}
               >
@@ -91,7 +91,7 @@ export default function AprovacoesPage() {
               <button
                 key={h}
                 onClick={() => setHubFiltro(h)}
-                className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                className={`rounded-control border px-3 py-1.5 text-xs transition ${
                   hubFiltro === h ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text-secondary hover:border-accent'
                 }`}
               >

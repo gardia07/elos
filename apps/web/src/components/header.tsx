@@ -158,10 +158,10 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
             }}
             onFocus={() => setShowSearchResults(true)}
             placeholder="Buscar colaborador…"
-            className="w-64 rounded-full border border-border-strong bg-surface px-4 py-2 text-sm"
+            className="w-64 rounded-control border border-border-strong bg-surface px-4 py-2 text-sm"
           />
           {showSearchResults && searchTerm.trim().length >= 2 && (
-            <div className="absolute right-0 z-40 mt-1 w-80 rounded-[10px] border border-border bg-surface shadow-lg">
+            <div className="absolute right-0 z-40 mt-1 w-80 rounded-container border border-border bg-surface shadow-lg">
               <ul className="max-h-72 overflow-y-auto py-1">
                 {searchData?.colaboradores.map((c) => (
                   <li key={c.id}>
@@ -203,7 +203,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
             )}
           </button>
           {showNotifications && (
-            <div className="absolute right-0 z-40 mt-1 w-80 rounded-[10px] border border-border bg-surface shadow-lg">
+            <div className="absolute right-0 z-40 mt-1 w-80 rounded-container border border-border bg-surface shadow-lg">
               <div className="border-b border-divider px-3 py-2 text-xs font-semibold uppercase tracking-[0.06em] text-text-tertiary">
                 Alertas ({tasks?.length ?? 0})
               </div>
@@ -267,7 +267,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
             {initials}
           </button>
           {showAccountMenu && (
-            <div className="absolute right-0 z-40 mt-1 w-64 rounded-[10px] border border-border bg-surface shadow-lg">
+            <div className="absolute right-0 z-40 mt-1 w-64 rounded-container border border-border bg-surface shadow-lg">
               <div className="border-b border-divider px-4 py-3">
                 <div className="font-medium">{user?.name}</div>
                 <div className="text-xs text-text-tertiary">{ROLE_LABEL[user?.role ?? ''] ?? user?.role}</div>
@@ -305,7 +305,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
               </button>
               <button
                 onClick={() => logout.mutate()}
-                className="block w-full rounded-b-[10px] px-4 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
+                className="block w-full rounded-b-container px-4 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
               >
                 Sair
               </button>
@@ -332,7 +332,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 required
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
@@ -343,7 +343,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={8}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             {passwordError && <p className="text-sm text-danger">{passwordError}</p>}
@@ -371,7 +371,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
               value={switchSlug}
               onChange={(e) => setSwitchSlug(e.target.value)}
               required
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           {switchError && <p className="text-sm text-danger">{switchError}</p>}

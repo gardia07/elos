@@ -50,22 +50,22 @@ export function AgendaHeader({
   return (
     <div className="flex flex-col gap-3 border-b border-divider bg-page-bg px-4 py-4 sm:px-8 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 rounded-[10px] border border-border-strong bg-surface p-1">
+        <div className="flex items-center gap-1 rounded-control border border-border-strong bg-surface p-1">
           <button
             type="button"
             onClick={onPrev}
-            className="rounded-[10px] p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
+            className="rounded-control p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
             aria-label="Período anterior"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button type="button" onClick={onToday} className="rounded-[10px] px-2.5 py-1 text-xs font-medium text-text hover:bg-surface-alt">
+          <button type="button" onClick={onToday} className="rounded-control px-2.5 py-1 text-xs font-medium text-text hover:bg-surface-alt">
             Hoje
           </button>
           <button
             type="button"
             onClick={onNext}
-            className="rounded-[10px] p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
+            className="rounded-control p-1.5 text-text-secondary hover:bg-surface-alt hover:text-text"
             aria-label="Próximo período"
           >
             <ChevronRight className="h-4 w-4" />
@@ -75,14 +75,14 @@ export function AgendaHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex rounded-[10px] border border-border-strong bg-surface p-1">
+        <div className="flex rounded-control border border-border-strong bg-surface p-1">
           {(Object.keys(VIEW_LABEL) as AgendaView[]).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => onViewChange(v)}
               className={cn(
-                'rounded-[10px] px-3 py-1.5 text-xs font-medium transition',
+                'rounded-control px-3 py-1.5 text-xs font-medium transition',
                 view === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:bg-surface-alt',
               )}
             >
@@ -97,14 +97,14 @@ export function AgendaHeader({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar…"
-            className="w-40 rounded-full border border-border-strong bg-surface py-2 pl-8 pr-3 text-sm"
+            className="w-40 rounded-control border border-border-strong bg-surface py-2 pl-8 pr-3 text-sm"
           />
         </div>
 
         <button
           type="button"
           onClick={onOpenReview}
-          className="flex items-center gap-1.5 rounded-[10px] border border-border-strong bg-surface px-3.5 py-2 text-sm font-medium text-text-secondary hover:border-accent hover:text-accent"
+          className="flex items-center gap-1.5 rounded-control border border-border-strong bg-surface px-3.5 py-2 text-sm font-medium text-text-secondary hover:border-accent hover:text-accent"
         >
           <Moon className="h-4 w-4" /> Revisão do dia
         </button>
@@ -139,7 +139,7 @@ export function CategoryLegend({
             type="button"
             onClick={() => onToggle(c.id)}
             className={cn(
-              'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition',
+              'flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-medium transition',
               active ? 'border-border-strong bg-surface text-text' : 'border-border bg-surface-alt text-text-tertiary opacity-60',
             )}
           >
@@ -284,7 +284,7 @@ export function EventFormDrawer({
             onChange={(e) => setValues((v) => ({ ...v, descricao: e.target.value }))}
             required
             autoFocus
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
 
@@ -302,7 +302,7 @@ export function EventFormDrawer({
               value={values.data}
               onChange={(e) => setValues((v) => ({ ...v, data: e.target.value }))}
               required
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <label className="flex flex-1 flex-col gap-1.5 text-sm">
@@ -310,7 +310,7 @@ export function EventFormDrawer({
             <select
               value={values.tipo}
               onChange={(e) => setValues((v) => ({ ...v, tipo: e.target.value as AgendaItemTipo }))}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             >
               {(Object.keys(TIPO_LABEL) as AgendaItemTipo[]).map((t) => (
                 <option key={t} value={t}>
@@ -338,7 +338,7 @@ export function EventFormDrawer({
                 type="time"
                 value={values.hora}
                 onChange={(e) => setValues((v) => ({ ...v, hora: e.target.value }))}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
             <label className="flex flex-1 flex-col gap-1.5 text-sm">
@@ -347,14 +347,14 @@ export function EventFormDrawer({
                 type="time"
                 value={values.horaFim}
                 onChange={(e) => setValues((v) => ({ ...v, horaFim: e.target.value }))}
-                className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="rounded-control border border-border-strong bg-surface px-3 py-2"
               />
             </label>
           </div>
         )}
 
         {!item && (
-          <div className="flex flex-col gap-2 rounded-[10px] border border-border p-3">
+          <div className="flex flex-col gap-2 rounded-container border border-border p-3">
             <label className="flex items-center gap-2 text-sm text-text-secondary">
               <input
                 type="checkbox"
@@ -375,7 +375,7 @@ export function EventFormDrawer({
                 <select
                   value={values.frequencia}
                   onChange={(e) => setValues((v) => ({ ...v, frequencia: e.target.value as AgendaRecorrenciaFrequencia }))}
-                  className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                  className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
                 >
                   {(Object.keys(FREQUENCIA_LABEL) as AgendaRecorrenciaFrequencia[]).map((f) => (
                     <option key={f} value={f}>
@@ -392,7 +392,7 @@ export function EventFormDrawer({
                       min={1}
                       value={values.intervalo}
                       onChange={(e) => setValues((v) => ({ ...v, intervalo: Math.max(1, Number(e.target.value)) }))}
-                      className="w-16 rounded-[10px] border border-border-strong bg-surface px-2 py-1.5"
+                      className="w-16 rounded-control border border-border-strong bg-surface px-2 py-1.5"
                     />
                     <span>{UNIDADE_INTERVALO[values.frequencia]}</span>
                   </div>
@@ -413,7 +413,7 @@ export function EventFormDrawer({
                             }))
                           }
                           className={cn(
-                            'rounded-full border px-2.5 py-1 text-xs',
+                            'rounded-control border px-2.5 py-1 text-xs',
                             ativo ? 'border-accent bg-tint-blue text-accent' : 'border-border-strong bg-surface text-text-secondary',
                           )}
                         >
@@ -431,7 +431,7 @@ export function EventFormDrawer({
                       <select
                         value={values.posicaoNoMes}
                         onChange={(e) => setValues((v) => ({ ...v, posicaoNoMes: Number(e.target.value) }))}
-                        className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5"
+                        className="rounded-control border border-border-strong bg-surface px-2 py-1.5"
                       >
                         {[1, 2, 3, 4, -1].map((p) => (
                           <option key={p} value={p}>
@@ -442,7 +442,7 @@ export function EventFormDrawer({
                       <select
                         value={values.diasDaSemana[0] ?? 'SEX'}
                         onChange={(e) => setValues((v) => ({ ...v, diasDaSemana: [e.target.value] }))}
-                        className="rounded-[10px] border border-border-strong bg-surface px-2 py-1.5"
+                        className="rounded-control border border-border-strong bg-surface px-2 py-1.5"
                       >
                         {DIA_SEMANA_CODES.map((d) => (
                           <option key={d} value={d}>
@@ -463,7 +463,7 @@ export function EventFormDrawer({
                     onChange={(e) => setValues((v) => ({ ...v, dataFimRecorrencia: e.target.value }))}
                     max={addAnosIso(values.data, 2)}
                     required
-                    className="w-44 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-44 rounded-control border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
               </div>
@@ -471,7 +471,7 @@ export function EventFormDrawer({
           </div>
         )}
 
-        <div className="flex flex-col gap-2 rounded-[10px] border border-border p-3">
+        <div className="flex flex-col gap-2 rounded-container border border-border p-3">
           <span className="flex items-center gap-1.5 text-sm text-text-secondary">
             <Bell className="h-3.5 w-3.5" /> Lembrete
           </span>
@@ -489,7 +489,7 @@ export function EventFormDrawer({
                     }))
                   }
                   className={cn(
-                    'rounded-full border px-2.5 py-1 text-xs',
+                    'rounded-control border px-2.5 py-1 text-xs',
                     ativo ? 'border-accent bg-tint-blue text-accent' : 'border-border-strong bg-surface text-text-secondary',
                   )}
                 >
@@ -517,7 +517,7 @@ export function EventFormDrawer({
               type="button"
               onClick={() => setValues((v) => ({ ...v, categoriaId: '' }))}
               className={cn(
-                'rounded-full border px-3 py-1.5 text-xs',
+                'rounded-control border px-3 py-1.5 text-xs',
                 values.categoriaId === '' ? 'border-accent bg-tint-blue text-accent' : 'border-border-strong bg-surface text-text-secondary',
               )}
             >
@@ -532,7 +532,7 @@ export function EventFormDrawer({
                   type="button"
                   onClick={() => setValues((v) => ({ ...v, categoriaId: c.id }))}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition',
+                    'flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-medium transition',
                     selected ? 'border-accent bg-tint-blue text-text' : 'border-border-strong bg-surface text-text-secondary',
                   )}
                 >
@@ -549,7 +549,7 @@ export function EventFormDrawer({
           <select
             value={values.responsavelId}
             onChange={(e) => setValues((v) => ({ ...v, responsavelId: e.target.value }))}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           >
             <option value="">Ninguém (só eu)</option>
             {usuarios.map((u) => (
@@ -566,7 +566,7 @@ export function EventFormDrawer({
             <select
               value={values.projetoId}
               onChange={(e) => setValues((v) => ({ ...v, projetoId: e.target.value }))}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             >
               <option value="">Nenhum</option>
               {projetos.map((p) => (
@@ -583,7 +583,7 @@ export function EventFormDrawer({
           <select
             value={values.prioridade}
             onChange={(e) => setValues((v) => ({ ...v, prioridade: e.target.value as AgendaItemPrioridade | '' }))}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           >
             <option value="">Sem prioridade</option>
             {(['P0', 'P1', 'P2', 'P3'] as const).map((p) => (
@@ -600,7 +600,7 @@ export function EventFormDrawer({
             <select
               value={values.bloqueadoPorId}
               onChange={(e) => setValues((v) => ({ ...v, bloqueadoPorId: e.target.value }))}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             >
               <option value="">Nenhuma</option>
               {tarefasDoProjeto
@@ -620,7 +620,7 @@ export function EventFormDrawer({
             value={values.notas}
             onChange={(e) => setValues((v) => ({ ...v, notas: e.target.value }))}
             rows={3}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
 
@@ -696,7 +696,7 @@ function SubtarefasSection({ agendaItemId }: { agendaItemId: string }) {
       </span>
       <div className="flex flex-col gap-1">
         {subtarefas?.map((s) => (
-          <div key={s.id} className="group flex items-center gap-2 rounded-[10px] px-1.5 py-1 hover:bg-surface-alt">
+          <div key={s.id} className="group flex items-center gap-2 rounded-control px-1.5 py-1 hover:bg-surface-alt">
             <input type="checkbox" checked={s.concluida} onChange={(e) => alternar.mutate({ id: s.id, concluida: e.target.checked })} />
             <span className={cn('flex-1 text-sm', s.concluida && 'text-text-tertiary line-through')}>{s.titulo}</span>
             <button
@@ -721,13 +721,13 @@ function SubtarefasSection({ agendaItemId }: { agendaItemId: string }) {
               criar.mutate();
             }
           }}
-          className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <button
           type="button"
           disabled={!titulo.trim() || criar.isPending}
           onClick={() => criar.mutate()}
-          className="flex items-center justify-center rounded-[10px] bg-accent px-3 text-on-accent disabled:opacity-50"
+          className="flex items-center justify-center rounded-control bg-accent px-3 text-on-accent disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
         </button>
@@ -758,7 +758,7 @@ function CommentsSection({ agendaItemId }: { agendaItemId: string }) {
       <span className="text-sm text-text-secondary">Comentários</span>
       <div className="flex max-h-48 flex-col gap-2 overflow-y-auto">
         {comentarios?.map((c) => (
-          <div key={c.id} className="rounded-[10px] bg-surface-alt p-2.5 text-sm">
+          <div key={c.id} className="rounded-container bg-surface-alt p-2.5 text-sm">
             <div className="mb-0.5 flex items-center gap-1.5 text-xs font-semibold text-text">
               <UserRound className="h-3 w-3 text-text-tertiary" />
               {c.autor}
@@ -780,13 +780,13 @@ function CommentsSection({ agendaItemId }: { agendaItemId: string }) {
               criar.mutate();
             }
           }}
-          className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <button
           type="button"
           disabled={!texto.trim() || criar.isPending}
           onClick={() => criar.mutate()}
-          className="flex items-center justify-center rounded-[10px] bg-accent px-3 text-on-accent disabled:opacity-50"
+          className="flex items-center justify-center rounded-control bg-accent px-3 text-on-accent disabled:opacity-50"
         >
           <Send className="h-4 w-4" />
         </button>

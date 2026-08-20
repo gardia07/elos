@@ -62,7 +62,7 @@ export default function EloPage() {
               <button
                 key={h.id}
                 onClick={() => setUltima(h)}
-                className="rounded-[10px] px-2 py-2 text-left text-sm text-text-secondary hover:bg-surface-alt"
+                className="rounded-control px-2 py-2 text-left text-sm text-text-secondary hover:bg-surface-alt"
               >
                 {h.pergunta}
               </button>
@@ -83,7 +83,7 @@ export default function EloPage() {
                 <span className="font-medium text-text-secondary">Modo agente</span>
                 <button
                   onClick={() => setModoAgente((m) => !m)}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1 ${modoAgente ? 'border-accent bg-accent/10 text-accent' : 'border-border-strong text-text-tertiary'}`}
+                  className={`flex items-center gap-1.5 rounded-control border px-3 py-1 ${modoAgente ? 'border-accent bg-accent/10 text-accent' : 'border-border-strong text-text-tertiary'}`}
                 >
                   <span className={`h-2 w-2 rounded-full ${modoAgente ? 'bg-success' : 'bg-text-tertiary'}`} />
                   {modoAgente ? 'Executa ações' : 'Só informa'}
@@ -100,10 +100,10 @@ export default function EloPage() {
               )}
               {exibida && (
                 <div className="flex flex-col gap-4">
-                  <div className="self-end rounded-[10px] rounded-br-none bg-accent px-4 py-2.5 text-sm text-on-accent">
+                  <div className="self-end rounded-container rounded-br-none bg-accent px-4 py-2.5 text-sm text-on-accent">
                     {exibida.pergunta}
                   </div>
-                  <div className="flex flex-col gap-2 self-start rounded-[10px] rounded-bl-none bg-surface-alt px-4 py-2.5 text-sm">
+                  <div className="flex flex-col gap-2 self-start rounded-container rounded-bl-none bg-surface-alt px-4 py-2.5 text-sm">
                     <span className="whitespace-pre-wrap">{exibida.resposta}</span>
                     {exibida.acaoExecutada && <Badge tone="green">Ação executada: {exibida.acaoExecutada}</Badge>}
                   </div>
@@ -123,7 +123,7 @@ export default function EloPage() {
                 value={pergunta}
                 onChange={(e) => setPergunta(e.target.value)}
                 placeholder='Ex: "Criar tarefa: revisar PGR" ou "Resumo do turnover"'
-                className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2.5 text-sm"
+                className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2.5 text-sm"
               />
               <Button type="submit" disabled={ask.isPending || !pergunta.trim()}>
                 Enviar

@@ -44,7 +44,7 @@ export function ProjetoMarcos({ projetoId }: { projetoId: string }) {
         {(marcos ?? []).map((m) => {
           const atrasado = !m.concluido && m.data.slice(0, 10) < hojeIso;
           return (
-            <div key={m.id} className="group flex items-center gap-2 rounded-[10px] border border-border bg-surface px-3 py-2">
+            <div key={m.id} className="group flex items-center gap-2 rounded-container border border-border bg-surface px-3 py-2">
               <input type="checkbox" checked={m.concluido} onChange={(e) => alternar.mutate({ id: m.id, concluido: e.target.checked })} />
               <Flag className={cn('h-3.5 w-3.5 shrink-0', atrasado ? 'text-danger' : 'text-text-tertiary')} />
               <span className={cn('flex-1 text-sm', m.concluido && 'text-text-tertiary line-through')}>{m.titulo}</span>
@@ -69,14 +69,14 @@ export function ProjetoMarcos({ projetoId }: { projetoId: string }) {
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="Novo marco…"
-          className="min-w-[160px] flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+          className="min-w-[160px] flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
-        <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm" />
+        <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
         <button
           type="button"
           disabled={!titulo.trim() || criar.isPending}
           onClick={() => criar.mutate()}
-          className="flex items-center justify-center rounded-[10px] bg-accent px-3 text-on-accent disabled:opacity-50"
+          className="flex items-center justify-center rounded-control bg-accent px-3 text-on-accent disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
         </button>

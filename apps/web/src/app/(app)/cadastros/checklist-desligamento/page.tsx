@@ -77,7 +77,7 @@ function ModelosDeDocumentos() {
           <select
             value={tipoDoc}
             onChange={(e) => { setTipoDoc(e.target.value as DocTemplateTipo); setCorpo(null); }}
-            className="w-56 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="w-56 rounded-control border border-border-strong bg-surface px-3 py-2"
           >
             {(Object.entries(DOC_TIPO_LABEL) as [DocTemplateTipo, string][]).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -89,7 +89,7 @@ function ModelosDeDocumentos() {
           <select
             value={tipoDesligamento}
             onChange={(e) => { setTipoDesligamento(e.target.value as TerminationTipo); setCorpo(null); }}
-            className="w-56 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="w-56 rounded-control border border-border-strong bg-surface px-3 py-2"
           >
             {(Object.entries(TERMINATION_TIPO_LABEL) as [TerminationTipo, string][]).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -106,7 +106,7 @@ function ModelosDeDocumentos() {
             value={corpoAtual}
             onChange={(e) => setCorpo(e.target.value)}
             rows={16}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 font-mono text-xs leading-relaxed"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 font-mono text-xs leading-relaxed"
           />
           <div className="flex items-center gap-2">
             <Button disabled={save.isPending} onClick={() => save.mutate()}>
@@ -122,7 +122,7 @@ function ModelosDeDocumentos() {
             </span>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {VARIAVEIS_DISPONIVEIS.map((v) => (
-                <code key={v} className="rounded-[10px] bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
+                <code key={v} className="rounded-container bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
                   {`{{${v}}}`}
                 </code>
               ))}
@@ -184,7 +184,7 @@ export default function ChecklistDesligamentoPage() {
           <button
             type="button"
             onClick={() => setSecao('checklist')}
-            className={`rounded-full border px-4 py-2 text-sm transition ${
+            className={`rounded-control border px-4 py-2 text-sm transition ${
               secao === 'checklist' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
             }`}
           >
@@ -193,7 +193,7 @@ export default function ChecklistDesligamentoPage() {
           <button
             type="button"
             onClick={() => setSecao('modelos')}
-            className={`rounded-full border px-4 py-2 text-sm transition ${
+            className={`rounded-control border px-4 py-2 text-sm transition ${
               secao === 'modelos' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
             }`}
           >
@@ -212,14 +212,14 @@ export default function ChecklistDesligamentoPage() {
           </p>
           <div className="flex flex-col gap-2">
             {current.map((item, i) => (
-              <div key={item.key} className="flex flex-wrap items-center gap-3 rounded-[10px] border border-border p-2.5 text-sm">
+              <div key={item.key} className="flex flex-wrap items-center gap-3 rounded-container border border-border p-2.5 text-sm">
                 <span className="min-w-[160px] flex-1">{item.nome}</span>
                 <select
                   value={item.categoria}
                   onChange={(e) =>
                     update(current.map((c, j) => (j === i ? { ...c, categoria: e.target.value as ChecklistItem['categoria'] } : c)))
                   }
-                  className="rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                  className="rounded-control border border-border-strong bg-surface px-2 py-1 text-xs"
                 >
                   <option value="PROCESSO">Processo</option>
                   <option value="COMPLIANCE">Compliance</option>
@@ -234,7 +234,7 @@ export default function ChecklistDesligamentoPage() {
                       ),
                     )
                   }
-                  className="h-16 w-40 rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs"
+                  className="h-16 w-40 rounded-control border border-border-strong bg-surface px-2 py-1 text-xs"
                   title="Vazio = aplica a todos os tipos"
                 >
                   {Object.entries(TERMINATION_TIPO_LABEL).map(([value, label]) => (
@@ -279,7 +279,7 @@ export default function ChecklistDesligamentoPage() {
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               placeholder="Novo item do checklist…"
-              className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
             />
             <Button type="submit" variant="secondary">
               Adicionar

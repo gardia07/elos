@@ -72,7 +72,7 @@ function ModeloDeContrato() {
             value={corpoAtual}
             onChange={(e) => setCorpo(e.target.value)}
             rows={16}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 font-mono text-xs leading-relaxed"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2 font-mono text-xs leading-relaxed"
           />
           <div className="flex items-center gap-2">
             <Button disabled={save.isPending} onClick={() => save.mutate()}>
@@ -88,7 +88,7 @@ function ModeloDeContrato() {
             </span>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {VARIAVEIS_DISPONIVEIS.map((v) => (
-                <code key={v} className="rounded-[10px] bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
+                <code key={v} className="rounded-container bg-surface-alt px-1.5 py-0.5 text-[11px] text-text-secondary">
                   {`{{${v}}}`}
                 </code>
               ))}
@@ -146,7 +146,7 @@ export default function ChecklistAdmissaoPage() {
           <button
             type="button"
             onClick={() => setSecao('checklist')}
-            className={`rounded-full border px-4 py-2 text-sm transition ${
+            className={`rounded-control border px-4 py-2 text-sm transition ${
               secao === 'checklist' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
             }`}
           >
@@ -155,7 +155,7 @@ export default function ChecklistAdmissaoPage() {
           <button
             type="button"
             onClick={() => setSecao('modelo')}
-            className={`rounded-full border px-4 py-2 text-sm transition ${
+            className={`rounded-control border px-4 py-2 text-sm transition ${
               secao === 'modelo' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
             }`}
           >
@@ -176,7 +176,7 @@ export default function ChecklistAdmissaoPage() {
               <select
                 value={filialAtiva}
                 onChange={(e) => { setFilial(e.target.value); setItems(null); }}
-                className="w-64 rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                className="w-64 rounded-control border border-border-strong bg-surface px-3 py-2"
               >
                 {filterOptions.filiais.map((f) => (
                   <option key={f} value={f}>{f}</option>
@@ -193,7 +193,7 @@ export default function ChecklistAdmissaoPage() {
             <>
               <div className="flex flex-col gap-2">
                 {current.map((item, i) => (
-                  <div key={item.key} className="flex items-center gap-3 rounded-[10px] border border-border p-2.5 text-sm">
+                  <div key={item.key} className="flex items-center gap-3 rounded-container border border-border p-2.5 text-sm">
                     <span className="flex-1">{item.nome}</span>
                     <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                       <input
@@ -220,7 +220,7 @@ export default function ChecklistAdmissaoPage() {
                   value={novoNome}
                   onChange={(e) => setNovoNome(e.target.value)}
                   placeholder="Novo item do checklist…"
-                  className="flex-1 rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+                  className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
                 />
                 <Button type="submit" variant="secondary">
                   Adicionar

@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 
 export function Card({ children, className = '', onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <div className={cn('rounded-[10px] border border-border bg-surface p-5', className)} onClick={onClick}>
+    <div className={cn('rounded-container border border-border bg-surface p-5', className)} onClick={onClick}>
       {children}
     </div>
   );
@@ -31,7 +31,7 @@ const BADGE_COLORS: Record<string, string> = {
 
 export function Badge({ tone = 'grey', children }: { tone?: keyof typeof BADGE_COLORS; children: ReactNode }) {
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${BADGE_COLORS[tone]}`}>
+    <span className={`inline-flex rounded-pill px-2.5 py-1 text-xs font-medium ${BADGE_COLORS[tone]}`}>
       {children}
     </span>
   );
@@ -55,7 +55,7 @@ export function Button({
   };
   return (
     <button
-      className={`rounded-[10px] transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`rounded-control transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

@@ -42,7 +42,7 @@ export function EventChip({
       onClick={onClick}
       style={style}
       className={cn(
-        'flex w-full items-center gap-1.5 rounded-[10px] border-l-[3px] bg-surface px-1.5 py-1 text-left text-[11px] leading-tight text-text shadow-sm transition hover:brightness-95',
+        'flex w-full items-center gap-1.5 rounded-container border-l-[3px] bg-surface px-1.5 py-1 text-left text-[11px] leading-tight text-text shadow-sm transition hover:brightness-95',
         dragId ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
         event.concluida && 'opacity-50',
       )}

@@ -29,7 +29,7 @@ function TaskCard({ tarefa, bloqueadora, isDark, onClick }: { tarefa: AgendaItem
       type="button"
       onClick={onClick}
       style={style}
-      className="flex w-full cursor-grab flex-col gap-1.5 rounded-[10px] border border-border bg-surface p-2.5 text-left text-sm shadow-sm transition hover:border-accent active:cursor-grabbing"
+      className="flex w-full cursor-grab flex-col gap-1.5 rounded-container border border-border bg-surface p-2.5 text-left text-sm shadow-sm transition hover:border-accent active:cursor-grabbing"
     >
       <span className={cn(tarefa.concluida && 'text-text-tertiary line-through')}>{tarefa.descricao}</span>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -84,7 +84,7 @@ function Coluna({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex min-h-[220px] flex-1 flex-col gap-2 rounded-[10px] border border-border bg-page-bg p-3 transition',
+        'flex min-h-[220px] flex-1 flex-col gap-2 rounded-container border border-border bg-page-bg p-3 transition',
         isOver && 'border-accent bg-tint-blue',
         excedeWip && 'border-warning',
       )}

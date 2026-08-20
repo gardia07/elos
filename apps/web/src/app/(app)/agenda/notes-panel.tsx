@@ -14,7 +14,7 @@ function NoteLine({ id, text }: { id: string; text: string }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`flex cursor-grab items-start gap-1.5 rounded-[10px] border border-border bg-surface-alt px-2 py-1.5 text-xs text-text active:cursor-grabbing ${
+      className={`flex cursor-grab items-start gap-1.5 rounded-container border border-border bg-surface-alt px-2 py-1.5 text-xs text-text active:cursor-grabbing ${
         isDragging ? 'opacity-40' : ''
       }`}
       title="Arraste para um horário do calendário para transformar em item de agenda"
@@ -92,7 +92,7 @@ export function NotesPanel({ date, collapsed, onToggleCollapse }: { date: string
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Anotações livres do dia — uma ideia por linha…"
         rows={8}
-        className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+        className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
       />
       <span className="text-[11px] text-text-tertiary">{save.isPending || pendingSave ? 'Salvando…' : 'Salvo'}</span>
 

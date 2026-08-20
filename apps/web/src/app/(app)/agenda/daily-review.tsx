@@ -87,14 +87,14 @@ export function DailyReviewDrawer({ open, onClose, date }: { open: boolean; onCl
           ) : (
             <ul className="flex flex-col gap-1.5">
               {pendentes.map((i) => (
-                <li key={i.id} className="flex items-center gap-2 rounded-[10px] border border-border p-2 text-sm">
+                <li key={i.id} className="flex items-center gap-2 rounded-container border border-border p-2 text-sm">
                   <Circle className="h-4 w-4 shrink-0 text-text-tertiary" />
                   <span className="flex-1 text-text">{i.descricao}</span>
                   <button
                     type="button"
                     disabled={reagendar.isPending}
                     onClick={() => reagendar.mutate({ id: i.id, data: amanhaIso(date) })}
-                    className="flex items-center gap-1 rounded-full border border-border-strong px-2.5 py-1 text-xs text-text-secondary hover:border-accent hover:text-accent disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-control border border-border-strong px-2.5 py-1 text-xs text-text-secondary hover:border-accent hover:text-accent disabled:opacity-50"
                   >
                     Amanhã <ArrowRight className="h-3 w-3" />
                   </button>
@@ -111,7 +111,7 @@ export function DailyReviewDrawer({ open, onClose, date }: { open: boolean; onCl
             onChange={(e) => handleReflexaoChange(e.target.value)}
             placeholder="Como foi o dia? O que valeu a pena registrar?"
             rows={4}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
           <span className="text-[11px] text-text-tertiary">{saveReflexao.isPending || dirty ? 'Salvando…' : 'Salvo'}</span>
         </label>

@@ -146,7 +146,7 @@ export function FiltroDropdown({
         type="button"
         onClick={abrirOuFechar}
         className={cn(
-          'flex items-center gap-1.5 rounded-[10px] border px-3 py-1.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+          'flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
           selected.length > 0 ? 'border-accent bg-tint-blue text-accent' : 'border-border-strong text-text-secondary hover:border-text-tertiary',
         )}
       >
@@ -177,7 +177,7 @@ export function FiltroDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-1.5 w-80 rounded-[10px] border border-border bg-surface p-2 shadow-lg">
+        <div className="absolute left-0 top-full z-30 mt-1.5 w-80 rounded-container border border-border bg-surface p-2 shadow-lg">
           <div className="relative mb-2">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
             <input
@@ -189,7 +189,7 @@ export function FiltroDropdown({
               }}
               onKeyDown={handleKeyDown}
               placeholder="Buscar…"
-              className="w-full rounded-[10px] border border-border-strong bg-page-bg py-1.5 pl-8 pr-2.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              className="w-full rounded-control border border-border-strong bg-page-bg py-1.5 pl-8 pr-2.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
             />
           </div>
           <div role="listbox" aria-multiselectable={multi} className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
@@ -205,7 +205,7 @@ export function FiltroDropdown({
                   onClick={() => toggle(o.value)}
                   onMouseEnter={() => setHighlight(i)}
                   className={cn(
-                    'flex items-center justify-between gap-2 rounded-[10px] px-2 py-1.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+                    'flex items-center justify-between gap-2 rounded-control px-2 py-1.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
                     ativo ? 'bg-tint-blue text-accent' : i === highlight ? 'bg-surface-alt text-text' : 'text-text',
                   )}
                 >
@@ -321,12 +321,12 @@ export function ProjetoDrawer({
         }}
       >
         {!projeto && (modelos?.length ?? 0) > 0 && (
-          <div className="flex flex-col gap-1.5 rounded-[10px] border border-border p-3">
+          <div className="flex flex-col gap-1.5 rounded-container border border-border p-3">
             <span className="text-sm text-text-secondary">Começar a partir de um modelo (opcional)</span>
             <select
               value={values.modeloId}
               onChange={(e) => selecionarModelo(e.target.value)}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2 text-sm"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
             >
               <option value="">Projeto em branco</option>
               {modelos?.map((m) => (
@@ -364,7 +364,7 @@ export function ProjetoDrawer({
             onChange={(e) => setValues((v) => ({ ...v, nome: e.target.value }))}
             required
             autoFocus
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
 
@@ -374,7 +374,7 @@ export function ProjetoDrawer({
             value={values.descricao}
             onChange={(e) => setValues((v) => ({ ...v, descricao: e.target.value }))}
             rows={2}
-            className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+            className="rounded-control border border-border-strong bg-surface px-3 py-2"
           />
         </label>
 
@@ -386,7 +386,7 @@ export function ProjetoDrawer({
               value={values.dataInicio}
               onChange={(e) => setValues((v) => ({ ...v, dataInicio: e.target.value }))}
               required
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
           <label className="flex flex-1 flex-col gap-1.5 text-sm">
@@ -395,13 +395,13 @@ export function ProjetoDrawer({
               type="date"
               value={values.dataFim}
               onChange={(e) => setValues((v) => ({ ...v, dataFim: e.target.value }))}
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
         </div>
 
         {projeto && (
-          <div className="flex flex-col gap-1.5 rounded-[10px] border border-border p-3">
+          <div className="flex flex-col gap-1.5 rounded-container border border-border p-3">
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -425,7 +425,7 @@ export function ProjetoDrawer({
               value={values.wipLimiteEmAndamento}
               onChange={(e) => setValues((v) => ({ ...v, wipLimiteEmAndamento: e.target.value }))}
               placeholder="Sem limite"
-              className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+              className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
             <span className="text-xs text-text-tertiary">
               Aviso visual (não trava o quadro) quando a coluna &quot;Em andamento&quot; passar desse número — ajuda a evitar começar tarefa demais ao mesmo tempo.
@@ -468,19 +468,19 @@ export function ProjetoDrawer({
               onChange={(e) => setValues((v) => ({ ...v, cor: e.target.value }))}
               placeholder="#3b82f6"
               spellCheck={false}
-              className="w-24 rounded-[10px] border border-border-strong bg-surface px-2 py-1 text-xs uppercase text-text"
+              className="w-24 rounded-control border border-border-strong bg-surface px-2 py-1 text-xs uppercase text-text"
             />
           </div>
         </div>
 
         <div>
           <span className="mb-1.5 block text-sm text-text-secondary">Participantes</span>
-          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-[10px] border border-border p-2">
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-container border border-border p-2">
             {usuarios.map((u) => {
               const checked = values.participanteIds.includes(u.id);
               const souEu = u.id === currentUserId;
               return (
-                <label key={u.id} className="flex items-center gap-2 rounded-[10px] px-1.5 py-1 text-sm hover:bg-surface-alt">
+                <label key={u.id} className="flex items-center gap-2 rounded-control px-1.5 py-1 text-sm hover:bg-surface-alt">
                   <input
                     type="checkbox"
                     checked={checked || souEu}
@@ -503,7 +503,7 @@ export function ProjetoDrawer({
             <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
               {(tarefas ?? []).length === 0 && <p className="text-xs text-text-tertiary">Nenhuma tarefa vinculada ainda. Vincule ao criar/editar um item na Agenda.</p>}
               {(tarefas ?? []).map((t) => (
-                <div key={t.id} className="flex items-center gap-2 rounded-[10px] bg-surface-alt px-2.5 py-1.5 text-sm">
+                <div key={t.id} className="flex items-center gap-2 rounded-container bg-surface-alt px-2.5 py-1.5 text-sm">
                   <span className={cn('h-2 w-2 shrink-0 rounded-full', t.concluida ? 'bg-success' : 'bg-border-strong')} />
                   <span className={cn('flex-1', t.concluida && 'text-text-tertiary line-through')}>{t.descricao}</span>
                   <span className="text-xs text-text-tertiary">{parseIsoUtc(t.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>
@@ -514,7 +514,7 @@ export function ProjetoDrawer({
         )}
 
         {projeto?.atrasado && (
-          <div className="flex items-center gap-1.5 rounded-[10px] bg-danger/10 px-3 py-2 text-xs text-danger">
+          <div className="flex items-center gap-1.5 rounded-container bg-danger/10 px-3 py-2 text-xs text-danger">
             <AlertTriangle className="h-3.5 w-3.5" /> Este projeto passou do prazo e ainda não foi concluído.
           </div>
         )}

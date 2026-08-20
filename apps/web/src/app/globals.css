@@ -22,6 +22,11 @@
   --info: #c9857a;
   --purple: #8a7fb0;
   --olive: #6d8a3d;
+
+  /* Raio por função do componente -- nunca por modulo. */
+  --radius-control: 8px;   /* botoes, inputs, campo de busca, tabs de subsecao */
+  --radius-container: 12px; /* cards, paineis, tabelas, modais */
+  --radius-pill: 9999px;   /* badges de status/estado, exclusivo */
 }
 
 :root[data-theme="dark"] {
@@ -80,6 +85,9 @@
   --color-info: var(--info);
   --color-purple: var(--purple);
   --color-olive: var(--olive);
+  --radius-control: var(--radius-control);
+  --radius-container: var(--radius-container);
+  --radius-pill: var(--radius-pill);
   --font-sans: var(--font-work-sans);
 }
 
