@@ -1425,6 +1425,7 @@ export default function EmployeeProfilePage() {
                   <tr className="border-b border-divider text-left text-text-tertiary">
                     <th className="py-2 pr-3 font-medium">Período</th>
                     <th className="py-2 pr-3 font-medium">Situação</th>
+                    <th className="py-2 pr-3 font-medium">Data limite</th>
                     <th className="py-2 pr-3 font-medium">Adquiridos</th>
                     <th className="py-2 pr-3 font-medium">Gozados</th>
                     <th className="py-2 pr-3 font-medium">Vendidos</th>
@@ -1440,6 +1441,14 @@ export default function EmployeeProfilePage() {
                       <td className="py-2 pr-3">
                         <Badge tone={STATUS_PERIODO_TONE[p.resumo.status]}>{STATUS_PERIODO_LABEL[p.resumo.status]}</Badge>
                       </td>
+                      <td className="py-2 pr-3">
+                        {formatDate(p.resumo.dataLimiteConcessao)}
+                        {p.resumo.diasParaVencer != null && (
+                          <div className="text-xs text-text-tertiary">
+                            {p.resumo.diasParaVencer < 0 ? `vencida há ${Math.abs(p.resumo.diasParaVencer)} dias` : `vence em ${p.resumo.diasParaVencer} dias`}
+                          </div>
+                        )}
+                      </td>
                       <td className="py-2 pr-3">{p.resumo.diasAdquiridos}</td>
                       <td className="py-2 pr-3">{p.resumo.diasGozados}</td>
                       <td className="py-2 pr-3">{p.resumo.diasVendidos}</td>
@@ -1448,7 +1457,7 @@ export default function EmployeeProfilePage() {
                   ))}
                   {(feriasHistorico?.periodos ?? []).length === 0 && (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <EmptyState>Sem períodos aquisitivos.</EmptyState>
                       </td>
                     </tr>
