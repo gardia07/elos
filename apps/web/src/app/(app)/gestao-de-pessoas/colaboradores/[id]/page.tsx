@@ -338,6 +338,10 @@ export default function EmployeeProfilePage() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabParam ?? '') ? (tabParam as Tab) : 'geral');
+  const changeTab = (t: Tab) => {
+    setTab(t);
+    router.replace(`/gestao-de-pessoas/colaboradores/${id}?tab=${t}`, { scroll: false });
+  };
   const [showPromote, setShowPromote] = useState(false);
   const [promoteMode, setPromoteMode] = useState<'salario' | 'cargo'>('salario');
   const [novoCargo, setNovoCargo] = useState('');
@@ -776,53 +780,55 @@ export default function EmployeeProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/gestao-de-pessoas/colaboradores" className="text-sm text-text-secondary hover:text-text">
-        ← Voltar para Colaboradores
-      </Link>
+      <div className="sticky top-0 z-10 -mx-8 flex flex-col gap-3 bg-page-bg px-8 pb-3 pt-1">
+        <Link href="/gestao-de-pessoas/colaboradores" className="text-sm text-text-secondary hover:text-text">
+          ← Voltar para Colaboradores
+        </Link>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold">{e.nome}</h2>
-            <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>{statusColaboradorLabel(e.status, e.afastadoAtual)}</Badge>
-            <Badge tone={complianceTone(e.conformidadeDocumental)}>Conformidade: {e.conformidadeDocumental}%</Badge>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">{e.nome}</h2>
+              <Badge tone={statusColaboradorTone(e.status, e.afastadoAtual)}>{statusColaboradorLabel(e.status, e.afastadoAtual)}</Badge>
+              <Badge tone={complianceTone(e.conformidadeDocumental)}>Conformidade: {e.conformidadeDocumental}%</Badge>
+            </div>
+            <p className="text-sm text-text-secondary">
+              {e.cargo} · {e.departamento} · {e.filial ?? '—'} · gestor: {e.gestorDireto || 'Não atribuído'}
+            </p>
           </div>
-          <p className="text-sm text-text-secondary">
-            {e.cargo} · {e.departamento} · {e.filial ?? '—'} · gestor: {e.gestorDireto || 'Não atribuído'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setShowPromote(false);
-              setEdit(toEditFields(e));
-              setMotivoSalario('');
-              setSalarioVigenciaDesde('');
-              setEditing(true);
-              setTab('geral');
-            }}
-          >
-            Editar dados
-          </Button>
-          {e.status === 'ATIVO' && (
-            <Button variant="danger" onClick={() => router.push(`/gestao-de-pessoas/desligamento?employeeId=${e.id}`)}>
-              Desligar
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowPromote(false);
+                setEdit(toEditFields(e));
+                setMotivoSalario('');
+                setSalarioVigenciaDesde('');
+                setEditing(true);
+                changeTab('geral');
+              }}
+            >
+              Editar dados
             </Button>
-          )}
+            {e.status === 'ATIVO' && (
+              <Button variant="danger" onClick={() => router.push(`/gestao-de-pessoas/desligamento?employeeId=${e.id}`)}>
+                Desligar
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex gap-2 border-b border-divider">
-        {TABS.filter((t) => t !== 'desligamento' || e.terminations.length > 0).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm ${tab === t ? 'border-b-2 border-accent font-medium text-text' : 'text-text-secondary'}`}
-          >
-            {TAB_LABEL[t]}
-          </button>
-        ))}
+        <div className="flex gap-2 border-b border-divider">
+          {TABS.filter((t) => t !== 'desligamento' || e.terminations.length > 0).map((t) => (
+            <button
+              key={t}
+              onClick={() => changeTab(t)}
+              className={`px-3 py-2 text-sm ${tab === t ? 'border-b-2 border-accent font-medium text-text' : 'text-text-secondary'}`}
+            >
+              {TAB_LABEL[t]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === 'geral' && (
@@ -1529,7 +1535,7 @@ export default function EmployeeProfilePage() {
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={progHistorico} onChange={(ev) => setProgHistorico(ev.target.checked)} />
-                  <span className="text-text-secondary">Lançamento histórico (já aconteceu — sem validar aviso de 30 dias nem prazo do abono)</span>
+                  <span className="text-text-secondary">Lançamento histórico (cadastro de dado antigo — sem validações)</span>
                 </label>
                 <label className="flex w-full flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">{progHistorico ? 'Justificativa (opcional)' : 'Justificativa (obrigatória se fora da janela de 30 dias de aviso)'}</span>

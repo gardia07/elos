@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
 import { Header } from '@/components/header';
 
 const SUBPAGES = [
@@ -18,21 +16,10 @@ const SUBPAGES = [
 
 export default function GestaoDePessoasLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '';
-  const colaboradorId = pathname.match(/^\/gestao-de-pessoas\/colaboradores\/([^/]+)$/)?.[1];
-
-  // mesma queryKey usada pela própria página do colaborador -- reaproveita o cache
-  // em vez de disparar uma segunda requisição, só pra saber de quem é a ficha aberta.
-  const { data: colaborador } = useQuery({
-    queryKey: ['employee', colaboradorId],
-    queryFn: async () => (await api.get<{ nome: string }>(`/rh/employees/${colaboradorId}`)).data,
-    enabled: !!colaboradorId,
-  });
-
-  const eyebrow = colaborador ? `Recrutamento · Admissão · Colaboradores · ${colaborador.nome}` : 'Recrutamento · Admissão · Colaboradores';
 
   return (
     <>
-      <Header eyebrow={eyebrow} title="Gestão de Pessoas" />
+      <Header eyebrow="Recrutamento · Admissão · Colaboradores" title="Gestão de Pessoas" />
       <div className="flex flex-wrap gap-2 border-b border-divider bg-page-bg px-8 py-4">
         {SUBPAGES.map((sp) => {
           const active = pathname.startsWith(sp.href);

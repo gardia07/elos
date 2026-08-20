@@ -61,7 +61,7 @@ function useTheme() {
   return { theme, toggle };
 }
 
-export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
+export function Header({ title }: { eyebrow?: string; title: string }) {
   const { user, tenant } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -145,7 +145,6 @@ export function Header({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <header className="flex items-center justify-between gap-4 border-b border-divider bg-page-bg px-8 py-5">
       <div>
-        <div className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">{eyebrow}</div>
         <h1 className="text-xl font-semibold text-text">{title}</h1>
       </div>
 

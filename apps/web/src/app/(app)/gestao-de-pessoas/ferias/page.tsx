@@ -462,12 +462,12 @@ export default function FeriasPage() {
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={progHistorico} onChange={(ev) => setProgHistorico(ev.target.checked)} />
-            <span className="text-text-secondary">Lançamento histórico (já aconteceu — sem validar aviso de 30 dias nem prazo do abono)</span>
+            <span className="text-text-secondary">Lançamento histórico (cadastro de dado antigo — sem validações)</span>
           </label>
           {progHistorico && (
             <p className="w-full rounded-[10px] border border-accent bg-tint-blue p-3 text-xs text-text-secondary">
-              Registra o fato já ocorrido: pula a validação de antecedência de aviso e de decadência do abono, e a fração já nasce aprovada. Continuam valendo saldo
-              disponível, fracionamento e o limite de 10 dias de abono.
+              Registra o fato já ocorrido: pula saldo, fracionamento, limite/decadência do abono e aviso de 30 dias, e a fração já nasce aprovada. A única checagem que
+              continua valendo é a de período que perdeu o direito por afastamento (art. 133 CLT).
             </p>
           )}
 

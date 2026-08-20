@@ -311,36 +311,40 @@ export class FeriasService {
     const dataFim = new Date(dataInicio.getTime() + (dto.dias - 1) * 86_400_000);
     const tipo = dto.tipo ?? 'NORMAL';
 
-    if (tipo === 'NORMAL') {
-      const fracoesNormaisAtivas = periodo.fracoes.filter((f) => f.tipo === 'NORMAL');
-      const violacoesFracionamento = validarFracionamento(
-        fracoesNormaisAtivas.map((f) => ({ status: f.status as StatusFracao, dias: f.dias })),
-        dto.dias,
-      );
-      if (violacoesFracionamento.length > 0) throw new BadRequestException(violacoesFracionamento.join(' '));
-    }
-
-    if (dto.diasAbono) {
-      const violacoesAbono = validarAbono(dto.diasAbono, dataInicio, periodo.dataFim, hoje, dto.historico);
-      if (violacoesAbono.length > 0) throw new BadRequestException(violacoesAbono.join(' '));
-    }
-
-    const faltasNoPeriodo = await this.faltasPorPeriodo(employeeId, periodo.dataInicio, periodo.dataFim);
-    const resumo = computePeriodoResumo(
-      { numero: periodo.numero, dataInicio: periodo.dataInicio, dataFim: periodo.dataFim, suspensoPorAfastamento: periodo.origemSuspensaoId != null },
-      faltasNoPeriodo,
-      periodo.fracoes,
-      hoje,
-    );
-    if (dto.dias + (dto.diasAbono ?? 0) > resumo.saldoDisponivel) {
-      throw new BadRequestException(`Saldo insuficiente — este período tem ${resumo.saldoDisponivel} dia(s) disponível(is).`);
-    }
-
-    // Aviso de 30 dias é recomendação operacional, não trava estrutural (mesmo
-    // padrão do mockup: alerta exige justificativa preenchida, mas não bloqueia).
-    // Não se aplica a lançamento histórico -- não há "aviso de antecedência" pra
-    // algo que já aconteceu, a data de hoje não tem relação com o fato registrado.
+    // Lançamento histórico (colaborador migrando de outro sistema, dado que já
+    // aconteceu de fato) pula TODAS as travas abaixo -- fracionamento, saldo,
+    // limite/decadência do abono e aviso de 30 dias -- porque são regras pensadas
+    // pra avaliar um pedido novo, não pra registrar um fato consumado no passado.
+    // A única trava que continua valendo sempre é a de período que perdeu o
+    // direito por afastamento (não é timing, é um fato jurídico sobre o período).
     if (!dto.historico) {
+      if (tipo === 'NORMAL') {
+        const fracoesNormaisAtivas = periodo.fracoes.filter((f) => f.tipo === 'NORMAL');
+        const violacoesFracionamento = validarFracionamento(
+          fracoesNormaisAtivas.map((f) => ({ status: f.status as StatusFracao, dias: f.dias })),
+          dto.dias,
+        );
+        if (violacoesFracionamento.length > 0) throw new BadRequestException(violacoesFracionamento.join(' '));
+      }
+
+      if (dto.diasAbono) {
+        const violacoesAbono = validarAbono(dto.diasAbono, dataInicio, periodo.dataFim, hoje);
+        if (violacoesAbono.length > 0) throw new BadRequestException(violacoesAbono.join(' '));
+      }
+
+      const faltasNoPeriodo = await this.faltasPorPeriodo(employeeId, periodo.dataInicio, periodo.dataFim);
+      const resumo = computePeriodoResumo(
+        { numero: periodo.numero, dataInicio: periodo.dataInicio, dataFim: periodo.dataFim, suspensoPorAfastamento: periodo.origemSuspensaoId != null },
+        faltasNoPeriodo,
+        periodo.fracoes,
+        hoje,
+      );
+      if (dto.dias + (dto.diasAbono ?? 0) > resumo.saldoDisponivel) {
+        throw new BadRequestException(`Saldo insuficiente — este período tem ${resumo.saldoDisponivel} dia(s) disponível(is).`);
+      }
+
+      // Aviso de 30 dias é recomendação operacional, não trava estrutural (mesmo
+      // padrão do mockup: alerta exige justificativa preenchida, mas não bloqueia).
       const alertas = validarAvisoEInicio(dataInicio, hoje);
       if (alertas.length > 0 && !dto.justificativa?.trim()) {
         throw new BadRequestException(`Justificativa obrigatória para esta solicitação (fora da janela recomendada): ${alertas.join(' ')}`);
@@ -396,13 +400,13 @@ export class FeriasService {
     );
     if (resumo.status === 'PERDIDO_POR_AFASTAMENTO') {
       alertas.push('Este período aquisitivo perdeu o direito a férias devido a afastamento superior a 6 meses (art. 133, IV, CLT) — não é possível programar férias nele.');
-    } else if (resumo.status === 'VENCIDA') {
+    } else if (resumo.status === 'VENCIDA' && !historico) {
       alertas.push('Este período está com saldo vencido — a concessão agora não elimina a obrigação de pagamento em dobro do trecho já vencido, apenas evita novo agravamento.');
     }
 
-    if (dataInicioIso && dias) {
+    if (dataInicioIso && dias && !historico) {
       const dataInicio = startOfDayUtc(dataInicioIso);
-      if (!historico) alertas.push(...validarAvisoEInicio(dataInicio, hoje));
+      alertas.push(...validarAvisoEInicio(dataInicio, hoje));
       if (dias + (diasAbono ?? 0) > resumo.saldoDisponivel) {
         alertas.push(`Saldo insuficiente — este período tem ${resumo.saldoDisponivel} dia(s) disponível(is).`);
       }
@@ -410,8 +414,8 @@ export class FeriasService {
       alertas.push(...validarFracionamento(fracoesNormaisAtivas.map((f) => ({ status: f.status as StatusFracao, dias: f.dias })), dias));
     }
 
-    if (diasAbono) {
-      alertas.push(...validarAbono(diasAbono, hoje, periodo.dataFim, hoje, historico));
+    if (diasAbono && !historico) {
+      alertas.push(...validarAbono(diasAbono, hoje, periodo.dataFim, hoje));
     }
 
     return { alertas, saldoDisponivel: resumo.saldoDisponivel };
