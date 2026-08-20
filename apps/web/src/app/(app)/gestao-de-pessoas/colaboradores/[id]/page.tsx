@@ -1251,12 +1251,12 @@ export default function EmployeeProfilePage() {
                     className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
-                <label className="flex flex-col gap-1.5 text-sm">
+                <label className="flex min-w-[200px] flex-1 flex-col gap-1.5 text-sm">
                   <span className="text-text-secondary">Anotações</span>
                   <input
                     value={anotacaoPromocao}
                     onChange={(ev) => setAnotacaoPromocao(ev.target.value)}
-                    className="rounded-[10px] border border-border-strong bg-surface px-3 py-2"
+                    className="w-full rounded-[10px] border border-border-strong bg-surface px-3 py-2"
                   />
                 </label>
                 <Button type="submit" disabled={promote.isPending}>
