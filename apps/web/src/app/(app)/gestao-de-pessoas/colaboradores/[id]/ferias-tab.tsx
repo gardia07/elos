@@ -138,8 +138,14 @@ export function FeriasTab({ employeeId, employee, feriasHistorico, feriasSaldoAt
   // de UTC (todo o Brasil), mesma pegadinha documentada em lib/format.ts::formatDate.
   const hoje = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
   const periodos = feriasHistorico?.periodos ?? [];
+  // Período mais recente (maior número) primeiro -- num colaborador de muitos anos de casa,
+  // o período atual é o que importa de cara, não deveria ficar escondido lá embaixo atrás de
+  // vários períodos antigos já quitados. `periodos` em si fica na ordem original (cronológica)
+  // porque o select do formulário abaixo ainda lista do mais antigo pro mais novo.
+  const periodosMaisRecentesPrimeiro = [...periodos].sort((a, b) => b.numero - a.numero);
 
   const [showConformidade, setShowConformidade] = useState(false);
+  const [showProgramar, setShowProgramar] = useState(false);
   const [openPeriodo, setOpenPeriodo] = useState<string | null>(null);
   const [openFracao, setOpenFracao] = useState<string | null>(null);
 
@@ -218,6 +224,7 @@ export function FeriasTab({ employeeId, employee, feriasHistorico, feriasSaldoAt
       setProgHistorico(false);
       setProgJustificativa('');
       setProgramarError('');
+      setShowProgramar(false);
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
@@ -323,11 +330,17 @@ export function FeriasTab({ employeeId, employee, feriasHistorico, feriasSaldoAt
 
       {/* ---- accordion de períodos ---- */}
       <div>
-        <h3 className="mb-1 text-sm font-semibold text-text">Períodos aquisitivos</h3>
-        <p className="mb-3 text-xs text-text-tertiary">Cada período pode ser expandido para ver adquiridos, gozados, vendidos e prazo de vencimento.</p>
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-text">Períodos aquisitivos</h3>
+          <Button onClick={() => setShowProgramar(true)}>Programar férias</Button>
+        </div>
+        <p className="mb-3 text-xs text-text-tertiary">Mais recente primeiro — cada período pode ser expandido para ver adquiridos, gozados, vendidos e prazo de vencimento.</p>
         <div className="flex flex-col gap-2.5">
-          {periodos.map((p) => {
-            const open = openPeriodo === p.id;
+          {periodosMaisRecentesPrimeiro.map((p, index) => {
+            // Ninguém mexeu em nenhum período ainda (openPeriodo ainda null) -- o mais recente
+            // (primeiro da lista agora) já abre sozinho, pra não esconder o período atual atrás
+            // de um clique num colaborador com muitos anos de casa e vários períodos antigos.
+            const open = openPeriodo != null ? openPeriodo === p.id : index === 0;
             const tone = corDoStatusPeriodo(p.resumo.status);
             const consumido = p.resumo.diasAdquiridos > 0 ? Math.min(100, Math.round(((p.resumo.diasGozados + p.resumo.diasVendidos) / p.resumo.diasAdquiridos) * 100)) : 0;
             return (
@@ -373,17 +386,17 @@ export function FeriasTab({ employeeId, employee, feriasHistorico, feriasSaldoAt
         </div>
       </div>
 
-      {/* ---- form programar férias ---- */}
-      <Card>
-        <h3 className="mb-4 text-sm font-semibold text-text">Programar férias</h3>
+      {/* ---- form programar férias (modal, aberto pelo botão ao lado de "Períodos aquisitivos") ---- */}
+      {showProgramar && (
+      <Modal open onClose={() => setShowProgramar(false)} title="Programar férias">
         <form
           onSubmit={(ev) => {
             ev.preventDefault();
             programarFerias.mutate();
           }}
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="flex flex-col gap-1.5 text-sm">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
               <span className="text-text-secondary">Período aquisitivo</span>
               <select
                 value={progPeriodoId}
@@ -392,7 +405,7 @@ export function FeriasTab({ employeeId, employee, feriasHistorico, feriasSaldoAt
                 className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
               >
                 <option value="">Selecione…</option>
-                {periodos
+                {periodosMaisRecentesPrimeiro
                   .filter((p) => p.resumo.saldoDisponivel > 0)
                   .map((p) => (
                     <option key={p.id} value={p.id}>
@@ -479,14 +492,18 @@ export function FeriasTab({ employeeId, employee, feriasHistorico, feriasSaldoAt
             )}
           </label>
 
-          <div className="mt-5 flex justify-end">
+          <div className="mt-5 flex justify-end gap-2">
+            <Button type="button" variant="cancel" onClick={() => setShowProgramar(false)}>
+              Cancelar
+            </Button>
             <Button type="submit" disabled={programarFerias.isPending}>
               Programar
             </Button>
           </div>
           {programarError && <p className="mt-2 text-right text-xs text-danger">{programarError}</p>}
         </form>
-      </Card>
+      </Modal>
+      )}
 
       {/* ---- histórico ---- */}
       <Card>
