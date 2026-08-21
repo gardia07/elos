@@ -184,7 +184,7 @@ export default function ChecklistDesligamentoPage() {
           <button
             type="button"
             onClick={() => setSecao('checklist')}
-            className={`rounded-control border px-4 py-2 text-sm transition ${
+            className={`rounded-control border px-3 py-1.5 text-xs transition ${
               secao === 'checklist' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
             }`}
           >
@@ -193,7 +193,7 @@ export default function ChecklistDesligamentoPage() {
           <button
             type="button"
             onClick={() => setSecao('modelos')}
-            className={`rounded-control border px-4 py-2 text-sm transition ${
+            className={`rounded-control border px-3 py-1.5 text-xs transition ${
               secao === 'modelos' ? 'border-accent bg-accent text-on-accent font-medium' : 'border-border-strong bg-surface text-text hover:border-accent'
             }`}
           >

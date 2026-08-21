@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Card } from '@/components/ui';
+import { Card, Switch } from '@/components/ui';
 
 interface Integration {
   id: string;
@@ -43,13 +43,7 @@ export default function IntegracoesPage() {
                 <div className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-text-tertiary">{i.tipo}</div>
                 <div className="font-medium">{i.nome}</div>
               </div>
-              <button
-                onClick={() => toggle.mutate({ id: i.id, conectado: !i.conectado })}
-                title={i.conectado ? 'Cancelar solicitação' : 'Solicitar integração'}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition ${i.conectado ? 'bg-accent' : 'bg-surface-alt'}`}
-              >
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${i.conectado ? 'left-[22px]' : 'left-0.5'}`} />
-              </button>
+              <Switch checked={i.conectado} onChange={(checked) => toggle.mutate({ id: i.id, conectado: checked })} />
             </div>
             <p className="text-sm text-text-secondary">{i.descricao}</p>
             <div className="text-xs">

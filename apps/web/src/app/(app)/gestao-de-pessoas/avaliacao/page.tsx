@@ -83,7 +83,7 @@ export default function AvaliacaoPage() {
           <button
             key={c.id}
             onClick={() => setCycleId(c.id)}
-            className={`rounded-control border px-4 py-2 text-sm ${
+            className={`rounded-control border px-3 py-1.5 text-xs ${
               cycleId === c.id ? 'border-accent bg-accent text-on-accent' : 'border-border-strong bg-surface'
             }`}
           >

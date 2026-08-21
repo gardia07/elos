@@ -27,7 +27,7 @@ export default function GestaoDePessoasLayout({ children }: { children: React.Re
             <Link
               key={sp.href}
               href={sp.href}
-              className={`rounded-control border px-4 py-2 text-sm transition ${
+              className={`rounded-control border px-3 py-1.5 text-xs transition ${
                 active
                   ? 'border-accent bg-accent text-on-accent font-medium'
                   : 'border-border-strong bg-surface text-text hover:border-accent'

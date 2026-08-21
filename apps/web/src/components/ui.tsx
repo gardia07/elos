@@ -49,16 +49,15 @@ export function Badge({ tone = 'grey', children }: { tone?: keyof typeof BADGE_C
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'cancel' | 'confirm';
 
-// Formato "pilula de badge, so que clicavel" -- aprovado pela Gabi via provador de botoes:
-// fundo suave (10% da cor), letra colorida, pilula totalmente redonda, texto pequeno.
-// Mesmo padding/fonte/raio em todas as variantes -- só a cor muda.
-const SOFT_BLUE = 'border border-transparent px-2.5 py-1 text-xs font-medium bg-accent/10 text-accent hover:bg-accent/20';
-const SOFT_RED = 'border border-transparent px-2.5 py-1 text-xs font-medium bg-danger/10 text-danger hover:bg-danger/20';
+// Fundo suave (10% da cor), letra colorida, sem borda -- aprovado pela Gabi via provador de botoes.
+// Mesmo formato das abas/filtros segmentados (rounded-control, px-3 py-1.5, text-xs) -- só a cor muda.
+const SOFT_BLUE = 'px-3 py-1.5 text-xs font-semibold bg-accent/10 text-accent hover:bg-accent/20';
+const SOFT_RED = 'px-3 py-1.5 text-xs font-semibold bg-danger/10 text-danger hover:bg-danger/20';
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: SOFT_BLUE,
-  // Neutro (outline) -- unica variante sem cor de texto, mesmo tamanho/raio das demais.
-  secondary: 'border border-border-strong px-2.5 py-1 text-xs font-medium bg-surface text-text hover:border-accent',
+  // Neutro -- unica variante sem cor de texto, mesmo tamanho/raio das demais, sem borda.
+  secondary: 'px-3 py-1.5 text-xs font-semibold bg-surface-alt text-text hover:bg-tint-blue hover:text-accent',
   danger: SOFT_RED,
   // Mesma cor do danger -- sinaliza cancelamento/recuo, reaproveitando o vermelho em vez de criar um tom novo.
   cancel: SOFT_RED,
@@ -69,7 +68,7 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
 // Exportado pra estilizar elementos que não podem ser um <button> (ex.: <Link> que navega mas
 // visualmente é um botão primário) com o mesmo formato, sem duplicar os valores de padding/raio/fonte.
 export function buttonClasses(variant: ButtonVariant = 'primary', className = '') {
-  return `rounded-button transition disabled:cursor-not-allowed disabled:opacity-50 ${BUTTON_VARIANTS[variant]} ${className}`;
+  return `rounded-control transition disabled:cursor-not-allowed disabled:opacity-50 ${BUTTON_VARIANTS[variant]} ${className}`;
 }
 
 export function Button({
