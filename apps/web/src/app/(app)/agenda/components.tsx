@@ -104,7 +104,7 @@ export function AgendaHeader({
         <button
           type="button"
           onClick={onOpenReview}
-          className="flex items-center gap-1.5 rounded-button border border-border-strong bg-surface px-3 py-1.5 text-sm font-medium text-text-secondary hover:border-accent hover:text-accent"
+          className="flex items-center gap-1.5 rounded-button border border-border-strong bg-surface px-2.5 py-1 text-xs font-medium text-text-secondary hover:border-accent hover:text-accent"
         >
           <Moon className="h-4 w-4" /> Revisão do dia
         </button>

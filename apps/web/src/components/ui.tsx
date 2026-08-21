@@ -49,20 +49,21 @@ export function Badge({ tone = 'grey', children }: { tone?: keyof typeof BADGE_C
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'cancel' | 'confirm';
 
-// Mesma altura/padding/raio em todas as variantes de tamanho "padrao" (primary/secondary/danger) --
-// referencia e o outline (secondary), que ja usava esse formato. primary/danger ganham border
-// transparente pra ocupar o mesmo espaco do border real do secondary (senao ficam ~2px mais baixos).
+// Formato "pilula de badge, so que clicavel" -- aprovado pela Gabi via provador de botoes:
+// fundo suave (10% da cor), letra colorida, pilula totalmente redonda, texto pequeno.
+// Mesmo padding/fonte/raio em todas as variantes -- só a cor muda.
+const SOFT_BLUE = 'border border-transparent px-2.5 py-1 text-xs font-medium bg-accent/10 text-accent hover:bg-accent/20';
+const SOFT_RED = 'border border-transparent px-2.5 py-1 text-xs font-medium bg-danger/10 text-danger hover:bg-danger/20';
+
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'border border-transparent px-3 py-1.5 text-sm font-medium bg-accent text-on-accent hover:opacity-90',
-  secondary: 'border border-border-strong px-3 py-1.5 text-sm font-medium bg-surface text-text hover:border-accent',
-  danger: 'border border-transparent px-3 py-1.5 text-sm font-medium bg-danger text-white hover:opacity-90',
-  // Mesmo formato do secondary (outline) -- em todo call site aparece ao lado de um primary/danger/
-  // secondary de tamanho normal (Confirmar+Cancelar, Salvar+Cancelar, Aprovar+Reprovar+Cancelar), então
-  // precisa da mesma altura. Só a cor do texto muda pra sinalizar cancelamento.
-  // Reaproveita --danger (mesmo tom do badge "Conformidade" vermelho) em vez de uma cor nova.
-  cancel: 'border border-border-strong px-3 py-1.5 text-sm font-medium bg-surface text-danger hover:bg-danger/10',
-  // Mesmo formato do "cancel", mas com a cor de accent (o azul-acinzentado do botão "primary").
-  confirm: 'border border-border-strong px-3 py-1.5 text-sm font-medium bg-surface text-accent hover:bg-tint-blue',
+  primary: SOFT_BLUE,
+  // Neutro (outline) -- unica variante sem cor de texto, mesmo tamanho/raio das demais.
+  secondary: 'border border-border-strong px-2.5 py-1 text-xs font-medium bg-surface text-text hover:border-accent',
+  danger: SOFT_RED,
+  // Mesma cor do danger -- sinaliza cancelamento/recuo, reaproveitando o vermelho em vez de criar um tom novo.
+  cancel: SOFT_RED,
+  // Mesma cor do primary -- confirmacao leve, mesmo azul-acinzentado do "primary".
+  confirm: SOFT_BLUE,
 };
 
 // Exportado pra estilizar elementos que não podem ser um <button> (ex.: <Link> que navega mas

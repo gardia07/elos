@@ -25,7 +25,7 @@
 
   /* Raio por função do componente -- nunca por modulo. */
   --radius-control: 8px;   /* inputs, campo de busca, tabs de subsecao */
-  --radius-button: 12px;   /* botoes (Button/buttonClasses), exclusivo -- mais arredondado que os demais controles pra se destacar */
+  --radius-button: 9999px; /* botoes (Button/buttonClasses), exclusivo -- pilula total, aprovado pela Gabi via provador de botoes */
   --radius-container: 12px; /* cards, paineis, tabelas, modais */
   --radius-pill: 9999px;   /* badges de status/estado, exclusivo */
 }
