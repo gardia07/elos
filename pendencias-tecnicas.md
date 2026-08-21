@@ -110,10 +110,48 @@ próprio documento pede isso no item "Próximos passos"):
   de como o Motor de Conformidade Documental for estendido -- hoje ele só
   cobre os 14 tipos de evento de RH/DP já implementados.
 
+## Portal do Colaborador — Proposta ampliada (cadastro/ponto/banco de horas/assinatura/bem-estar)
+
+Status: **especificado, não iniciado.** Documento completo (pesquisa global
+de mercado + núcleo jurídico brasileiro + arquitetura funcional e técnica)
+salvo em `especificacao-modulo-portal-colaborador.md`, na raiz do repo.
+
+**Correção factual registrada em 2026-08-21**: o documento descreve uma
+decisão "Supabase vs. Neon" como se o ELOS rodasse hoje em Supabase — isso
+está incorreto. O ELOS nunca usou Supabase; roda em Postgres via Neon desde
+o início (mesmo caso já visto e corrigido no documento do Módulo de
+Psicologia). Não existe nenhuma migração de banco/autenticação a decidir
+aqui -- a seção "Arquitetura técnica" do documento deve ser lida ignorando
+a alternativa Supabase.
+
+Pontos genuinamente em aberto (os outros dois "Pontos em aberto" do
+documento, que continuam válidos):
+
+- **REP-P próprio vs. integrado a provedor homologado** (Sólides, Secullum,
+  Tangerino) -- decisão estratégica com impacto direto no plano de Ponto
+  Eletrônico já existente (ver seção abaixo), que hoje assume REP-P próprio
+  via registro no INPI. Se a decisão for "integrar via API", o plano
+  `delightful-purring-conway.md` precisa ser revisto antes de retomar --
+  boa parte do desenho de AFD/assinatura CAdES muda de "ELOS assina" para
+  "provedor assina, ELOS consome via API".
+- **Ordem das 5 frentes de bem-estar** (Saúde, Alimentação, Educação,
+  Hobbies/comunidade, Planner pessoal) além de Saúde ser a primeira
+  (sugestão do próprio documento, por sinergia com SST/Psicologia).
+
+Sobreposição com o que já existe: "Solicitações" do documento é o mesmo
+mecanismo do Motor de Conformidade Documental (evento → pendência); não
+precisa ser reconstruído, só precisa de mais pontos de entrada no Portal.
+"Financeiro do colaborador" e "Benefícios" já têm bases parciais nos
+módulos de DP/Benefícios existentes -- não é território 100% novo.
+
 ## Ponto Eletrônico (REP-P)
 
 Status: **planejado, não iniciado.** Plano completo salvo em
-`C:\Users\User\.claude\plans\delightful-purring-conway.md`.
+`C:\Users\User\.claude\plans\delightful-purring-conway.md` -- assume REP-P
+próprio (registro no INPI). Ver nota acima: a proposta ampliada do Portal
+do Colaborador sugere considerar integração com provedor homologado como
+alternativa; se essa via for escolhida, o plano precisa ser revisado antes
+de retomar a implementação.
 
 O schema (Jornada, Batida, AjustePonto, CertificadoDigital, AfdGeracao) já
 foi migrado para o banco de produção com RLS (efeito colateral de uma
@@ -124,7 +162,8 @@ ponto, calcular espelho, gerar AFD assinado — não existe.
 
 Bloqueios reais fora do código (não é trabalho de implementação):
 registro do software no INPI e certificado ICP-Brasil e-CNPJ por tenant,
-necessários pra operar como REP-P válido de fato.
+necessários pra operar como REP-P válido de fato (só se aplica à via "REP-P
+próprio" -- não se aplica se a decisão for integrar via provedor).
 
 Retomar só depois que Férias + os dois motores acima estiverem
 completamente estáveis em uso real (decisão explícita do usuário).
