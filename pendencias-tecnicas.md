@@ -76,11 +76,36 @@ Pendente:
   `afastamento_saude_mental_sem_acompanhamento`) — pesos cadastrados, mas sem
   nenhum item real: o módulo de Psicologia ainda é só um rótulo no sistema
   (sem tela, sem tabela). Precisa do módulo existir antes do motor ter o que
-  varrer.
+  varrer -- ver `especificacao-modulo-psicologia.md` (spec completa, ainda
+  não implementada, ver seção própria abaixo).
 - **`epi_nao_registrado`** e **`pgr_pcmso_desatualizado`** hoje são
   aproximados a partir de dados existentes (EPI vencido / ação de PGR
   atrasada) — não são exatamente "não registrado"/"desatualizado" no sentido
   literal, é a melhor proxy disponível com o schema atual.
+
+## Módulo de Psicologia (Organizacional e do Trabalho)
+
+Status: **especificado, não iniciado.** Spec funcional completa (legislação,
+papéis, camadas de acesso, submódulos) salva em
+`especificacao-modulo-psicologia.md`, na raiz do repo.
+
+Pontos que exigem decisão/validação antes de começar a implementar (o
+próprio documento pede isso no item "Próximos passos"):
+
+- Escopo da v1 -- o documento cobre 9 submódulos (prontuário, testes,
+  seleção, riscos psicossociais/NR-1, clima, PDI, agenda, consentimento,
+  cadastro de psicólogo); provavelmente grande demais pra uma entrega só.
+- Separação Camada A (organizacional) / Camada B (sigilo profissional)
+  precisa ser decidida a nível de RLS antes do primeiro model entrar no
+  schema -- é o tipo de decisão estrutural que é caro corrigir depois.
+- O documento menciona "RLS no Supabase" várias vezes, mas o ELOS roda em
+  Postgres via Neon (RLS já implementado nesse padrão pros outros módulos,
+  não Supabase) -- terminologia do doc precisa ser lida como "RLS no
+  Postgres", sem mudança de infraestrutura real.
+- Compartilhamento do indicador de risco psicossocial com SST/PGR e com o
+  Motor de Conformidade (pendência automática quando risco "alto") depende
+  de como o Motor de Conformidade Documental for estendido -- hoje ele só
+  cobre os 14 tipos de evento de RH/DP já implementados.
 
 ## Ponto Eletrônico (REP-P)
 
