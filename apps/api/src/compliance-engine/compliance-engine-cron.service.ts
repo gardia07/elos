@@ -114,7 +114,7 @@ export class ComplianceEngineCronService {
     const jaTemPendenciaAtiva = await db.pendencia.findFirst({
       where: {
         employeeId: input.employeeId,
-        status: { not: 'CONCLUIDA' },
+        status: { notIn: ['CONCLUIDA', 'DESCARTADA'] },
         documento: { nome: input.documentoNome },
       },
     });

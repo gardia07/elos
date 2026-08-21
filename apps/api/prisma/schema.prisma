@@ -2322,6 +2322,7 @@ enum StatusPendencia {
   AGUARDANDO_ASSINATURA
   CONCLUIDA
   VENCIDA
+  DESCARTADA
 
   @@map("status_pendencia")
 }
@@ -2339,7 +2340,9 @@ model Pendencia {
   dataAbertura      DateTime        @default(now())
   dataLimite        DateTime        @db.Date
   dataConclusao     DateTime?
-  anexoDocumentoId  String?         @db.Uuid
+  anexoBlobPathname String?
+  anexoNomeArquivo  String?
+  anexoContentType  String?
   responsavelId     String?         @db.Uuid
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt

@@ -23,22 +23,31 @@ Concluído em 2026-08-20:
 - **Portal do Colaborador** — aba "Pendências" (`/portal/pendencias`)
   mostrando as pendências do próprio colaborador logado (`GET
   /portal/pendencias`, `PortalService.pendencias()` reaproveitando
-  `ComplianceEngineService.listarPendencias`). Mostra todas as pendências
-  (não só as de assinatura), já que hoje não existe um campo que distinga
-  "exige assinatura" de outras pendências no schema — ver nota abaixo.
+  `ComplianceEngineService.listarPendencias`).
+
+Concluído em 2026-08-21 (grupo 2):
+
+- **Aprovações** — pendências cujo `TipoDocumento.requerAssinaturaColaborador`
+  é `true` (campo que já existia no schema, só não estava sendo lido em
+  lugar nenhum) agora aparecem em `/aprovacoes` como um novo tipo
+  `CONFORMIDADE`. "Aprovar" chama `resolverPendencia` (marca concluída
+  manualmente, sem passar pela validação automática — uso pensado pra quando
+  o documento chega por outro canal). "Recusar" chama o novo
+  `descartarPendencia` (novo status `DESCARTADA`, pra quando a
+  `condicaoAdicional` da regra não se aplicava de fato ao caso) — neutro no
+  Índice de Conformidade, não conta como irregularidade.
+- **Elô (OCR)** — novo endpoint `POST /portal/pendencias/:id/anexar`: o
+  colaborador anexa o documento (pdf/jpg/png) que resolve a própria
+  pendência, o modelo de visão (`claude-haiku-4-5`, ver
+  `apps/api/src/compliance-engine/document-classifier.util.ts`) confere se o
+  arquivo bate com o `tipo_documento` esperado antes de marcar concluída —
+  se não bater, a pendência continua aberta e o motivo aparece na tela.
+  Arquivo aceito só é guardado no Blob store quando passa na validação (não
+  guarda arquivo errado). Faltou o equivalente do lado admin (RH anexando em
+  nome de alguém pelo mesmo mecanismo) — hoje só existe pelo Portal.
 
 Pendente:
 
-- **Campo explícito de "exige assinatura do colaborador"** — hoje
-  `RegraConformidade`/`Pendencia` não tem esse booleano; o status
-  `AGUARDANDO_ASSINATURA` existe mas nada o seta automaticamente ainda. Sem
-  isso, o Portal mostra todas as pendências do colaborador, não um recorte
-  específico de assinatura.
-- **Aprovações** — quando uma pendência exige assinatura, nascer como item de
-  Aprovações (fluxo de assinatura eletrônica via provedor ICP-Brasil). Depende
-  do campo acima pra saber quais pendências disparam isso.
-- **Elô (OCR)** — ao anexar o documento que resolve uma pendência, validar se
-  o arquivo bate com o `tipo_documento` esperado.
 - **Dois eventos sem fonte de dado real ainda** (motor já reconhece o tipo,
   mas nunca dispara): `MUDANCA_CARGA_HORARIA` e `MUDANCA_REGIME_TRABALHO` —
   não existe campo de carga horária/regime de trabalho no cadastro do

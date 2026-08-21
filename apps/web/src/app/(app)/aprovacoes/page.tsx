@@ -8,7 +8,7 @@ import { Header } from '@/components/header';
 
 interface ApprovalItem {
   id: string;
-  tipo: 'FERIAS' | 'PONTO' | 'VAGA';
+  tipo: 'FERIAS' | 'PONTO' | 'VAGA' | 'CONFORMIDADE';
   hub: string;
   titulo: string;
   solicitante: string;
@@ -26,7 +26,7 @@ interface Kpis {
   concluidasMes: number;
 }
 
-const TIPO_LABEL = { FERIAS: 'Férias', PONTO: 'Ponto', VAGA: 'Vaga' } as const;
+const TIPO_LABEL = { FERIAS: 'Férias', PONTO: 'Ponto', VAGA: 'Vaga', CONFORMIDADE: 'Conformidade' } as const;
 const STATUS_LABEL = { PENDENTE: 'Pendente', APROVADA: 'Aprovada', RECUSADA: 'Recusada' } as const;
 
 type Filtro = 'PENDENTE' | 'APROVADA' | 'RECUSADA' | 'TODOS';

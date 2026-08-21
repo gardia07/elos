@@ -93,6 +93,12 @@ export class PortalService {
     return this.complianceEngine.listarPendencias({ employeeId });
   }
 
+  async anexarDocumentoPendencia(pendenciaId: string, file: Express.Multer.File) {
+    const employeeId = await this.myEmployeeId();
+    const { userId } = getRequestContext();
+    return this.complianceEngine.anexarDocumento(pendenciaId, file, { restrictToEmployeeId: employeeId, responsavelId: userId });
+  }
+
   async holerites() {
     const employeeId = await this.myEmployeeId();
     return this.db().payslipItem.findMany({

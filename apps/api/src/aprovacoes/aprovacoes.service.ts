@@ -3,10 +3,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { VacationsService } from '../rh/vacations/vacations.service';
 import { TimeclockService } from '../dp/timeclock/timeclock.service';
 import { RecruitmentService } from '../rh/recruitment/recruitment.service';
+import { ComplianceEngineService } from '../compliance-engine/compliance-engine.service';
+import { getRequestContext } from '../common/request-context';
 
 export interface ApprovalItem {
   id: string;
-  tipo: 'FERIAS' | 'PONTO' | 'VAGA';
+  tipo: 'FERIAS' | 'PONTO' | 'VAGA' | 'CONFORMIDADE';
   hub: string;
   titulo: string;
   solicitante: string;
@@ -33,6 +35,7 @@ export class AprovacoesService {
     private readonly vacations: VacationsService,
     private readonly timeclock: TimeclockService,
     private readonly recruitment: RecruitmentService,
+    private readonly complianceEngine: ComplianceEngineService,
   ) {}
 
   private db() {
@@ -41,10 +44,11 @@ export class AprovacoesService {
 
   async list(): Promise<ApprovalItem[]> {
     const db = this.db();
-    const [vacationRequests, justifications, requisitions] = await Promise.all([
+    const [vacationRequests, justifications, requisitions, pendenciasConformidade] = await Promise.all([
       db.vacationRequest.findMany({ include: { employee: { select: { nome: true } } }, orderBy: { createdAt: 'desc' } }),
       db.timeJustification.findMany({ include: { employee: { select: { nome: true } } }, orderBy: { createdAt: 'desc' } }),
       db.jobRequisition.findMany({ orderBy: { createdAt: 'desc' } }),
+      this.complianceEngine.listarPendencias({ requerAssinaturaColaborador: true }),
     ]);
 
     const items: ApprovalItem[] = [];
@@ -97,6 +101,23 @@ export class AprovacoesService {
       });
     }
 
+    for (const p of pendenciasConformidade) {
+      const status = p.status === 'CONCLUIDA' ? 'APROVADA' : p.status === 'DESCARTADA' ? 'RECUSADA' : 'PENDENTE';
+      items.push({
+        id: p.id,
+        tipo: 'CONFORMIDADE',
+        hub: 'Compliance',
+        titulo: `${p.documento.nome} — ${p.employee.nome}`,
+        solicitante: p.employee.nome,
+        valor: null,
+        prioridade: p.regra.bloqueante ? 'Alta' : 'Normal',
+        prazo: p.dataLimite.toISOString(),
+        slaRisco: status === 'PENDENTE' && (p.status === 'VENCIDA' || daysUntil(p.dataLimite) <= 3),
+        status,
+        createdAt: p.dataAbertura.toISOString(),
+      });
+    }
+
     return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
@@ -119,6 +140,10 @@ export class AprovacoesService {
         return this.timeclock.approve(id);
       case 'VAGA':
         return this.recruitment.approveRequisition(id);
+      case 'CONFORMIDADE': {
+        const { userId } = getRequestContext();
+        return this.complianceEngine.resolverPendencia(id, { responsavelId: userId });
+      }
       default:
         throw new BadRequestException('Tipo de aprovação desconhecido.');
     }
@@ -132,6 +157,10 @@ export class AprovacoesService {
         return this.timeclock.reject(id);
       case 'VAGA':
         return this.recruitment.rejectRequisition(id);
+      case 'CONFORMIDADE': {
+        const { userId } = getRequestContext();
+        return this.complianceEngine.descartarPendencia(id, userId);
+      }
       default:
         throw new BadRequestException('Tipo de aprovação desconhecido.');
     }

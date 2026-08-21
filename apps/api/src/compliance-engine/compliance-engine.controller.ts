@@ -5,7 +5,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { getRequestContext } from '../common/request-context';
 import { PrismaService } from '../prisma/prisma.service';
 import { ComplianceEngineService } from './compliance-engine.service';
-import { RegistrarEventoDto, ResolverPendenciaDto, UpdateRegraConformidadeDto } from './dto/compliance-engine.dto';
+import { RegistrarEventoDto, UpdateRegraConformidadeDto } from './dto/compliance-engine.dto';
 
 @UseGuards(AuthGuard)
 @Controller('compliance-engine')
@@ -26,14 +26,30 @@ export class ComplianceEngineController {
   }
 
   @Get('pendencias')
-  listarPendencias(@Query('employeeId') employeeId?: string, @Query('status') status?: string, @Query('bloqueantes') bloqueantes?: string) {
-    return this.service.listarPendencias({ employeeId, status, bloqueantes: bloqueantes === 'true' });
+  listarPendencias(
+    @Query('employeeId') employeeId?: string,
+    @Query('status') status?: string,
+    @Query('bloqueantes') bloqueantes?: string,
+    @Query('requerAssinaturaColaborador') requerAssinaturaColaborador?: string,
+  ) {
+    return this.service.listarPendencias({
+      employeeId,
+      status,
+      bloqueantes: bloqueantes === 'true' ? true : undefined,
+      requerAssinaturaColaborador: requerAssinaturaColaborador === undefined ? undefined : requerAssinaturaColaborador === 'true',
+    });
   }
 
   @Patch('pendencias/:id/resolver')
-  resolverPendencia(@Param('id') id: string, @Body() dto: ResolverPendenciaDto) {
+  resolverPendencia(@Param('id') id: string) {
     const { userId } = getRequestContext();
-    return this.service.resolverPendencia(id, { anexoDocumentoId: dto.anexoDocumentoId, responsavelId: userId });
+    return this.service.resolverPendencia(id, { responsavelId: userId });
+  }
+
+  @Patch('pendencias/:id/descartar')
+  descartarPendencia(@Param('id') id: string) {
+    const { userId } = getRequestContext();
+    return this.service.descartarPendencia(id, userId);
   }
 
   @Get('colaboradores-irregulares')

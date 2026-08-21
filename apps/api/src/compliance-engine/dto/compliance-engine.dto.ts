@@ -25,10 +25,6 @@ export class RegistrarEventoDto {
   @IsOptional() @IsObject() dadosNovos?: Record<string, unknown>;
 }
 
-export class ResolverPendenciaDto {
-  @IsOptional() @IsUUID() anexoDocumentoId?: string;
-}
-
 export class UpdateRegraConformidadeDto {
   @IsOptional() @IsBoolean() ativo?: boolean;
   @IsOptional() @IsBoolean() bloqueante?: boolean;

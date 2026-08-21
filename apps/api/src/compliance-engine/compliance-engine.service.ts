@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getRequestContext } from '../common/request-context';
+import { uploadDocumento } from '../common/blob-storage';
+import { classificarDocumento, isClassificavel } from './document-classifier.util';
 
 export type TipoEventoColaborador =
   | 'ADMISSAO'
@@ -49,6 +51,7 @@ export function pontuarPendencia(p: { status: string; dataLimite: Date; dataConc
     return p.dataConclusao && p.dataConclusao <= p.dataLimite ? 1 : p.regra.bloqueante ? -1 : 0;
   }
   if (p.status === 'VENCIDA') return p.regra.bloqueante ? -3 : -1;
+  if (p.status === 'DESCARTADA') return 0; // não se aplicava de fato -- neutro, nem penaliza nem soma.
   // ABERTA / EM_ANDAMENTO / AGUARDANDO_ASSINATURA, ainda dentro do prazo
   return p.regra.bloqueante ? -1 : 0;
 }
@@ -124,13 +127,18 @@ export class ComplianceEngineService {
     return { evento, pendencias };
   }
 
-  async listarPendencias(filtros: { employeeId?: string; status?: string; bloqueantes?: boolean } = {}) {
+  async listarPendencias(
+    filtros: { employeeId?: string; status?: string; bloqueantes?: boolean; requerAssinaturaColaborador?: boolean } = {},
+  ) {
     const db = this.db();
     return db.pendencia.findMany({
       where: {
         employeeId: filtros.employeeId,
         status: filtros.status as never,
         ...(filtros.bloqueantes ? { regra: { bloqueante: true } } : {}),
+        ...(filtros.requerAssinaturaColaborador !== undefined
+          ? { documento: { requerAssinaturaColaborador: filtros.requerAssinaturaColaborador } }
+          : {}),
       },
       include: {
         employee: { select: { id: true, nome: true, departamento: true } },
@@ -141,23 +149,76 @@ export class ComplianceEngineService {
     });
   }
 
-  async resolverPendencia(id: string, opts: { anexoDocumentoId?: string; responsavelId?: string }) {
+  /** Marca resolvida manualmente (sem anexo passando pela validação automática) -- ex.: aprovação em Aprovações após receber o documento por outro canal. */
+  async resolverPendencia(id: string, opts: { responsavelId?: string }) {
     const db = this.db();
     const existing = await db.pendencia.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Pendência não encontrada.');
     return db.pendencia.update({
       where: { id },
-      data: {
-        status: 'CONCLUIDA',
-        dataConclusao: new Date(),
-        anexoDocumentoId: opts.anexoDocumentoId,
-        responsavelId: opts.responsavelId,
-      },
+      data: { status: 'CONCLUIDA', dataConclusao: new Date(), responsavelId: opts.responsavelId },
+    });
+  }
+
+  /** A condição adicional da regra não se aplicava de fato a este caso -- descarta sem contar como irregularidade nem como resolução. */
+  async descartarPendencia(id: string, responsavelId?: string) {
+    const db = this.db();
+    const existing = await db.pendencia.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Pendência não encontrada.');
+    return db.pendencia.update({
+      where: { id },
+      data: { status: 'DESCARTADA', dataConclusao: new Date(), responsavelId },
     });
   }
 
   async setStatusPendencia(id: string, status: 'ABERTA' | 'EM_ANDAMENTO' | 'AGUARDANDO_ASSINATURA') {
     return this.db().pendencia.update({ where: { id }, data: { status } });
+  }
+
+  /**
+   * Anexa o documento que resolve a pendência, com validação automática
+   * (Elô) de que o arquivo realmente parece ser o tipo exigido antes de
+   * marcar como concluída -- evita fechar uma pendência com o arquivo
+   * errado. `restrictToEmployeeId` é usado pelo Portal, pra um colaborador
+   * só poder anexar em pendências dele mesmo.
+   */
+  async anexarDocumento(
+    id: string,
+    file: { buffer: Buffer; mimetype: string; originalname: string; size: number },
+    opts: { restrictToEmployeeId?: string; responsavelId: string },
+  ) {
+    const db = this.db();
+    const { tenantId } = getRequestContext();
+    const pendencia = await db.pendencia.findUnique({ where: { id }, include: { documento: true } });
+    if (!pendencia) throw new NotFoundException('Pendência não encontrada.');
+    if (opts.restrictToEmployeeId && pendencia.employeeId !== opts.restrictToEmployeeId) {
+      throw new ForbiddenException('Esta pendência não pertence a você.');
+    }
+    if (pendencia.status === 'CONCLUIDA' || pendencia.status === 'DESCARTADA') {
+      throw new BadRequestException('Esta pendência já foi encerrada.');
+    }
+    if (!isClassificavel(file.mimetype)) {
+      throw new BadRequestException('Envie um arquivo .pdf, .jpg ou .png para validação automática.');
+    }
+
+    const { bate, motivo } = await classificarDocumento(file, pendencia.documento);
+    if (!bate) {
+      throw new BadRequestException(`O arquivo enviado não parece ser "${pendencia.documento.nome}". ${motivo}`);
+    }
+
+    const uploaded = await uploadDocumento(`compliance/${tenantId}/${pendencia.employeeId}/pendencias`, file as Express.Multer.File);
+    const atualizada = await db.pendencia.update({
+      where: { id },
+      data: {
+        status: 'CONCLUIDA',
+        dataConclusao: new Date(),
+        anexoBlobPathname: uploaded.pathname,
+        anexoNomeArquivo: uploaded.nomeOriginal,
+        anexoContentType: uploaded.contentType,
+        responsavelId: opts.responsavelId,
+      },
+    });
+    return { pendencia: atualizada, motivo };
   }
 
   /** Índice de conformidade (regra 5 da especificação) -- ver pontuarPendencia() pra ponderação. */
@@ -169,7 +230,7 @@ export class ComplianceEngineService {
     });
     const pontuacao = pendencias.reduce((acc, p) => acc + pontuarPendencia(p), 0);
     const pendenciasBloqueantesAbertas = pendencias.filter(
-      (p) => p.regra.bloqueante && p.status !== 'CONCLUIDA',
+      (p) => p.regra.bloqueante && p.status !== 'CONCLUIDA' && p.status !== 'DESCARTADA',
     ).length;
     return { pontuacao, pendenciasBloqueantesAbertas, totalPendencias: pendencias.length };
   }
@@ -207,7 +268,7 @@ export class ComplianceEngineService {
   async colaboradoresIrregulares() {
     const db = this.db();
     const pendencias = await db.pendencia.findMany({
-      where: { status: { not: 'CONCLUIDA' }, regra: { bloqueante: true } },
+      where: { status: { notIn: ['CONCLUIDA', 'DESCARTADA'] }, regra: { bloqueante: true } },
       include: { employee: { select: { id: true, nome: true } }, documento: { select: { nome: true } } },
     });
     const porColaborador = new Map<string, { employeeId: string; nome: string; pendencias: string[] }>();
