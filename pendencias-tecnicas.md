@@ -53,15 +53,22 @@ Pendente:
   não existe campo de carga horária/regime de trabalho no cadastro do
   colaborador hoje. Precisa desses campos existirem antes do evento fazer
   sentido.
-- **`contrato_experiencia_nao_formalizado`** (tipo do Motor de Risco, não do
-  Motor de Conformidade, mas mesma causa raiz) — não existe tracking de
-  "colaborador em contrato de experiência" no sistema (`JobContrato` só tem
-  CLT/ESTAGIO/PJ/INTERMITENTE).
-
 ## Motor de Risco (RiskEngineService)
 
 Status: **implementado e em produção** desde 2026-08-20 (substituiu a
 heurística antiga desconectada da Conformidade Geral).
+
+Concluído em 2026-08-21:
+
+- **`contrato_experiencia_nao_formalizado`** — novo campo
+  `Employee.dataFimExperiencia` (só aparece no cadastro/edição pra
+  colaboradores CLT). O motor sinaliza quando essa data já passou e o
+  colaborador segue ATIVO; o RH resolve limpando a data (efetivação ou
+  desligamento) na aba "Dados contratuais" do colaborador. Diferente dos
+  outros campos de data do cadastro (que só avançam), este é o único que
+  pode ser apagado de volta pra vazio -- é assim que o alerta se resolve.
+  Não criado na admissão (só depois, editando o colaborador), igual ao
+  padrão já usado pra `cnhValidade`.
 
 Pendente:
 

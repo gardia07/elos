@@ -556,6 +556,7 @@ model Employee {
   tipoConta              TipoContaBancaria?
   chavePix               String?
   tipoContrato           JobContrato        @default(CLT)
+  dataFimExperiencia     DateTime?          @db.Date
   tipoSalario            TipoSalario        @default(MENSALISTA)
   feriasSaldo            Int                @default(30)
   feriasVencimento       DateTime           @db.Date

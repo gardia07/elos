@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 /** IsOptional() only skips validation for undefined/null — an empty string from a cleared date input still needs to pass IsDateString(), so blank it out to undefined first. */
@@ -66,6 +67,11 @@ export class UpdateEmployeeDto {
   @IsOptional() @IsString() gestorDireto?: string;
   @IsOptional() @IsIn(['CLT', 'ESTAGIO', 'PJ', 'INTERMITENTE']) tipoContrato?:
     'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  // Diferente dos outros campos de data (só avançam): este precisa poder ser
+  // limpo quando o período de experiência é formalizado -- '' passa direto
+  // (não vira undefined) pro service saber que é uma ordem explícita de
+  // limpar, e não "não enviado".
+  @IsOptional() @ValidateIf((o) => o.dataFimExperiencia !== '') @IsDateString() dataFimExperiencia?: string;
   @IsOptional() @IsIn(['MENSALISTA', 'HORISTA', 'DIARISTA']) tipoSalario?:
     'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   @IsOptional() @IsNumber() @Min(0) salario?: number;

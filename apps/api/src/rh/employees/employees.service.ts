@@ -246,6 +246,7 @@ export class EmployeesService {
       dataAdmissao,
       rgDataExpedicao,
       cnhValidade,
+      dataFimExperiencia,
       salario,
       motivoAlteracaoSalario,
       salarioVigenciaDesde,
@@ -265,6 +266,11 @@ export class EmployeesService {
           ? { rgDataExpedicao: new Date(rgDataExpedicao) }
           : {}),
         ...(cnhValidade ? { cnhValidade: new Date(cnhValidade) } : {}),
+        // Único campo de data que pode ser limpo de volta pra null: dataFimExperiencia
+        // marca período de experiência formalizado quando o RH apaga a data.
+        ...(dataFimExperiencia !== undefined
+          ? { dataFimExperiencia: dataFimExperiencia ? new Date(dataFimExperiencia) : null }
+          : {}),
         ...(salario != null ? { salario } : {}),
       },
     });

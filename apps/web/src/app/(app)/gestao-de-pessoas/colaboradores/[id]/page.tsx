@@ -220,6 +220,7 @@ interface EmployeeDetail {
   tipoConta: 'CORRENTE' | 'POUPANCA' | null;
   chavePix: string | null;
   tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  dataFimExperiencia: string | null;
   tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   feriasSaldo: number;
   feriasVencimento: string;
@@ -281,6 +282,7 @@ type EditFields = {
   conjugeNome: string; conjugeCpf: string;
   matricula: string; dataAdmissao: string;
   cargo: string; departamento: string; filial: string; gestorDireto: string; tipoContrato: 'CLT' | 'ESTAGIO' | 'PJ' | 'INTERMITENTE';
+  dataFimExperiencia: string;
   tipoSalario: 'MENSALISTA' | 'HORISTA' | 'DIARISTA';
   salario: string;
   banco: string; agencia: string; conta: string; tipoConta: 'CORRENTE' | 'POUPANCA'; chavePix: string;
@@ -301,6 +303,7 @@ function toEditFields(e: EmployeeDetail): EditFields {
     matricula: e.matricula, dataAdmissao: e.dataAdmissao.slice(0, 10),
     cargo: e.cargo, departamento: e.departamento, filial: e.filial ?? '', gestorDireto: e.gestorDireto ?? '',
     tipoContrato: e.tipoContrato,
+    dataFimExperiencia: e.dataFimExperiencia ? e.dataFimExperiencia.slice(0, 10) : '',
     tipoSalario: e.tipoSalario,
     salario: String(Number(e.salario)),
     banco: e.banco ?? '', agencia: e.agencia ?? '', conta: e.conta ?? '', tipoConta: e.tipoConta ?? 'CORRENTE', chavePix: e.chavePix ?? '',
@@ -1005,6 +1008,9 @@ export default function EmployeeProfilePage() {
                 <Row label="Filial" value={e.filial ?? '—'} />
                 <Row label="Gestor direto" value={e.gestorDireto ?? 'Não atribuído'} />
                 <Row label="Tipo de contrato" value={TIPO_CONTRATO_LABEL[e.tipoContrato]} />
+                {e.tipoContrato === 'CLT' && (
+                  <Row label="Fim do período de experiência" value={e.dataFimExperiencia ? formatDate(e.dataFimExperiencia) : '—'} />
+                )}
                 <Row label="Tipo de salário" value={TIPO_SALARIO_LABEL[e.tipoSalario]} />
                 <Row label="Matrícula" value={e.matricula} />
               </Section>
@@ -1095,6 +1101,17 @@ export default function EmployeeProfilePage() {
                       <option value="INTERMITENTE">Intermitente</option>
                     </select>
                   </label>
+                  {edit.tipoContrato === 'CLT' && (
+                    <div className="flex flex-col gap-1">
+                      <EditField
+                        label="Fim do período de experiência"
+                        type="date"
+                        value={edit.dataFimExperiencia}
+                        onChange={(v) => setEdit({ ...edit, dataFimExperiencia: v })}
+                      />
+                      <span className="text-xs text-text-tertiary">Limpe esta data quando o colaborador for efetivado ou desligado.</span>
+                    </div>
+                  )}
                   <label className="flex flex-col gap-1.5 text-sm">
                     <span className="text-text-secondary">Tipo de salário</span>
                     <select

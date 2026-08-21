@@ -86,7 +86,8 @@ const DIAS_CASO_PROLONGADO = 60;
  * abaixo é escrito para bater exatamente com o alertKey que
  * DashboardService.buildAlerts() já gera pra esses mesmos casos -- assim o
  * alerta existente ganha o score em vez de duplicar. Os outros tipos (exames,
- * PGR, políticas, ética) não tinham alerta individual antes e são novos.
+ * PGR, políticas, ética, contrato de experiência) não tinham alerta
+ * individual antes e são novos.
  */
 @Injectable()
 export class RiskEngineService {
@@ -323,6 +324,23 @@ export class RiskEngineService {
           }),
         );
       }
+    }
+
+    // DP — contrato de experiência vencido sem formalização (RH ainda não
+    // efetivou nem desligou; a data só é limpa quando isso é resolvido).
+    const experienciasVencidas = await db.employee.findMany({
+      where: { status: 'ATIVO', tipoContrato: 'CLT', dataFimExperiencia: { lt: hoje } },
+      select: { id: true, nome: true },
+    });
+    for (const emp of experienciasVencidas) {
+      push(
+        this.buildItem(weights, 'contrato_experiencia_nao_formalizado', {
+          hub: 'DP',
+          mensagem: `${emp.nome} — contrato de experiência vencido sem formalização`,
+          href: `/gestao-de-pessoas/colaboradores/${emp.id}`,
+          alertKey: `dp-contrato-experiencia-${emp.id}`,
+        }),
+      );
     }
 
     // Psicologia — o módulo ainda não tem tela/tabela própria no sistema (só
