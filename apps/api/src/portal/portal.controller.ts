@@ -37,4 +37,9 @@ export class PortalController {
   holerites() {
     return this.service.holerites();
   }
+
+  @Get('pendencias')
+  pendencias() {
+    return this.service.pendencias();
+  }
 }

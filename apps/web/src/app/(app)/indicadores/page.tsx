@@ -24,6 +24,16 @@ interface Diversidade {
   liderancaConfigurada: boolean;
   mulheresLiderancaPercentual: number | null;
 }
+interface IndiceGeral {
+  pontuacaoMedia: number;
+  colaboradores: number;
+  pendenciasBloqueantesVencidas: number;
+}
+interface IndicePorSetor {
+  departamento: string;
+  pontuacaoMedia: number;
+  colaboradores: number;
+}
 
 function formatMes(mes: string): string {
   const [year, month] = mes.split('-');
@@ -47,6 +57,14 @@ export default function IndicadoresPage() {
   const { data: diversidade } = useQuery({
     queryKey: ['indicadores', 'diversidade'],
     queryFn: async () => (await api.get<Diversidade>('/indicadores/diversidade')).data,
+  });
+  const { data: indiceGeral } = useQuery({
+    queryKey: ['compliance-engine', 'indice', 'geral'],
+    queryFn: async () => (await api.get<IndiceGeral>('/compliance-engine/indice/geral')).data,
+  });
+  const { data: indicePorSetor } = useQuery({
+    queryKey: ['compliance-engine', 'indice', 'setor'],
+    queryFn: async () => (await api.get<IndicePorSetor[]>('/compliance-engine/indice/setor')).data,
   });
 
   const maxHeadcount = Math.max(1, ...(headcount?.map((h) => h.total) ?? [1]));
@@ -120,6 +138,41 @@ export default function IndicadoresPage() {
                 </div>
               ))}
               {turnover?.porDepartamento.length === 0 && <p className="text-sm text-text-tertiary">Sem dados suficientes.</p>}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Índice de Conformidade Documental</h3>
+              <span className="text-sm text-text-secondary">
+                Geral: <strong className={indiceGeral && indiceGeral.pontuacaoMedia < 0 ? 'text-danger' : 'text-success'}>{indiceGeral?.pontuacaoMedia ?? 0}</strong>
+              </span>
+            </div>
+            {(indiceGeral?.pendenciasBloqueantesVencidas ?? 0) > 0 && (
+              <p className="mb-3 text-xs text-danger">
+                {indiceGeral?.pendenciasBloqueantesVencidas} pendência(s) bloqueante(s) vencida(s) — puxando o índice pra baixo.
+              </p>
+            )}
+            <p className="mb-3 text-xs text-text-tertiary">
+              Pontuação ponderada por pendência (não é %): bloqueante vencida pesa mais que uma em dia. Quanto mais próximo de zero
+              ou positivo, melhor.
+            </p>
+            <div className="flex flex-col gap-3">
+              {indicePorSetor?.map((s) => (
+                <div key={s.departamento}>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span>{s.departamento}</span>
+                    <span className={`font-medium ${s.pontuacaoMedia < 0 ? 'text-danger' : 'text-success'}`}>{s.pontuacaoMedia}</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-alt">
+                    <div
+                      className={`h-full rounded-full ${s.pontuacaoMedia < 0 ? 'bg-danger' : 'bg-success'}`}
+                      style={{ width: `${Math.min(100, Math.max(4, 100 - Math.abs(s.pontuacaoMedia) * 10))}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {indicePorSetor?.length === 0 && <p className="text-sm text-text-tertiary">Sem dados suficientes.</p>}
             </div>
           </Card>
         </div>

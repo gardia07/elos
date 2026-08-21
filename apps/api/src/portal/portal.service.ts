@@ -4,6 +4,7 @@ import { getRequestContext } from '../common/request-context';
 import { DocumentsService } from '../rh/documents/documents.service';
 import { FeriasService } from '../rh/ferias/ferias.service';
 import { RequestPortalVacationDto } from './dto/portal.dto';
+import { ComplianceEngineService } from '../compliance-engine/compliance-engine.service';
 
 @Injectable()
 export class PortalService {
@@ -11,6 +12,7 @@ export class PortalService {
     private readonly prisma: PrismaService,
     private readonly documents: DocumentsService,
     private readonly feriasService: FeriasService,
+    private readonly complianceEngine: ComplianceEngineService,
   ) {}
 
   private db() {
@@ -84,6 +86,11 @@ export class PortalService {
   async requestFerias(dto: RequestPortalVacationDto) {
     const employeeId = await this.myEmployeeId();
     return this.feriasService.programarPortal(employeeId, dto);
+  }
+
+  async pendencias() {
+    const employeeId = await this.myEmployeeId();
+    return this.complianceEngine.listarPendencias({ employeeId });
   }
 
   async holerites() {

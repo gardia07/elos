@@ -8,6 +8,7 @@ const SUBPAGES = [
   { label: 'Visão geral', href: '/compliance/visao-geral' },
   { label: 'Canal de Ética', href: '/compliance/canal-etica' },
   { label: 'Políticas', href: '/compliance/politicas' },
+  { label: 'Conformidade Documental', href: '/compliance/conformidade' },
 ];
 
 export default function ComplianceLayout({ children }: { children: React.ReactNode }) {

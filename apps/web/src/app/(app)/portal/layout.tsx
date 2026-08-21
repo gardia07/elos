@@ -7,6 +7,7 @@ import { Header } from '@/components/header';
 const SUBPAGES = [
   { label: 'Meus dados', href: '/portal' },
   { label: 'Documentos', href: '/portal/documentos' },
+  { label: 'Pendências', href: '/portal/pendencias' },
   { label: 'Férias', href: '/portal/ferias' },
   { label: 'Holerites', href: '/portal/holerites' },
   { label: 'Histórico', href: '/portal/historico' },
