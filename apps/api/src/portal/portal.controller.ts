@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Get, Param, Post, UploadedFile, 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AuthGuard } from '../common/guards/auth.guard';
+import { PortalSafe } from '../common/decorators/portal-safe.decorator';
 import { PortalService } from './portal.service';
 import { RequestPortalVacationDto } from './dto/portal.dto';
 
@@ -14,6 +15,7 @@ const anexoPendenciaUploadOptions = {
   },
 };
 
+@PortalSafe()
 @UseGuards(AuthGuard)
 @Controller('portal')
 export class PortalController {

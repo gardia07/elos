@@ -10,7 +10,11 @@ export default function Home() {
 
   useEffect(() => {
     if (isLoading) return;
-    router.replace(user ? '/painel' : '/login');
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    router.replace(user.role === 'COLABORADOR' ? '/portal' : '/painel');
   }, [isLoading, user, router]);
 
   return null;

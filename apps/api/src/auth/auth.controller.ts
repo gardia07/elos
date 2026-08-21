@@ -13,6 +13,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SkipLicenseCheck } from '../common/decorators/skip-license-check.decorator';
+import { PortalSafe } from '../common/decorators/portal-safe.decorator';
 import type { JwtPayload } from '../common/jwt-payload';
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -38,11 +39,13 @@ const DEVICE_COOKIE_OPTIONS = {
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
+  @PortalSafe()
   @Post('register-tenant')
   registerTenant(@Body() dto: RegisterTenantDto) {
     return this.auth.registerTenant(dto);
   }
 
+  @PortalSafe()
   @Post('login')
   @HttpCode(200)
   async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -55,6 +58,7 @@ export class AuthController {
     return result;
   }
 
+  @PortalSafe()
   @Post('verify-mfa')
   @HttpCode(200)
   async verifyMfa(@Body() dto: VerifyMfaDto, @Res({ passthrough: true }) res: Response) {
@@ -64,6 +68,7 @@ export class AuthController {
     return { user: result.user, tenant: result.tenant };
   }
 
+  @PortalSafe()
   @Post('logout')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response) {
@@ -71,18 +76,21 @@ export class AuthController {
     return { ok: true };
   }
 
+  @PortalSafe()
   @Post('forgot-password')
   @HttpCode(200)
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.auth.forgotPassword(dto);
   }
 
+  @PortalSafe()
   @Post('reset-password')
   @HttpCode(200)
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto);
   }
 
+  @PortalSafe()
   @UseGuards(AuthGuard)
   @Get('me')
   me(@CurrentUser() user: JwtPayload) {
@@ -122,6 +130,7 @@ export class AuthController {
     return this.auth.updateCompany(user.sub, id, dto);
   }
 
+  @PortalSafe()
   @UseGuards(AuthGuard)
   @Post('change-password')
   @HttpCode(200)

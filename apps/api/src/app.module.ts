@@ -8,6 +8,7 @@ import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { LicenseModule } from './license/license.module';
 import { LicenseGuard } from './common/guards/license.guard';
+import { ColaboradorScopeGuard } from './common/guards/colaborador-scope.guard';
 import { TenantContextMiddleware } from './common/tenant-context.middleware';
 import { RecruitmentModule } from './rh/recruitment/recruitment.module';
 import { AdmissionsModule } from './rh/admissions/admissions.module';
@@ -96,7 +97,10 @@ import { SearchModule } from './search/search.module';
     SearchModule,
   ],
   controllers: [AppController],
-  providers: [{ provide: APP_GUARD, useClass: LicenseGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: LicenseGuard },
+    { provide: APP_GUARD, useClass: ColaboradorScopeGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

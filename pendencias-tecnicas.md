@@ -7,6 +7,55 @@ resolvido ou um novo for identificado.
 
 ---
 
+## Portal do Colaborador — separação de visão (fundação, antes de qualquer frente nova)
+
+Status: **implementado em 2026-08-21.** Decisão explícita da Gabi: quem tem
+o papel COLABORADOR não pode ver nenhum dado da empresa, só o que é dele --
+essa regra vale para toda funcionalidade nova do Portal do Colaborador daqui
+pra frente, não só as que já existiam.
+
+O que foi corrigido (era uma lacuna real, não hipotética -- qualquer usuário
+autenticado, independente do papel, tinha acesso total à navegação do hub e,
+em vários endpoints, a dado de toda a empresa):
+
+- **Frontend**: `/portal/*` saiu do grupo de rotas `(app)` (que renderiza a
+  Sidebar com todos os hubs) e virou seu próprio grupo `(colaborador)`, com
+  layout próprio sem Sidebar. `(app)/layout.tsx` agora redireciona quem tem
+  `role === 'COLABORADOR'` pra `/portal` em vez de renderizar o hub. Login e
+  a rota raiz `/` também already redirecionam por papel.
+- **Header próprio do Portal** (`components/portal-header.tsx`): o `Header`
+  do hub consulta busca de colaboradores, alertas/tarefas da empresa e
+  "trocar de empresa" -- nenhum desses é seguro pra COLABORADOR. O Portal
+  agora usa um header enxuto (nome, trocar senha, sair, tema).
+- **Backend (a barreira que realmente importa -- UI escondida não bastava)**:
+  novo guard global `ColaboradorScopeGuard`
+  (`common/guards/colaborador-scope.guard.ts`) -- allowlist, não blocklist:
+  quem tem `role COLABORADOR` só acessa rotas marcadas com `@PortalSafe()`.
+  Aplicado em `PortalController` inteiro e nos endpoints de `AuthController`
+  que todo usuário precisa (`login`, `me`, `logout`, `change-password`,
+  `forgot/reset-password`, `verify-mfa`, `register-tenant`). Todo o resto
+  (dashboard, aprovações, indicadores, busca, Elô, todos os hubs) fica
+  bloqueado por padrão pra esse papel -- inclusive endpoint novo que alguém
+  esquecer de restringir no futuro, por ser allowlist.
+- RH/gestor/admin continuam podendo acessar o próprio `/portal` (autoatendimento
+  não é exclusivo de quem tem o papel COLABORADOR) -- a restrição é só do
+  hub interno pra quem tem esse papel específico.
+
+Pendente (ainda não é a mesma tarefa que a separação acima):
+
+- **Página inicial da empresa** -- pedido novo da Gabi: uma aba/tela dentro
+  do Portal onde a empresa publica informativos (comunicados) e disponibiliza
+  documentos institucionais (guia de integração, material de endomarketing).
+  Não existe hoje nem modelo de dados nem tela. Precisa de: um model tipo
+  "Comunicado" (tenant-wide, título/corpo/publicadoEm/ativo) + um lugar
+  admin pra RH publicar, e reaproveitar o padrão de blob-storage já usado
+  pros documentos pra anexar os arquivos institucionais.
+- **Perfil e cadastro (autoatendimento)** -- a frente que ficou combinada
+  como primeiro passo real da Central de Colaboradores (colaborador
+  visualiza/solicita atualização de dados cadastrais, RH aprova via motor de
+  pendências do Compliance) ainda não foi construída -- esta sessão cobriu
+  só a fundação de acesso, não essa frente.
+
 ## Motor de Conformidade Documental (compliance-engine)
 
 Status: **core implementado** (Evento → Motor de Regras → Pendência → Alerta →

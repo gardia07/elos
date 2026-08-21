@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Header } from '@/components/header';
+import { PortalHeader } from '@/components/portal-header';
 
 const SUBPAGES = [
   { label: 'Meus dados', href: '/portal' },
@@ -18,7 +18,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <Header eyebrow="Autoatendimento" title="Portal do Colaborador" />
+      <PortalHeader title="Portal do Colaborador" />
       <div className="flex flex-wrap gap-2 border-b border-divider bg-page-bg px-8 py-4">
         {SUBPAGES.map((sp) => {
           const active = sp.href === '/portal' ? pathname === '/portal' : pathname.startsWith(sp.href);

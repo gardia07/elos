@@ -11,10 +11,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) router.replace('/login');
+    if (isLoading) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    // Colaborador não tem acesso ao hub interno (dado de toda a empresa) --
+    // só ao próprio Portal. Ver PortalController/ColaboradorScopeGuard no
+    // backend: essa restrição também é aplicada na API, isto aqui é só a
+    // navegação -- não é a única barreira.
+    if (user.role === 'COLABORADOR') router.replace('/portal');
   }, [isLoading, user, router]);
 
-  if (isLoading || !user) {
+  if (isLoading || !user || user.role === 'COLABORADOR') {
     return <div className="flex min-h-screen items-center justify-center text-text-secondary">Carregando…</div>;
   }
 

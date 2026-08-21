@@ -29,7 +29,7 @@ export default function LoginPage() {
       // Dispositivo já reconhecido (verificado por e-mail antes): pula a etapa de código.
       if (data.user) {
         await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-        router.replace('/painel');
+        router.replace(data.user.role === 'COLABORADOR' ? '/portal' : '/painel');
         return;
       }
       setLoginTicket(data.loginTicket);
@@ -47,9 +47,9 @@ export default function LoginPage() {
 
   const mfaMutation = useMutation({
     mutationFn: async () => (await api.post('/auth/verify-mfa', { loginTicket, code })).data,
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-      router.replace('/painel');
+      router.replace(data.user?.role === 'COLABORADOR' ? '/portal' : '/painel');
     },
     onError: () => setError('Código inválido ou expirado.'),
   });
