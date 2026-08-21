@@ -18,7 +18,8 @@ export type TipoEventoColaborador =
   | 'ADVERTENCIA_SUSPENSAO'
   | 'ASO_PERIODICO_VENCIDO'
   | 'TREINAMENTO_NR_VENCIDO'
-  | 'DESLIGAMENTO';
+  | 'DESLIGAMENTO'
+  | 'AFASTAMENTO_RECAIDA_15_DIAS';
 
 export interface RegistrarEventoInput {
   employeeId: string;

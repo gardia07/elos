@@ -19,7 +19,8 @@ type TipoEvento =
   | 'ADVERTENCIA_SUSPENSAO'
   | 'ASO_PERIODICO_VENCIDO'
   | 'TREINAMENTO_NR_VENCIDO'
-  | 'DESLIGAMENTO';
+  | 'DESLIGAMENTO'
+  | 'AFASTAMENTO_RECAIDA_15_DIAS';
 
 const TIPO_EVENTO_LABEL: Record<TipoEvento, string> = {
   ADMISSAO: 'Admissão',
@@ -36,6 +37,7 @@ const TIPO_EVENTO_LABEL: Record<TipoEvento, string> = {
   ASO_PERIODICO_VENCIDO: 'ASO periódico vencido',
   TREINAMENTO_NR_VENCIDO: 'Treinamento de NR vencido',
   DESLIGAMENTO: 'Desligamento',
+  AFASTAMENTO_RECAIDA_15_DIAS: 'Recaída — 15 dias acumulados (mesmo CID)',
 };
 
 interface RegraConformidade {

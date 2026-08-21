@@ -15,6 +15,7 @@ const TIPOS_EVENTO = [
   'ASO_PERIODICO_VENCIDO',
   'TREINAMENTO_NR_VENCIDO',
   'DESLIGAMENTO',
+  'AFASTAMENTO_RECAIDA_15_DIAS',
 ] as const;
 
 export class RegistrarEventoDto {

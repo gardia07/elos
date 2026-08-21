@@ -10,6 +10,7 @@ const SUBPAGES = [
   { label: 'Tabela de Cargos', href: '/dp/cargos' },
   { label: 'Departamentos', href: '/dp/departamentos' },
   { label: 'Benefícios', href: '/dp/beneficios' },
+  { label: 'Afastamentos', href: '/dp/afastamentos' },
   { label: 'Uniforme e EPI', href: '/dp/uniforme' },
   { label: 'Ponto Eletrônico', href: '/dp/ponto' },
   { label: 'Folha de Pagamento', href: '/dp/folha' },

@@ -86,6 +86,12 @@ export class AccidentsService {
     });
 
     if (dto.comAfastamento) {
+      // Motivo "01 -- acidente/doença relacionada ao trabalho" (Tabela 18 eSocial), semeado
+      // no signup junto com o módulo de Afastamentos -- liga este LeaveRecord ao CAT em vez
+      // de duplicar o dado, pra ele aparecer corretamente categorizado em dp/afastamentos.
+      const motivoOcupacional = await db.motivoAfastamento.findFirst({
+        where: { tenantId: getRequestContext().tenantId, codigoEsocial: '01' },
+      });
       await db.leaveRecord.create({
         data: {
           tenantId: getRequestContext().tenantId,
@@ -93,6 +99,8 @@ export class AccidentsService {
           tipo: 'Acidente de trabalho',
           inicio: dataAcidente,
           retorno: diasAfastamento > 0 ? addDays(dataAcidente, diasAfastamento) : undefined,
+          accidentId: accident.id,
+          motivoAfastamentoId: motivoOcupacional?.id,
         },
       });
     }

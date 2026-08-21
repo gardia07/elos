@@ -21,6 +21,7 @@ import { TerminationsModule } from './rh/terminations/terminations.module';
 import { PainelModule } from './rh/painel/painel.module';
 import { DocumentTemplatesModule } from './rh/document-templates/document-templates.module';
 import { DeadlinesModule } from './dp/deadlines/deadlines.module';
+import { AfastamentosModule } from './dp/afastamentos/afastamentos.module';
 import { AgreementsModule } from './dp/agreements/agreements.module';
 import { JobGradesModule } from './dp/job-grades/job-grades.module';
 import { DepartmentsModule } from './dp/departments/departments.module';
@@ -68,6 +69,7 @@ import { SearchModule } from './search/search.module';
     PainelModule,
     DocumentTemplatesModule,
     DeadlinesModule,
+    AfastamentosModule,
     AgreementsModule,
     JobGradesModule,
     DepartmentsModule,

@@ -39,6 +39,7 @@ export const COMPLIANCE_DOCUMENTOS_DEFAULTS: ComplianceDocumentoDefault[] = [
   { nome: 'ASO periódico', categoria: 'SAUDE_OCUPACIONAL', requerAssinaturaColaborador: false, requerAssinaturaEmpresa: false, validadeDias: 365 },
   { nome: 'Certificado de treinamento NR', categoria: 'SAUDE_OCUPACIONAL', requerAssinaturaColaborador: false, requerAssinaturaEmpresa: false, validadeDias: null },
   { nome: 'Checklist rescisório completo', categoria: 'RESCISORIO', requerAssinaturaColaborador: true, requerAssinaturaEmpresa: true, validadeDias: null },
+  { nome: 'Comunicação de recaída ao INSS', categoria: 'AFASTAMENTO', requerAssinaturaColaborador: false, requerAssinaturaEmpresa: false, validadeDias: null },
 ];
 
 export interface ComplianceRegraDefault {
@@ -56,7 +57,8 @@ export interface ComplianceRegraDefault {
     | 'ADVERTENCIA_SUSPENSAO'
     | 'ASO_PERIODICO_VENCIDO'
     | 'TREINAMENTO_NR_VENCIDO'
-    | 'DESLIGAMENTO';
+    | 'DESLIGAMENTO'
+    | 'AFASTAMENTO_RECAIDA_15_DIAS';
   documentoNome: string;
   condicaoAdicional: string | null;
   prazoDias: number;
@@ -80,4 +82,12 @@ export const COMPLIANCE_REGRAS_DEFAULTS: ComplianceRegraDefault[] = [
   { tipoEventoGatilho: 'ASO_PERIODICO_VENCIDO', documentoNome: 'ASO periódico', condicaoAdicional: null, prazoDias: 0, bloqueante: true, baseLegal: 'NR-7' },
   { tipoEventoGatilho: 'TREINAMENTO_NR_VENCIDO', documentoNome: 'Certificado de treinamento NR', condicaoAdicional: null, prazoDias: 0, bloqueante: true, baseLegal: 'NR aplicável (ex.: NR-35 anual)' },
   { tipoEventoGatilho: 'DESLIGAMENTO', documentoNome: 'Checklist rescisório completo', condicaoAdicional: null, prazoDias: 10, bloqueante: true, baseLegal: 'Art. 477 CLT' },
+  {
+    tipoEventoGatilho: 'AFASTAMENTO_RECAIDA_15_DIAS',
+    documentoNome: 'Comunicação de recaída ao INSS',
+    condicaoAdicional: 'Episódio de afastamento pelo mesmo CID cruzou 15 dias acumulados dentro da janela de 60 dias -- comunicar ao INSS que se trata do mesmo motivo (campo infoMesmoMtv do S-2230)',
+    prazoDias: 2,
+    bloqueante: false,
+    baseLegal: 'Art. 75, §§3º-5º, Decreto 3.048/99',
+  },
 ];

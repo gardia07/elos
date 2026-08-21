@@ -86,7 +86,7 @@ export class TerminationsService {
       termination.docs as Record<string, boolean>,
       termination.tipo,
     );
-    const podeEfetivar = this.podeEfetivar(termination, readiness);
+    const podeEfetivar = await this.podeEfetivar(termination, readiness);
     return { ...termination, checklist, auditLog, readiness, podeEfetivar };
   }
 
@@ -199,11 +199,11 @@ export class TerminationsService {
     };
   }
 
-  /** Espelha `pode_efetivar` da espec: checklist bloqueante completo + cálculo gerado + motivo detalhado quando exigido. */
-  private podeEfetivar(
-    t: { tipo: string; motivo: string | null; calculoRescisao: unknown },
+  /** Espelha `pode_efetivar` da espec: checklist bloqueante completo + cálculo gerado + motivo detalhado quando exigido + estabilidade acidentária, quando aplicável. */
+  private async podeEfetivar(
+    t: { employeeId: string; tipo: string; motivo: string | null; calculoRescisao: unknown },
     readiness: { ready: boolean; pendingBlocking: string[] },
-  ): { ready: boolean; pendentes: string[] } {
+  ): Promise<{ ready: boolean; pendentes: string[] }> {
     const pendentes = [...readiness.pendingBlocking];
     if (!t.calculoRescisao)
       pendentes.push('Cálculo da rescisão ainda não gerado');
@@ -215,7 +215,27 @@ export class TerminationsService {
         `Motivo detalhado (mínimo ${MOTIVO_MIN_LENGTH} caracteres)`,
       );
     }
+    if (t.tipo === 'SEM_JUSTA_CAUSA') {
+      const estabilidadeAte = await this.estabilidadeAcidentariaAte(t.employeeId);
+      if (estabilidadeAte && estabilidadeAte >= new Date()) {
+        pendentes.push(
+          `Estabilidade acidentária vigente até ${estabilidadeAte.toLocaleDateString('pt-BR')} (Lei 8.213/91, art. 118) — desligamento sem justa causa bloqueado`,
+        );
+      }
+    }
     return { ready: pendentes.length === 0, pendentes };
+  }
+
+  /** Retorno do afastamento ocupacional mais recente + 12 meses, quando o motivo gera estabilidade -- null se não houver nenhum encerrado. */
+  private async estabilidadeAcidentariaAte(employeeId: string): Promise<Date | null> {
+    const leave = await this.db().leaveRecord.findFirst({
+      where: { employeeId, retorno: { not: null }, motivoAfastamento: { geraEstabilidade: true } },
+      orderBy: { retorno: 'desc' },
+    });
+    if (!leave?.retorno) return null;
+    const ate = new Date(leave.retorno);
+    ate.setMonth(ate.getMonth() + 12);
+    return ate;
   }
 
   async toggleDoc(id: string, dto: ToggleTerminationDocDto) {
@@ -353,7 +373,7 @@ export class TerminationsService {
         t.docs as Record<string, boolean>,
         t.tipo,
       );
-      const { ready, pendentes } = this.podeEfetivar(t, readiness);
+      const { ready, pendentes } = await this.podeEfetivar(t, readiness);
       if (!ready) {
         throw new BadRequestException(
           `Não é possível avançar: ${pendentes.join(', ')}`,

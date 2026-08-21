@@ -18,6 +18,7 @@ import { DEFAULT_AGENDA_CATEGORIAS } from '../agenda/default-categorias';
 import { DEFAULT_ATALHOS_EXTERNOS } from '../ferramentas/default-atalhos-externos';
 import { RISK_WEIGHT_DEFAULTS } from '../risk/risk-weights';
 import { COMPLIANCE_DOCUMENTOS_DEFAULTS, COMPLIANCE_REGRAS_DEFAULTS } from '../compliance-engine/compliance-rules-defaults';
+import { MOTIVOS_AFASTAMENTO_DEFAULTS } from '../dp/afastamentos/motivos-afastamento-defaults';
 import { JwtPayload } from '../common/jwt-payload';
 
 // Sem 0/O/1/I/L — caracteres fáceis de confundir quando o código é digitado à mão no login.
@@ -201,6 +202,18 @@ export class AuthService {
         prazoDias: r.prazoDias,
         bloqueante: r.bloqueante,
         baseLegal: r.baseLegal,
+        sistema: true,
+      })),
+    });
+
+    await this.prisma.forTenant(tenantId).motivoAfastamento.createMany({
+      data: MOTIVOS_AFASTAMENTO_DEFAULTS.map((m) => ({
+        tenantId,
+        codigoEsocial: m.codigoEsocial,
+        descricao: m.descricao,
+        natureza: m.natureza,
+        exigeCid: m.exigeCid,
+        geraEstabilidade: m.geraEstabilidade,
         sistema: true,
       })),
     });

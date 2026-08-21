@@ -130,6 +130,8 @@ model Tenant {
   regrasConformidade           RegraConformidade[]
   pendenciasConformidade       Pendencia[]
   alertasConformidade          AlertaConformidade[]
+  motivosAfastamento           MotivoAfastamento[]
+  afastamentoEpisodios         AfastamentoEpisodio[]
 
   metasPessoais               MetaPessoal[]
   habitosPessoais             HabitoPessoal[]
@@ -583,6 +585,7 @@ model Employee {
   faltasInjustificadas  FaltaInjustificada[]
   eventosColaborador    EventoColaborador[]
   pendenciasConformidade Pendencia[]
+  afastamentoEpisodios  AfastamentoEpisodio[]
   jornadas              Jornada[]
   batidas               Batida[]
   ajustesPonto          AjustePonto[]
@@ -853,6 +856,63 @@ model VacationRequest {
   @@map("vacation_requests")
 }
 
+/// Motivo de afastamento na natureza que o motor de 60 dias precisa saber:
+/// exige CID (saude) ou nao (licenca administrativa), e se gera estabilidade
+/// provisoria (acidente de trabalho / doenca ocupacional equiparada).
+enum NaturezaAfastamento {
+  OCUPACIONAL
+  NAO_OCUPACIONAL
+
+  @@map("natureza_afastamento")
+}
+
+/// Catalogo de motivos de afastamento por tenant (espelha a Tabela 18 do
+/// eSocial, mesmo padrao de TipoDocumento: semeado no signup, editavel
+/// depois sem deploy). codigoEsocial fica nullable -- so os codigos ja
+/// confirmados (01, 03) sao semeados de inicio; o catalogo cresce depois
+/// sem precisar de migracao nova.
+model MotivoAfastamento {
+  id              String              @id @default(uuid()) @db.Uuid
+  tenantId        String              @db.Uuid
+  codigoEsocial   String?
+  descricao       String
+  natureza        NaturezaAfastamento
+  exigeCid        Boolean             @default(true)
+  geraEstabilidade Boolean            @default(false)
+  ativo           Boolean             @default(true)
+  sistema         Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leaveRecords LeaveRecord[]
+
+  @@index([tenantId])
+  @@map("motivos_afastamento")
+}
+
+/// Agrupador interno (nao existe como conceito no eSocial) da "cadeia" de
+/// afastamentos pelo mesmo CID dentro da janela de 60 dias (Lei 8.213/91
+/// art. 60 §3º; Decreto 3.048/99 art. 75). Deliberadamente enxuto -- dias
+/// acumulados, split empresa/INSS, janela de 60 dias e status (aberto/
+/// encerrado) NAO sao colunas, sao sempre calculados a partir dos
+/// LeaveRecord vinculados (ver afastamento-episodio.util.ts), mesmo
+/// principio ja usado em PeriodoAquisitivo -- pra nunca desalinhar de um
+/// cache.
+model AfastamentoEpisodio {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  employeeId String   @db.Uuid
+  cid        String
+  createdAt  DateTime @default(now())
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveRecords LeaveRecord[]
+
+  @@index([tenantId, employeeId, cid])
+  @@map("afastamento_episodios")
+}
+
 model LeaveRecord {
   id          String    @id @default(uuid()) @db.Uuid
   tenantId    String    @db.Uuid
@@ -863,12 +923,32 @@ model LeaveRecord {
   esocialSent Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
-  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  employee          Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  // Campos do modulo de Afastamentos (nullable -- aditivo, nao quebra os
+  // registros antigos nem os consumidores existentes de LeaveRecord).
+  motivoAfastamentoId String?   @db.Uuid
+  /// Dado de saude sensivel (LGPD art. 5º, II) -- leitura restrita a
+  /// ADMIN/RH_GENERALISTA e mascarada no service pra outras roles; nunca
+  /// mapeado pro eSocial (ver AfastamentosService).
+  cid                 String?
+  cidDescricao        String?
+  medicoNome          String?
+  medicoCrm           String?
+  dataFimPrevista     DateTime? @db.Date
+  episodioId          String?   @db.Uuid
+  /// Liga ao acidente que originou este afastamento, quando aplicavel --
+  /// reaproveita o Accident/CAT ja existente em vez de duplicar o dado.
+  accidentId          String?   @db.Uuid
+
+  tenant            Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee          Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  motivoAfastamento MotivoAfastamento?   @relation(fields: [motivoAfastamentoId], references: [id])
+  episodio          AfastamentoEpisodio? @relation(fields: [episodioId], references: [id])
+  accident          Accident?            @relation(fields: [accidentId], references: [id], onDelete: SetNull)
   documentos        EmployeeDocumento[]
   periodosSuspensos PeriodoAquisitivo[]
 
   @@index([tenantId, employeeId])
+  @@index([episodioId])
   @@map("leave_records")
 }
 
@@ -2074,8 +2154,9 @@ model Accident {
   notaEncerramento String?
   createdAt        DateTime       @default(now())
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveRecords LeaveRecord[]
 
   @@index([tenantId])
   @@map("accidents")
@@ -2223,6 +2304,7 @@ enum TipoEventoColaborador {
   ASO_PERIODICO_VENCIDO
   TREINAMENTO_NR_VENCIDO
   DESLIGAMENTO
+  AFASTAMENTO_RECAIDA_15_DIAS
 
   @@map("tipo_evento_colaborador")
 }
