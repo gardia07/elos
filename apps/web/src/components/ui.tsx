@@ -56,11 +56,13 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'border border-transparent px-3.5 py-2 text-sm font-medium bg-accent text-on-accent hover:opacity-90',
   secondary: 'border border-border-strong px-3.5 py-2 text-sm font-medium bg-surface text-text hover:border-accent',
   danger: 'border border-transparent px-3.5 py-2 text-sm font-medium bg-danger text-white hover:opacity-90',
-  // Mesmo formato do botão "Anexar" (outline pequeno) -- só a cor do texto muda pra sinalizar cancelamento.
+  // Mesmo formato do secondary (outline) -- em todo call site aparece ao lado de um primary/danger/
+  // secondary de tamanho normal (Confirmar+Cancelar, Salvar+Cancelar, Aprovar+Reprovar+Cancelar), então
+  // precisa da mesma altura. Só a cor do texto muda pra sinalizar cancelamento.
   // Reaproveita --danger (mesmo tom do badge "Conformidade" vermelho) em vez de uma cor nova.
-  cancel: 'border border-border-strong px-2 py-1 text-xs bg-surface text-danger hover:bg-danger/10',
-  // Mesmo formato de outline pequeno do "cancel", mas com a cor de accent (o azul-acinzentado do botão "primary").
-  confirm: 'border border-border-strong px-2 py-1 text-xs bg-surface text-accent hover:bg-tint-blue',
+  cancel: 'border border-border-strong px-3.5 py-2 text-sm font-medium bg-surface text-danger hover:bg-danger/10',
+  // Mesmo formato do "cancel", mas com a cor de accent (o azul-acinzentado do botão "primary").
+  confirm: 'border border-border-strong px-3.5 py-2 text-sm font-medium bg-surface text-accent hover:bg-tint-blue',
 };
 
 // Exportado pra estilizar elementos que não podem ser um <button> (ex.: <Link> que navega mas
