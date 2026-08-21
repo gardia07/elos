@@ -2264,11 +2264,11 @@ export default function EmployeeProfilePage() {
             <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Contatos de emergência</h4>
               {e.contatosEmergencia.length === 0 ? (
-                <p className="text-sm text-text-tertiary">Nenhum contato cadastrado.</p>
+                <p className="text-xs text-text-tertiary">Nenhum contato cadastrado.</p>
               ) : (
-                <div className="flex flex-col gap-1 text-sm">
+                <div className="flex flex-col gap-1 text-xs">
                   {e.contatosEmergencia.map((c) => (
-                    <div key={c.id}>
+                    <div key={c.id} className="font-medium text-[#2B2B2B]">
                       {c.nome} · {c.parentesco}
                       {c.telefone ? ` · ${c.telefone}` : ''}
                     </div>
@@ -2282,10 +2282,10 @@ export default function EmployeeProfilePage() {
               <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
                 <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] sm:grid-cols-3 sm:divide-x sm:divide-y-0 print:grid-cols-3 print:divide-x print:divide-y-0">
                   <div className="p-4">
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Período Aquisitivo</div>
-                    <table className="w-full text-sm">
+                    <div className="mb-2 text-[9px] uppercase tracking-wide text-[#8B8B8B]">Período Aquisitivo</div>
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left font-bold text-[#8B8B8B]">
+                        <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                           <th className="pb-2">Início</th>
                           <th className="pb-2">Fim</th>
                           <th className="pb-2 print:hidden">Situação</th>
@@ -2293,7 +2293,7 @@ export default function EmployeeProfilePage() {
                       </thead>
                       <tbody>
                         {(feriasHistorico?.periodos ?? []).map((p) => (
-                          <tr key={p.id} className="border-t border-divider align-top">
+                          <tr key={p.id} className="border-t border-divider align-top font-medium text-[#2B2B2B]">
                             <td className="py-2">{formatDate(p.dataInicio)}</td>
                             <td className="py-2">{formatDate(p.dataFim)}</td>
                             <td className="py-2 print:hidden">
@@ -2319,10 +2319,10 @@ export default function EmployeeProfilePage() {
                   </div>
 
                   <div className="p-4">
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Usufruto</div>
-                    <table className="w-full text-sm">
+                    <div className="mb-2 text-[9px] uppercase tracking-wide text-[#8B8B8B]">Usufruto</div>
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left font-bold text-[#8B8B8B]">
+                        <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                           <th className="pb-2">Início</th>
                           <th className="pb-2">Fim</th>
                         </tr>
@@ -2332,7 +2332,7 @@ export default function EmployeeProfilePage() {
                           .flatMap((p) => p.fracoes)
                           .filter((f) => f.statusEfetivo === 'CONCLUIDA')
                           .map((f) => (
-                            <tr key={f.id} className="border-t border-divider">
+                            <tr key={f.id} className="border-t border-divider font-medium text-[#2B2B2B]">
                               <td className="py-2">{formatDate(f.dataInicio)}</td>
                               <td className="py-2">{formatDate(f.dataFim)}</td>
                             </tr>
@@ -2349,10 +2349,10 @@ export default function EmployeeProfilePage() {
                   </div>
 
                   <div className="p-4">
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Abono Pecuniário</div>
-                    <table className="w-full text-sm">
+                    <div className="mb-2 text-[9px] uppercase tracking-wide text-[#8B8B8B]">Abono Pecuniário</div>
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left font-bold text-[#8B8B8B]">
+                        <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                           <th className="pb-2">Período</th>
                           <th className="pb-2">Dias vendidos</th>
                         </tr>
@@ -2362,7 +2362,7 @@ export default function EmployeeProfilePage() {
                           .flatMap((p) => p.fracoes)
                           .filter((f) => f.statusEfetivo === 'CONCLUIDA' && f.diasAbono > 0)
                           .map((f) => (
-                            <tr key={f.id} className="border-t border-divider">
+                            <tr key={f.id} className="border-t border-divider font-medium text-[#2B2B2B]">
                               <td className="py-2">{formatDate(f.dataInicio)} a {formatDate(f.dataFim)}</td>
                               <td className="py-2">{f.diasAbono}</td>
                             </tr>
@@ -2384,9 +2384,9 @@ export default function EmployeeProfilePage() {
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Alterações de salário, cargo e/ou função</h4>
               <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-left font-bold text-[#8B8B8B]">
+                    <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                       <th className="pb-2">Vigente desde</th>
                       <th className="pb-2">Cargo</th>
                       <th className="pb-2">Salário</th>
@@ -2395,13 +2395,13 @@ export default function EmployeeProfilePage() {
                   </thead>
                   <tbody>
                     {e.cargoSalarioHistorico.map((h) => (
-                      <tr key={h.id} className="border-t border-divider align-top">
+                      <tr key={h.id} className="border-t border-divider align-top font-medium text-[#2B2B2B]">
                         <td className="py-2">{formatDate(h.vigenciaDesde)}</td>
                         <td className="py-2">{h.cargo}</td>
                         <td className="py-2">{formatBRL(Number(h.salario))}</td>
                         <td className="py-2">
                           {h.motivo}
-                          {h.observacao && <div className="text-xs text-text-tertiary">{h.observacao}</div>}
+                          {h.observacao && <div className="text-[10px] font-normal text-text-tertiary">{h.observacao}</div>}
                         </td>
                       </tr>
                     ))}
@@ -2420,9 +2420,9 @@ export default function EmployeeProfilePage() {
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Afastamentos</h4>
               <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-left font-bold text-[#8B8B8B]">
+                    <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                       <th className="pb-2">Tipo</th>
                       <th className="pb-2">Início</th>
                       <th className="pb-2">Retorno</th>
@@ -2430,7 +2430,7 @@ export default function EmployeeProfilePage() {
                   </thead>
                   <tbody>
                     {e.leaveRecords.map((l) => (
-                      <tr key={l.id} className="border-t border-divider">
+                      <tr key={l.id} className="border-t border-divider font-medium text-[#2B2B2B]">
                         <td className="py-2">{l.tipo}</td>
                         <td className="py-2">{formatDate(l.inicio)}</td>
                         <td className="py-2">{l.retorno ? formatDate(l.retorno) : 'Em andamento'}</td>
@@ -2453,10 +2453,10 @@ export default function EmployeeProfilePage() {
               <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
                 <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] sm:grid-cols-2 sm:divide-x sm:divide-y-0 print:grid-cols-2 print:divide-x print:divide-y-0">
                   <div className="p-4">
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Acidentes de trabalho e doenças ocupacionais</div>
-                    <table className="w-full text-sm">
+                    <div className="mb-2 text-[9px] uppercase tracking-wide text-[#8B8B8B]">Acidentes de trabalho e doenças ocupacionais</div>
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left font-bold text-[#8B8B8B]">
+                        <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                           <th className="pb-2">Data</th>
                           <th className="pb-2">Tipo</th>
                           <th className="pb-2">Afastamento</th>
@@ -2465,7 +2465,7 @@ export default function EmployeeProfilePage() {
                       </thead>
                       <tbody>
                         {e.accidents.map((a) => (
-                          <tr key={a.id} className="border-t border-divider align-top">
+                          <tr key={a.id} className="border-t border-divider align-top font-medium text-[#2B2B2B]">
                             <td className="py-2">{formatDate(a.dataAcidente)}</td>
                             <td className="py-2">{ACCIDENT_TIPO_LABEL[a.tipoAcidente]}</td>
                             <td className="py-2">{a.comAfastamento ? `${a.diasAfastamento} dia(s)` : 'Não'}</td>
@@ -2484,13 +2484,13 @@ export default function EmployeeProfilePage() {
                   </div>
 
                   <div className="p-4">
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B8B8B]">Rescisão de contrato de trabalho</div>
+                    <div className="mb-2 text-[9px] uppercase tracking-wide text-[#8B8B8B]">Rescisão de contrato de trabalho</div>
                     {e.terminations.length === 0 ? (
-                      <p className="text-sm text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
+                      <p className="text-xs text-text-tertiary">Colaborador ativo — sem rescisão registrada.</p>
                     ) : (
-                      <div className="flex flex-col gap-1 text-sm">
+                      <div className="flex flex-col gap-1 text-xs">
                         {e.terminations.map((t) => (
-                          <div key={t.id}>
+                          <div key={t.id} className="font-medium text-[#2B2B2B]">
                             Data da saída: {formatDate(t.data)} · Tipo: {TERMINATION_TIPO_LABEL[t.tipo]}
                           </div>
                         ))}
@@ -2504,9 +2504,9 @@ export default function EmployeeProfilePage() {
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Ocorrências</h4>
               <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-left font-bold text-[#8B8B8B]">
+                    <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                       <th className="pb-2">Data</th>
                       <th className="pb-2">Tipo</th>
                       <th className="pb-2">Descrição</th>
@@ -2515,7 +2515,7 @@ export default function EmployeeProfilePage() {
                   </thead>
                   <tbody>
                     {e.ocorrencias.map((o) => (
-                      <tr key={o.id} className="border-t border-divider align-top">
+                      <tr key={o.id} className="border-t border-divider align-top font-medium text-[#2B2B2B]">
                         <td className="py-2">{formatDate(o.data)}</td>
                         <td className="py-2">{o.tipo}</td>
                         <td className="py-2">{o.descricao}</td>
