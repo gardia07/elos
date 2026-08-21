@@ -2277,11 +2277,10 @@ export default function EmployeeProfilePage() {
               )}
             </Card>
 
-            <div>
-              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias</h4>
-              <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
-                <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] sm:grid-cols-3 sm:divide-x sm:divide-y-0 print:grid-cols-3 print:divide-x print:divide-y-0">
-                  <div className="p-4">
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
+              <h4 className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Férias</h4>
+              <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] border-t border-[#E2E0DA] sm:grid-cols-3 sm:divide-x sm:divide-y-0 print:grid-cols-3 print:divide-x print:divide-y-0">
+                <div className="p-4">
                     <div className="mb-2 text-[9px] uppercase tracking-wide text-[#8B8B8B]">Período Aquisitivo</div>
                     <table className="w-full text-xs">
                       <thead>
@@ -2376,15 +2375,13 @@ export default function EmployeeProfilePage() {
                         )}
                       </tbody>
                     </table>
-                  </div>
                 </div>
-              </Card>
-            </div>
+              </div>
+            </Card>
 
-            <div>
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Alterações de salário, cargo e/ou função</h4>
-              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
-                <table className="w-full text-xs">
+              <table className="w-full text-xs">
                   <thead>
                     <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                       <th className="pb-2">Vigente desde</th>
@@ -2413,14 +2410,12 @@ export default function EmployeeProfilePage() {
                       </tr>
                     )}
                   </tbody>
-                </table>
-              </Card>
-            </div>
+              </table>
+            </Card>
 
-            <div>
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Afastamentos</h4>
-              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
-                <table className="w-full text-xs">
+              <table className="w-full text-xs">
                   <thead>
                     <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                       <th className="pb-2">Tipo</th>
@@ -2444,15 +2439,13 @@ export default function EmployeeProfilePage() {
                       </tr>
                     )}
                   </tbody>
-                </table>
-              </Card>
-            </div>
+              </table>
+            </Card>
 
-            <div>
-              <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Acidentes de trabalho e rescisão de contrato</h4>
-              <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
-                <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] sm:grid-cols-2 sm:divide-x sm:divide-y-0 print:grid-cols-2 print:divide-x print:divide-y-0">
-                  <div className="p-4">
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white p-0">
+              <h4 className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Acidentes de trabalho e rescisão de contrato</h4>
+              <div className="grid grid-cols-1 divide-y divide-[#E2E0DA] border-t border-[#E2E0DA] sm:grid-cols-2 sm:divide-x sm:divide-y-0 print:grid-cols-2 print:divide-x print:divide-y-0">
+                <div className="p-4">
                     <div className="mb-2 text-[9px] uppercase tracking-wide text-[#8B8B8B]">Acidentes de trabalho e doenças ocupacionais</div>
                     <table className="w-full text-xs">
                       <thead>
@@ -2496,15 +2489,13 @@ export default function EmployeeProfilePage() {
                         ))}
                       </div>
                     )}
-                  </div>
                 </div>
-              </Card>
-            </div>
+              </div>
+            </Card>
 
-            <div>
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Ocorrências</h4>
-              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
-                <table className="w-full text-xs">
+              <table className="w-full text-xs">
                   <thead>
                     <tr className="text-left text-[9px] uppercase tracking-wide text-[#8B8B8B]">
                       <th className="pb-2">Data</th>
@@ -2530,16 +2521,13 @@ export default function EmployeeProfilePage() {
                       </tr>
                     )}
                   </tbody>
-                </table>
-              </Card>
-            </div>
+              </table>
+            </Card>
 
-            <div>
+            <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
               <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#1F2430]">Observações</h4>
-              <Card className="rounded-[10px] border-[#E2E0DA] bg-white">
-                <EmptyState>Sem observações registradas.</EmptyState>
-              </Card>
-            </div>
+              <EmptyState>Sem observações registradas.</EmptyState>
+            </Card>
 
             <div className="mt-4 flex flex-col gap-10 print:mt-10">
               <p className="text-xs text-[#8B8B8B]">
