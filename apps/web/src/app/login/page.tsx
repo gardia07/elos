@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { Button } from '@/components/ui';
 
 type Step = 'credentials' | 'mfa' | 'forgot';
 
@@ -81,13 +82,9 @@ export default function LoginPage() {
             <Field label="E-mail" type="email" name="username" autoComplete="username" value={email} onChange={setEmail} />
             <Field label="Senha" type="password" name="current-password" autoComplete="current-password" value={password} onChange={setPassword} />
             {error && <p className="text-sm text-danger">{error}</p>}
-            <button
-              type="submit"
-              disabled={loginMutation.isPending}
-              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
-            >
+            <Button type="submit" disabled={loginMutation.isPending} className="mt-2">
               {loginMutation.isPending ? 'Entrando…' : 'Entrar'}
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => {
@@ -124,13 +121,9 @@ export default function LoginPage() {
             )}
             <Field label="Código" value={code} onChange={setCode} maxLength={6} />
             {error && <p className="text-sm text-danger">{error}</p>}
-            <button
-              type="submit"
-              disabled={mfaMutation.isPending}
-              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
-            >
+            <Button type="submit" disabled={mfaMutation.isPending} className="mt-2">
               {mfaMutation.isPending ? 'Verificando…' : 'Verificar'}
-            </button>
+            </Button>
           </form>
         )}
 
@@ -147,13 +140,9 @@ export default function LoginPage() {
                 <p className="text-sm text-text-secondary">Informe sua empresa e e-mail para receber o link de redefinição.</p>
                 <Field label="Código da empresa" name="organization" autoComplete="organization" value={tenantSlug} onChange={setTenantSlug} />
                 <Field label="E-mail" type="email" name="username" autoComplete="username" value={email} onChange={setEmail} />
-                <button
-                  type="submit"
-                  disabled={forgotMutation.isPending}
-                  className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
-                >
+                <Button type="submit" disabled={forgotMutation.isPending} className="mt-2">
                   {forgotMutation.isPending ? 'Enviando…' : 'Enviar link de recuperação'}
-                </button>
+                </Button>
               </form>
             ) : (
               <div className="flex flex-col gap-3">

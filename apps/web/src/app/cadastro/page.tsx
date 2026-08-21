@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { buttonClasses, Button } from '@/components/ui';
 
 export default function CadastroPage() {
   const [companyName, setCompanyName] = useState('');
@@ -47,13 +48,9 @@ export default function CadastroPage() {
             <Field label="E-mail" type="email" value={email} onChange={setEmail} />
             <Field label="Senha" type="password" value={password} onChange={setPassword} minLength={8} />
             {error && <p className="text-sm text-danger">{error}</p>}
-            <button
-              type="submit"
-              disabled={registerMutation.isPending}
-              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
-            >
+            <Button type="submit" disabled={registerMutation.isPending} className="mt-2">
               {registerMutation.isPending ? 'Criando…' : 'Criar empresa'}
-            </button>
+            </Button>
             <Link href="/login" className="text-center text-sm text-text-secondary hover:text-accent">
               Já tenho uma conta
             </Link>
@@ -64,10 +61,7 @@ export default function CadastroPage() {
               Empresa criada. Guarde este código — é ele que você (e sua equipe) vai usar para entrar:
             </p>
             <p className="rounded-container bg-tint-blue px-3 py-2 text-center text-lg font-semibold tracking-[0.15em] text-text">{tenantSlug}</p>
-            <Link
-              href="/login"
-              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-center text-sm font-semibold text-on-accent transition"
-            >
+            <Link href="/login" className={buttonClasses('primary', 'mt-2 text-center')}>
               Ir para o login
             </Link>
           </div>

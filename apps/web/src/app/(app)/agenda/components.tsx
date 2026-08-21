@@ -723,14 +723,14 @@ function SubtarefasSection({ agendaItemId }: { agendaItemId: string }) {
           }}
           className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
-        <button
+        <Button
           type="button"
           disabled={!titulo.trim() || criar.isPending}
           onClick={() => criar.mutate()}
-          className="flex items-center justify-center rounded-control bg-accent px-3 text-on-accent disabled:opacity-50"
+          className="flex items-center justify-center"
         >
           <Plus className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -782,14 +782,14 @@ function CommentsSection({ agendaItemId }: { agendaItemId: string }) {
           }}
           className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
-        <button
+        <Button
           type="button"
           disabled={!texto.trim() || criar.isPending}
           onClick={() => criar.mutate()}
-          className="flex items-center justify-center rounded-control bg-accent px-3 text-on-accent disabled:opacity-50"
+          className="flex items-center justify-center"
         >
           <Send className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

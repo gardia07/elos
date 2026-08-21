@@ -47,27 +47,36 @@ export function Badge({ tone = 'grey', children }: { tone?: keyof typeof BADGE_C
   );
 }
 
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'cancel' | 'confirm';
+
+// Mesma altura/padding/raio em todas as variantes de tamanho "padrao" (primary/secondary/danger) --
+// referencia e o outline (secondary), que ja usava esse formato. primary/danger ganham border
+// transparente pra ocupar o mesmo espaco do border real do secondary (senao ficam ~2px mais baixos).
+const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
+  primary: 'border border-transparent px-3.5 py-2 text-sm font-medium bg-accent text-on-accent hover:opacity-90',
+  secondary: 'border border-border-strong px-3.5 py-2 text-sm font-medium bg-surface text-text hover:border-accent',
+  danger: 'border border-transparent px-3.5 py-2 text-sm font-medium bg-danger text-white hover:opacity-90',
+  // Mesmo formato do botão "Anexar" (outline pequeno) -- só a cor do texto muda pra sinalizar cancelamento.
+  // Reaproveita --danger (mesmo tom do badge "Conformidade" vermelho) em vez de uma cor nova.
+  cancel: 'border border-border-strong px-2 py-1 text-xs bg-surface text-danger hover:bg-danger/10',
+  // Mesmo formato de outline pequeno do "cancel", mas com a cor de accent (o azul-acinzentado do botão "primary").
+  confirm: 'border border-border-strong px-2 py-1 text-xs bg-surface text-accent hover:bg-tint-blue',
+};
+
+// Exportado pra estilizar elementos que não podem ser um <button> (ex.: <Link> que navega mas
+// visualmente é um botão primário) com o mesmo formato, sem duplicar os valores de padding/raio/fonte.
+export function buttonClasses(variant: ButtonVariant = 'primary', className = '') {
+  return `rounded-control transition disabled:cursor-not-allowed disabled:opacity-50 ${BUTTON_VARIANTS[variant]} ${className}`;
+}
+
 export function Button({
   children,
   variant = 'primary',
   className = '',
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'cancel' | 'confirm' }) {
-  const variants: Record<string, string> = {
-    primary: 'px-3.5 py-2 text-sm font-medium bg-accent text-on-accent hover:opacity-90',
-    secondary: 'px-3.5 py-2 text-sm font-medium border border-border-strong bg-surface text-text hover:border-accent',
-    danger: 'px-3.5 py-2 text-sm font-medium bg-danger text-white hover:opacity-90',
-    // Mesmo formato do botão "Anexar" (outline pequeno) -- só a cor do texto muda pra sinalizar cancelamento.
-    // Reaproveita --danger (mesmo tom do badge "Conformidade" vermelho) em vez de uma cor nova.
-    cancel: 'px-2 py-1 text-xs border border-border-strong bg-surface text-danger hover:bg-danger/10',
-    // Mesmo formato de outline pequeno do "cancel", mas com a cor de accent (o azul-acinzentado do botão "primary").
-    confirm: 'px-2 py-1 text-xs border border-border-strong bg-surface text-accent hover:bg-tint-blue',
-  };
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
   return (
-    <button
-      className={`rounded-control transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
-      {...props}
-    >
+    <button className={buttonClasses(variant, className)} {...props}>
       {children}
     </button>
   );

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Clock, ExternalLink, Pin, Plus, UserPlus } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import { Badge, Card } from '@/components/ui';
+import { Badge, Button, Card } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { parseIsoUtc } from '../agenda/lib';
 import type { Usuario } from '../agenda/types';
@@ -244,15 +244,11 @@ export function TarefasDoDia() {
           value={novoTitulo}
           onChange={(e) => setNovoTitulo(e.target.value)}
           placeholder="Adicionar tarefa…"
-          className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-1.5 text-sm"
+          className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
-        <button
-          type="submit"
-          disabled={criarManual.isPending || !novoTitulo.trim()}
-          className="flex items-center justify-center rounded-control bg-accent px-3 py-1.5 text-on-accent transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" disabled={criarManual.isPending || !novoTitulo.trim()} className="flex items-center justify-center">
           <Plus className="h-4 w-4" />
-        </button>
+        </Button>
       </form>
     </Card>
   );

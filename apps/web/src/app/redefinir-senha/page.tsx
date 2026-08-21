@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { buttonClasses, Button } from '@/components/ui';
 
 export default function RedefinirSenhaPage() {
   return (
@@ -41,7 +42,7 @@ function RedefinirSenhaForm() {
         ) : success ? (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-success">Senha redefinida com sucesso.</p>
-            <Link href="/login" className="rounded-control bg-accent px-4 py-2.5 text-center text-sm font-semibold text-on-accent">
+            <Link href="/login" className={buttonClasses('primary', 'text-center')}>
               Ir para o login
             </Link>
           </div>
@@ -82,13 +83,9 @@ function RedefinirSenhaForm() {
               />
             </label>
             {error && <p className="text-sm text-danger">{error}</p>}
-            <button
-              type="submit"
-              disabled={reset.isPending}
-              className="mt-2 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition disabled:opacity-60"
-            >
+            <Button type="submit" disabled={reset.isPending} className="mt-2">
               {reset.isPending ? 'Salvando…' : 'Redefinir senha'}
-            </button>
+            </Button>
           </form>
         )}
       </div>

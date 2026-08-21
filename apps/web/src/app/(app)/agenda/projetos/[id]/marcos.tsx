@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Flag, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import type { ProjetoMarco } from '../../types';
 import { localIso, parseIsoUtc } from '../../lib';
@@ -72,14 +73,14 @@ export function ProjetoMarcos({ projetoId }: { projetoId: string }) {
           className="min-w-[160px] flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
         <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
-        <button
+        <Button
           type="button"
           disabled={!titulo.trim() || criar.isPending}
           onClick={() => criar.mutate()}
-          className="flex items-center justify-center rounded-control bg-accent px-3 text-on-accent disabled:opacity-50"
+          className="flex items-center justify-center"
         >
           <Plus className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );
