@@ -104,3 +104,37 @@ body {
 * {
   border-color: var(--border);
 }
+
+/* Barra de rolagem discreta: fina, sem setinhas, transparente até o hover. */
+.scroll-suave {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scroll-suave:hover {
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.scroll-suave::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroll-suave::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-suave::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+}
+
+.scroll-suave:hover::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+}
+
+.scroll-suave::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}

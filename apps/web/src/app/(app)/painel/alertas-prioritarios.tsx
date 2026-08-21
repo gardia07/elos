@@ -101,7 +101,7 @@ export function AlertasPrioritarios() {
     <Card className="flex h-full max-h-[420px] flex-col">
       <h3 className="mb-3 shrink-0 text-sm font-semibold">Alertas prioritários</h3>
 
-      <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <ul className="scroll-suave flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {alertas.map((t) => {
           const href = t.detalhes?.href;
           const score = t.detalhes?.score;

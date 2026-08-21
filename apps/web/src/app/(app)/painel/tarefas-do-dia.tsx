@@ -135,7 +135,7 @@ export function TarefasDoDia() {
         </span>
       </div>
 
-      <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <ul className="scroll-suave flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {itens.map((item) => (
           <li key={item.id} className="rounded-container border border-border p-2.5">
             <div className="flex items-start gap-2">
@@ -213,7 +213,7 @@ export function TarefasDoDia() {
             )}
 
             {popoverAberto?.id === item.id && popoverAberto.tipo === 'delegar' && (
-              <div className="mt-2 flex max-h-40 flex-col gap-0.5 overflow-y-auto border-t border-divider pt-2 pl-6">
+              <div className="scroll-suave mt-2 flex max-h-40 flex-col gap-0.5 overflow-y-auto border-t border-divider pt-2 pl-6">
                 {(usuarios ?? []).map((u) => (
                   <button
                     key={u.id}
