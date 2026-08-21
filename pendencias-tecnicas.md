@@ -98,10 +98,13 @@ próprio documento pede isso no item "Próximos passos"):
 - Separação Camada A (organizacional) / Camada B (sigilo profissional)
   precisa ser decidida a nível de RLS antes do primeiro model entrar no
   schema -- é o tipo de decisão estrutural que é caro corrigir depois.
-- O documento menciona "RLS no Supabase" várias vezes, mas o ELOS roda em
-  Postgres via Neon (RLS já implementado nesse padrão pros outros módulos,
-  não Supabase) -- terminologia do doc precisa ser lida como "RLS no
-  Postgres", sem mudança de infraestrutura real.
+- ~~O documento menciona "RLS no Supabase"~~ -- **confirmado com a Gabi em
+  2026-08-21: mantém Postgres via Neon**, não migra pra Supabase. RLS da
+  separação Camada A/Camada B segue o mesmo padrão de policy já usado nos
+  outros módulos (`app.current_tenant_id`), só que com uma policy adicional
+  de papel (psicólogo responsável) por cima da de tenant.
+- Ainda em aberto: escolher o fatiamento da v1 (recomendação: começar por
+  "cadastro de psicólogo + prontuário", que é o gate de todo o resto).
 - Compartilhamento do indicador de risco psicossocial com SST/PGR e com o
   Motor de Conformidade (pendência automática quando risco "alto") depende
   de como o Motor de Conformidade Documental for estendido -- hoje ele só
