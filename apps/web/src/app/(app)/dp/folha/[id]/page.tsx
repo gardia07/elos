@@ -297,7 +297,7 @@ export default function PayrollRunPage() {
 
               <div>
                 <h4 className="mb-2 text-sm font-semibold">Mapeamento de colunas</h4>
-                <div className="overflow-x-auto rounded-container border border-border">
+                <div className="scroll-suave overflow-x-auto rounded-container border border-border">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-surface-alt text-left text-text-tertiary">

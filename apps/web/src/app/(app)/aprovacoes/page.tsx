@@ -65,7 +65,7 @@ export default function AprovacoesPage() {
   return (
     <>
       <Header eyebrow="Motor de workflow" title="Aprovações" />
-      <main className="flex-1 overflow-y-auto px-8 py-6">
+      <main className="scroll-suave flex-1 overflow-y-auto px-8 py-6">
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-3 gap-4">
             <KpiCard label="Pendentes no total" value={kpis?.pendentesTotal ?? '—'} />

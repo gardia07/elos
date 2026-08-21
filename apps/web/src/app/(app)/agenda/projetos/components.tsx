@@ -192,7 +192,7 @@ export function FiltroDropdown({
               className="w-full rounded-control border border-border-strong bg-page-bg py-1.5 pl-8 pr-2.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
             />
           </div>
-          <div role="listbox" aria-multiselectable={multi} className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
+          <div role="listbox" aria-multiselectable={multi} className="scroll-suave flex max-h-64 flex-col gap-0.5 overflow-y-auto">
             {filtradas.length === 0 && <p className="px-2 py-1.5 text-xs text-text-tertiary">Nada encontrado.</p>}
             {filtradas.map((o, i) => {
               const ativo = selected.includes(o.value);
@@ -475,7 +475,7 @@ export function ProjetoDrawer({
 
         <div>
           <span className="mb-1.5 block text-sm text-text-secondary">Participantes</span>
-          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-container border border-border p-2">
+          <div className="scroll-suave flex max-h-40 flex-col gap-1 overflow-y-auto rounded-container border border-border p-2">
             {usuarios.map((u) => {
               const checked = values.participanteIds.includes(u.id);
               const souEu = u.id === currentUserId;
@@ -500,7 +500,7 @@ export function ProjetoDrawer({
             <span className="flex items-center gap-1.5 text-sm text-text-secondary">
               <ListChecks className="h-3.5 w-3.5" /> Tarefas vinculadas ({projeto.tarefasConcluidas}/{projeto.totalTarefas})
             </span>
-            <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            <div className="scroll-suave flex max-h-40 flex-col gap-1 overflow-y-auto">
               {(tarefas ?? []).length === 0 && <p className="text-xs text-text-tertiary">Nenhuma tarefa vinculada ainda. Vincule ao criar/editar um item na Agenda.</p>}
               {(tarefas ?? []).map((t) => (
                 <div key={t.id} className="flex items-center gap-2 rounded-container bg-surface-alt px-2.5 py-1.5 text-sm">

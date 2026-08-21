@@ -97,7 +97,7 @@ function Coluna({
           {wipLimite ? ` / ${wipLimite}` : ''}
         </span>
       </div>
-      <div className="flex max-h-[65vh] flex-col gap-2 overflow-y-auto pr-0.5">
+      <div className="scroll-suave flex max-h-[65vh] flex-col gap-2 overflow-y-auto pr-0.5">
         {tarefas.map((t) => (
           <TaskCard key={t.id} tarefa={t} bloqueadora={t.bloqueadoPorId ? tarefasPorId.get(t.bloqueadoPorId) : undefined} isDark={isDark} onClick={() => onCardClick(t)} />
         ))}

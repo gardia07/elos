@@ -347,7 +347,7 @@ export default function AgendaPage() {
           <div className="flex min-h-0 flex-1 flex-col">
             {view === 'mes' &&
               (isMobile ? (
-                <div className="flex flex-col gap-2 overflow-y-auto p-4">
+                <div className="scroll-suave flex flex-col gap-2 overflow-y-auto p-4">
                   {weeks.flat().map((d) => {
                     const iso = localIso(d);
                     const dayEvents = eventsByDay.get(iso) ?? [];

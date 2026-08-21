@@ -756,7 +756,7 @@ function CommentsSection({ agendaItemId }: { agendaItemId: string }) {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm text-text-secondary">Comentários</span>
-      <div className="flex max-h-48 flex-col gap-2 overflow-y-auto">
+      <div className="scroll-suave flex max-h-48 flex-col gap-2 overflow-y-auto">
         {comentarios?.map((c) => (
           <div key={c.id} className="rounded-container bg-surface-alt p-2.5 text-sm">
             <div className="mb-0.5 flex items-center gap-1.5 text-xs font-semibold text-text">
@@ -838,7 +838,7 @@ export function AuditSection({ agendaItemId }: { agendaItemId: string }) {
         <span className="text-xs text-text-tertiary">({eventos.length})</span>
       </button>
       {open && (
-        <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto text-xs text-text-tertiary">
+        <ul className="scroll-suave flex max-h-40 flex-col gap-1 overflow-y-auto text-xs text-text-tertiary">
           {eventos.map((e) => (
             <li key={e.id}>
               {new Date(e.createdAt).toLocaleString('pt-BR')} — {auditActionLabel(e.action)} — {e.actorName}

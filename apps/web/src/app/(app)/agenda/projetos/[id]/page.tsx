@@ -184,7 +184,7 @@ export default function ProjetoDetalhePage() {
   return (
     <>
       <Header eyebrow="Agenda" title={projeto.nome} />
-      <div className="flex flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8">
+      <div className="scroll-suave flex flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <Link href="/agenda/projetos" className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent">
             <ArrowLeft className="h-4 w-4" /> Voltar para Projetos

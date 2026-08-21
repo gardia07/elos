@@ -41,7 +41,7 @@ export default function DpLayout({ children }: { children: React.ReactNode }) {
           );
         })}
       </div>
-      <main className="flex-1 overflow-y-auto px-8 py-6">{children}</main>
+      <main className="scroll-suave flex-1 overflow-y-auto px-8 py-6">{children}</main>
     </>
   );
 }

@@ -26,7 +26,7 @@ export default function PlannerPage() {
     <>
       <Header eyebrow={`Seu ano de ${ano}`} title="Planner Pessoal" />
       <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
-        <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-divider bg-page-bg px-4 py-3 md:w-56 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:px-3 md:py-4">
+        <nav className="scroll-suave flex shrink-0 gap-1 overflow-x-auto border-b border-divider bg-page-bg px-4 py-3 md:w-56 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:px-3 md:py-4">
           {SECOES.map((s) => {
             const Icon = s.icon;
             const active = secaoId === s.id;
@@ -45,7 +45,7 @@ export default function PlannerPage() {
           })}
         </nav>
 
-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
+        <main className="scroll-suave flex-1 overflow-y-auto px-4 py-6 sm:px-8">
           {secaoId === 'dashboard' && <DashboardSection ano={ano} tema={tema} />}
           {secaoId === 'metas' && <MetasSection ano={ano} tema={tema} />}
           {secaoId === 'habitos' && <HabitosSection ano={ano} tema={tema} />}

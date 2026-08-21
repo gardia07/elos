@@ -176,7 +176,7 @@ export default function ChecklistDesligamentoPage() {
   return (
     <>
       <Header eyebrow="Cadastros" title="Checklist de desligamento" />
-      <main className="flex-1 overflow-y-auto px-8 py-6">
+      <main className="scroll-suave flex-1 overflow-y-auto px-8 py-6">
         <Link href="/gestao-de-pessoas/desligamento" className="mb-4 inline-block text-sm text-text-secondary hover:text-text">
           ← Voltar para Desligamento
         </Link>

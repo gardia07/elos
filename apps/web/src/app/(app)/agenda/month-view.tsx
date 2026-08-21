@@ -105,7 +105,7 @@ export function MonthView({
   onToggleConcluida: (e: CalendarEvent) => void;
 }) {
   return (
-    <div className="flex flex-1 flex-col overflow-auto">
+    <div className="scroll-suave flex flex-1 flex-col overflow-auto">
       <div className="grid grid-cols-7 border-l border-t border-divider">
         {DIA_SEMANA.map((d) => (
           <div key={d} className="border-b border-r border-divider bg-surface-alt px-2 py-1.5 text-center text-[10.5px] font-semibold uppercase tracking-[0.04em] text-text-tertiary">

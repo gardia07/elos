@@ -36,7 +36,7 @@ export default function FerramentasLayout({ children }: { children: React.ReactN
           );
         })}
       </div>
-      <main className="flex-1 overflow-y-auto px-8 py-6">{children}</main>
+      <main className="scroll-suave flex-1 overflow-y-auto px-8 py-6">{children}</main>
     </>
   );
 }

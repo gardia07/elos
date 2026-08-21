@@ -141,7 +141,7 @@ export default function ChecklistAdmissaoPage() {
   return (
     <>
       <Header eyebrow="Cadastros" title="Checklist de admissão" />
-      <main className="flex-1 overflow-y-auto px-8 py-6">
+      <main className="scroll-suave flex-1 overflow-y-auto px-8 py-6">
         <div className="mb-4 flex gap-2">
           <button
             type="button"

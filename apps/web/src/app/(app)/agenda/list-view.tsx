@@ -28,7 +28,7 @@ export function ListView({
   const filtered = eventos.filter((e) => hubFiltro === 'Todos' || e.hub === hubFiltro);
 
   return (
-    <div className="flex flex-col gap-4 overflow-y-auto p-4 sm:p-8">
+    <div className="scroll-suave flex flex-col gap-4 overflow-y-auto p-4 sm:p-8">
       <div className="flex flex-wrap gap-2">
         {hubs.map((h) => (
           <button

@@ -54,7 +54,7 @@ export default function EloPage() {
   return (
     <>
       <Header eyebrow="Assistente de IA · Especialista trabalhista" title="Elô" />
-      <main className="flex-1 overflow-y-auto px-8 py-6">
+      <main className="scroll-suave flex-1 overflow-y-auto px-8 py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           <Card className="flex flex-col gap-1">
             <h3 className="mb-2 text-sm font-semibold">Histórico</h3>

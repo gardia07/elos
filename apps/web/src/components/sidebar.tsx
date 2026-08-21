@@ -84,7 +84,7 @@ export function Sidebar() {
         <Image src="/logo-elos-cream.png" alt="elos" width={965} height={562} className="h-8 w-auto" />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4">
+      <div className="scroll-suave flex min-h-0 flex-1 flex-col overflow-y-auto px-4">
         <nav className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => (
             <NavItem key={item.href} {...item} active={isNavItemActive(pathname, item.href)} />
@@ -114,7 +114,7 @@ export function Sidebar() {
 
           {showSwitcher && (
             <div className="absolute bottom-full left-4 right-4 z-40 mb-2 rounded-container border border-border bg-surface text-text shadow-lg">
-              <div className="max-h-64 overflow-y-auto py-1">
+              <div className="scroll-suave max-h-64 overflow-y-auto py-1">
                 {companies?.map((c) => (
                   <button
                     key={c.id}

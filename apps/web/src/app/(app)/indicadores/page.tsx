@@ -72,7 +72,7 @@ export default function IndicadoresPage() {
   return (
     <>
       <Header eyebrow="Cross-hub analytics" title="Indicadores" />
-      <main className="flex-1 overflow-y-auto px-8 py-6">
+      <main className="scroll-suave flex-1 overflow-y-auto px-8 py-6">
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>

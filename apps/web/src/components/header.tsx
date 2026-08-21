@@ -162,7 +162,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
           />
           {showSearchResults && searchTerm.trim().length >= 2 && (
             <div className="absolute right-0 z-40 mt-1 w-80 rounded-container border border-border bg-surface shadow-lg">
-              <ul className="max-h-72 overflow-y-auto py-1">
+              <ul className="scroll-suave max-h-72 overflow-y-auto py-1">
                 {searchData?.colaboradores.map((c) => (
                   <li key={c.id}>
                     <Link
@@ -207,7 +207,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
               <div className="border-b border-divider px-3 py-2 text-xs font-semibold uppercase tracking-[0.06em] text-text-tertiary">
                 Alertas ({tasks?.length ?? 0})
               </div>
-              <ul className="max-h-80 overflow-y-auto py-1">
+              <ul className="scroll-suave max-h-80 overflow-y-auto py-1">
                 {tasks?.map((t) => {
                   const href = t.detalhes?.href;
                   const content = (
@@ -234,7 +234,7 @@ export function Header({ title }: { eyebrow?: string; title: string }) {
               <div className="border-t border-divider px-3 py-2 text-xs font-semibold uppercase tracking-[0.06em] text-text-tertiary">
                 Lembretes de agenda
               </div>
-              <ul className="max-h-56 overflow-y-auto py-1">
+              <ul className="scroll-suave max-h-56 overflow-y-auto py-1">
                 {notificacoes?.map((n) => (
                   <li key={n.id}>
                     <Link

@@ -40,7 +40,7 @@ export function PriorityAlerts({
   return (
     <div className="flex max-h-[420px] flex-col rounded-container border border-border bg-surface p-4 shadow-sm">
       <h3 className="mb-3 shrink-0 text-sm font-bold text-text">Alertas prioritários</h3>
-      <div className="flex flex-col gap-2 overflow-y-auto">
+      <div className="scroll-suave flex flex-col gap-2 overflow-y-auto">
         {alertas.map((alerta) => {
           const cor = categoriaColor[alerta.categoria] ?? SEVERIDADE_COLOR[alerta.severidade];
           const content = (

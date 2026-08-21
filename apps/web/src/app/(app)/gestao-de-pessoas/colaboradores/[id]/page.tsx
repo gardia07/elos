@@ -1455,7 +1455,7 @@ export default function EmployeeProfilePage() {
           </div>
 
           <Section title="Períodos aquisitivos">
-            <div className="overflow-x-auto">
+            <div className="scroll-suave overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-divider text-left text-text-tertiary">

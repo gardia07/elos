@@ -96,7 +96,7 @@ export function Drawer({ open, onClose, title, children }: { open: boolean; onCl
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative flex h-full w-[440px] max-w-full flex-col overflow-y-auto bg-surface p-6 shadow-[-8px_0_30px_rgba(61,61,61,0.12)]">
+      <div className="scroll-suave relative flex h-full w-[440px] max-w-full flex-col overflow-y-auto bg-surface p-6 shadow-[-8px_0_30px_rgba(61,61,61,0.12)]">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-text">{title}</h2>
           <button onClick={onClose} className="text-text-tertiary hover:text-text">

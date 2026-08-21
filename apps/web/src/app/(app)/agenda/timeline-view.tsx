@@ -149,7 +149,7 @@ export function TimelineView({
   const isoOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto">
+    <div className="scroll-suave flex flex-1 flex-col overflow-auto">
       <div className="flex border-b border-divider">
         <div className="w-14 shrink-0" />
         {days.map((d) => {
