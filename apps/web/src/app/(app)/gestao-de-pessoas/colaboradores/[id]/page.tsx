@@ -21,6 +21,7 @@ import {
 } from '@/lib/format';
 import { Badge, Button, Card, EmptyState, KpiCard, Modal, Switch } from '@/components/ui';
 import { type TenantInfo } from '@/components/empresa-form';
+import { FeriasTab } from './ferias-tab';
 
 const ESCOLARIDADE_OPTIONS = [
   'Fundamental incompleto', 'Fundamental completo', 'Médio incompleto', 'Médio completo',
@@ -94,7 +95,7 @@ const DOC_STATUS_TONE: Record<DocumentRequirementStatus['status'], 'green' | 'bl
   NAO_SE_APLICA: 'grey',
 };
 
-type StatusPeriodoAquisitivo =
+export type StatusPeriodoAquisitivo =
   | 'EM_AQUISICAO'
   | 'DISPONIVEL'
   | 'A_VENCER'
@@ -103,7 +104,7 @@ type StatusPeriodoAquisitivo =
   | 'QUITADA'
   | 'PERDIDO_POR_AFASTAMENTO';
 
-const STATUS_PERIODO_LABEL: Record<StatusPeriodoAquisitivo, string> = {
+export const STATUS_PERIODO_LABEL: Record<StatusPeriodoAquisitivo, string> = {
   EM_AQUISICAO: 'Em aquisição',
   DISPONIVEL: 'Disponível',
   A_VENCER: 'A vencer',
@@ -123,9 +124,9 @@ const STATUS_PERIODO_TONE: Record<StatusPeriodoAquisitivo, 'green' | 'blue' | 'a
   PERDIDO_POR_AFASTAMENTO: 'red',
 };
 
-type StatusFracaoFerias = 'PENDENTE' | 'APROVADA' | 'REPROVADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
+export type StatusFracaoFerias = 'PENDENTE' | 'APROVADA' | 'REPROVADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
 
-const STATUS_FRACAO_LABEL: Record<StatusFracaoFerias, string> = {
+export const STATUS_FRACAO_LABEL: Record<StatusFracaoFerias, string> = {
   PENDENTE: 'Pendente',
   APROVADA: 'Aprovada',
   REPROVADA: 'Reprovada',
@@ -134,16 +135,7 @@ const STATUS_FRACAO_LABEL: Record<StatusFracaoFerias, string> = {
   CANCELADA: 'Cancelada',
 };
 
-const STATUS_FRACAO_TONE: Record<StatusFracaoFerias, 'green' | 'blue' | 'amber' | 'red' | 'grey'> = {
-  PENDENTE: 'amber',
-  APROVADA: 'blue',
-  REPROVADA: 'red',
-  EM_ANDAMENTO: 'green',
-  CONCLUIDA: 'green',
-  CANCELADA: 'red',
-};
-
-interface FeriasHistoricoColaborador {
+export interface FeriasHistoricoColaborador {
   periodos: {
     id: string;
     numero: number;
@@ -375,14 +367,6 @@ export default function EmployeeProfilePage() {
   const [contatoNome, setContatoNome] = useState('');
   const [contatoParentesco, setContatoParentesco] = useState('');
   const [contatoTelefone, setContatoTelefone] = useState('');
-  const [progPeriodoId, setProgPeriodoId] = useState('');
-  const [progInicio, setProgInicio] = useState('');
-  const [progDias, setProgDias] = useState('');
-  const [progDiasAbono, setProgDiasAbono] = useState('');
-  const [progAntecipa13, setProgAntecipa13] = useState(false);
-  const [progHistorico, setProgHistorico] = useState(false);
-  const [progJustificativa, setProgJustificativa] = useState('');
-  const [programarError, setProgramarError] = useState('');
   const [leaveTipo, setLeaveTipo] = useState(TIPOS_AFASTAMENTO[0]);
   const [leaveTipoOutro, setLeaveTipoOutro] = useState('');
   const [leaveInicio, setLeaveInicio] = useState('');
@@ -538,46 +522,6 @@ export default function EmployeeProfilePage() {
     onSuccess: invalidate,
   });
 
-  const programarFerias = useMutation({
-    mutationFn: async () =>
-      api.post(`/rh/ferias/colaboradores/${id}/programar`, {
-        periodoAquisitivoId: progPeriodoId,
-        dataInicio: progInicio,
-        dias: Number(progDias),
-        diasAbono: progDiasAbono ? Number(progDiasAbono) : undefined,
-        antecipa13: progAntecipa13 || undefined,
-        justificativa: progJustificativa || undefined,
-        historico: progHistorico || undefined,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rh', 'ferias'] });
-      setProgInicio('');
-      setProgDias('');
-      setProgDiasAbono('');
-      setProgAntecipa13(false);
-      setProgHistorico(false);
-      setProgJustificativa('');
-      setProgramarError('');
-    },
-    onError: (err: unknown) => {
-      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-      setProgramarError(Array.isArray(message) ? message.join(' ') : message || 'Não foi possível programar as férias.');
-    },
-  });
-
-  const aprovarFracao = useMutation({
-    mutationFn: async (fracaoId: string) => api.patch(`/rh/ferias/fracoes/${fracaoId}/aprovar`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rh', 'ferias'] }),
-  });
-  const reprovarFracao = useMutation({
-    mutationFn: async (fracaoId: string) => api.patch(`/rh/ferias/fracoes/${fracaoId}/reprovar`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rh', 'ferias'] }),
-  });
-  const cancelarFracao = useMutation({
-    mutationFn: async (fracaoId: string) => api.delete(`/rh/ferias/fracoes/${fracaoId}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rh', 'ferias'] }),
-  });
-
   const createLeave = useMutation({
     mutationFn: async () =>
       api.post('/rh/vacations/leaves', {
@@ -597,29 +541,6 @@ export default function EmployeeProfilePage() {
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       setLeaveError(Array.isArray(message) ? message.join(' ') : message || 'Não foi possível registrar o afastamento.');
-    },
-  });
-
-  const [uploadingFracaoId, setUploadingFracaoId] = useState<string | null>(null);
-  const [uploadFracaoError, setUploadFracaoError] = useState<{ fracaoId: string; message: string } | null>(null);
-  const addFracaoDocumento = useMutation({
-    mutationFn: async (vars: { fracaoId: string; file: File }) => {
-      const form = new FormData();
-      form.append('arquivo', vars.file);
-      form.append('tipo', 'Aviso/Recibo de férias');
-      form.append('fracaoDeFeriasId', vars.fracaoId);
-      return api.post(`/rh/employees/${id}/documentos`, form);
-    },
-    onSuccess: () => {
-      invalidate();
-      queryClient.invalidateQueries({ queryKey: ['rh', 'ferias'] });
-      setUploadingFracaoId(null);
-      setUploadFracaoError(null);
-    },
-    onError: (err: unknown, vars) => {
-      setUploadingFracaoId(null);
-      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-      setUploadFracaoError({ fracaoId: vars.fracaoId, message: Array.isArray(message) ? message.join(' ') : message || 'Não foi possível anexar o arquivo.' });
     },
   });
 
@@ -1442,212 +1363,15 @@ export default function EmployeeProfilePage() {
         </div>
       )}
 
-      {tab === 'ferias' && (
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-3 gap-4">
-            <KpiCard label="Saldo disponível" value={feriasSaldoAtual ? `${feriasSaldoAtual.saldoDisponivel} dias` : '—'} />
-            <KpiCard
-              label="Próximo vencimento"
-              value={
-                <span className={feriasSaldoAtual?.feriasVencendoEm60Dias ? 'text-danger' : ''}>
-                  {feriasSaldoAtual?.proximoVencimento ? formatDate(feriasSaldoAtual.proximoVencimento) : '—'}
-                </span>
-              }
-            />
-            <KpiCard label="Períodos aquisitivos" value={feriasHistorico?.periodos.length ?? 0} />
-          </div>
-
-          <Section title="Períodos aquisitivos">
-            <div className="scroll-suave overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-divider text-left text-text-tertiary">
-                    <th className="py-2 pr-3 font-medium">Período</th>
-                    <th className="py-2 pr-3 font-medium">Situação</th>
-                    <th className="py-2 pr-3 font-medium">Data limite</th>
-                    <th className="py-2 pr-3 font-medium">Adquiridos</th>
-                    <th className="py-2 pr-3 font-medium">Gozados</th>
-                    <th className="py-2 pr-3 font-medium">Vendidos</th>
-                    <th className="py-2 font-medium">Saldo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(feriasHistorico?.periodos ?? []).map((p) => (
-                    <tr key={p.id} className="border-b border-divider last:border-0">
-                      <td className="py-2 pr-3">
-                        {formatDate(p.dataInicio)} a {formatDate(p.dataFim)}
-                      </td>
-                      <td className="py-2 pr-3">
-                        <Badge tone={STATUS_PERIODO_TONE[p.resumo.status]}>{STATUS_PERIODO_LABEL[p.resumo.status]}</Badge>
-                      </td>
-                      <td className="py-2 pr-3">
-                        {formatDate(p.resumo.dataLimiteConcessao)}
-                        {p.resumo.diasParaVencer != null && (
-                          <div className="text-xs text-text-tertiary">
-                            {p.resumo.diasParaVencer < 0 ? `vencida há ${Math.abs(p.resumo.diasParaVencer)} dias` : `vence em ${p.resumo.diasParaVencer} dias`}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2 pr-3">{p.resumo.diasAdquiridos}</td>
-                      <td className="py-2 pr-3">{p.resumo.diasGozados}</td>
-                      <td className="py-2 pr-3">{p.resumo.diasVendidos}</td>
-                      <td className="py-2 font-medium">{p.resumo.saldoDisponivel}</td>
-                    </tr>
-                  ))}
-                  {(feriasHistorico?.periodos ?? []).length === 0 && (
-                    <tr>
-                      <td colSpan={7}>
-                        <EmptyState>Sem períodos aquisitivos.</EmptyState>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Section>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Section title="Programar férias">
-              <form
-                className="flex flex-col items-start gap-3"
-                onSubmit={(ev) => {
-                  ev.preventDefault();
-                  programarFerias.mutate();
-                }}
-              >
-                <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Período aquisitivo</span>
-                  <select
-                    value={progPeriodoId}
-                    onChange={(ev) => setProgPeriodoId(ev.target.value)}
-                    required
-                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
-                  >
-                    <option value="">Selecione…</option>
-                    {(feriasHistorico?.periodos ?? [])
-                      .filter((p) => p.resumo.saldoDisponivel > 0)
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {formatDate(p.dataInicio)} a {formatDate(p.dataFim)} — saldo {p.resumo.saldoDisponivel} dias
-                        </option>
-                      ))}
-                  </select>
-                </label>
-                <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Início</span>
-                  <input type="date" value={progInicio} onChange={(ev) => setProgInicio(ev.target.value)} required className="w-full rounded-control border border-border-strong bg-surface px-3 py-2" />
-                </label>
-                <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Dias de gozo</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={progDias}
-                    onChange={(ev) => setProgDias(ev.target.value)}
-                    required
-                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
-                  />
-                </label>
-                <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">Dias de abono pecuniário (venda de férias, opcional, máx. 10)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={10}
-                    value={progDiasAbono}
-                    onChange={(ev) => setProgDiasAbono(ev.target.value)}
-                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
-                  />
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={progAntecipa13} onChange={(ev) => setProgAntecipa13(ev.target.checked)} />
-                  <span className="text-text-secondary">Antecipar 1ª parcela do 13º salário</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={progHistorico} onChange={(ev) => setProgHistorico(ev.target.checked)} />
-                  <span className="text-text-secondary">Lançamento histórico (cadastro de dado antigo — sem validações)</span>
-                </label>
-                <label className="flex w-full flex-col gap-1.5 text-sm">
-                  <span className="text-text-secondary">{progHistorico ? 'Justificativa (opcional)' : 'Justificativa (obrigatória se fora da janela de 30 dias de aviso)'}</span>
-                  <input
-                    value={progJustificativa}
-                    onChange={(ev) => setProgJustificativa(ev.target.value)}
-                    className="w-full rounded-control border border-border-strong bg-surface px-3 py-2"
-                  />
-                </label>
-                <Button type="submit" disabled={programarFerias.isPending}>
-                  Programar
-                </Button>
-                {programarError && <p className="text-xs text-danger">{programarError}</p>}
-              </form>
-            </Section>
-
-            <Section title="Frações programadas">
-              {(feriasHistorico?.periodos ?? []).every((p) => p.fracoes.length === 0) && <p className="text-sm text-text-tertiary">Sem registros.</p>}
-              <ul className="flex flex-col gap-2 text-sm">
-                {(feriasHistorico?.periodos ?? [])
-                  .flatMap((p) => p.fracoes.map((f) => ({ ...f, periodoNumero: p.numero })))
-                  .sort((a, b) => b.dataInicio.localeCompare(a.dataInicio))
-                  .map((f) => (
-                    <li key={f.id} className="flex flex-col gap-1.5 rounded-container border border-border p-2.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-text-secondary">
-                          {formatDate(f.dataInicio)} a {formatDate(f.dataFim)} ({formatDias(f.dias)}{f.diasAbono > 0 ? ` · ${formatDias(f.diasAbono)} de abono` : ''}
-                          {f.antecipa13 ? ' · antecipa 13º' : ''})
-                        </span>
-                        <Badge tone={STATUS_FRACAO_TONE[f.statusEfetivo]}>{STATUS_FRACAO_LABEL[f.statusEfetivo]}</Badge>
-                      </div>
-                      {f.justificativa && <p className="text-xs text-text-tertiary">{f.justificativa}</p>}
-                      <div className="flex flex-wrap items-center gap-3">
-                        {f.documentos.map((d) => (
-                          <a
-                            key={d.id}
-                            href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-accent hover:underline"
-                          >
-                            {d.nome}
-                          </a>
-                        ))}
-                        <label className="cursor-pointer rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent">
-                          {uploadingFracaoId === f.id ? 'Enviando…' : 'Anexar aviso/recibo'}
-                          <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                            className="hidden"
-                            disabled={uploadingFracaoId === f.id}
-                            onChange={(ev) => {
-                              const file = ev.target.files?.[0];
-                              if (file) {
-                                setUploadingFracaoId(f.id);
-                                addFracaoDocumento.mutate({ fracaoId: f.id, file });
-                              }
-                              ev.target.value = '';
-                            }}
-                          />
-                        </label>
-                        {f.status === 'PENDENTE' && (
-                          <>
-                            <Button onClick={() => aprovarFracao.mutate(f.id)}>Aprovar</Button>
-                            <Button variant="secondary" onClick={() => reprovarFracao.mutate(f.id)}>
-                              Reprovar
-                            </Button>
-                          </>
-                        )}
-                        {(f.status === 'PENDENTE' || f.status === 'APROVADA') && (
-                          <Button variant="cancel" onClick={() => cancelarFracao.mutate(f.id)}>
-                            Cancelar
-                          </Button>
-                        )}
-                      </div>
-                      {uploadFracaoError?.fracaoId === f.id && <p className="text-xs text-danger">{uploadFracaoError.message}</p>}
-                    </li>
-                  ))}
-              </ul>
-            </Section>
-          </div>
-        </div>
+      {tab === 'ferias' && e && (
+        <FeriasTab
+          employeeId={id}
+          employee={{ nome: e.nome, banco: e.banco, agencia: e.agencia, conta: e.conta }}
+          feriasHistorico={feriasHistorico}
+          feriasSaldoAtual={feriasSaldoAtual}
+          apiBaseUrl={apiBaseUrl}
+          onMutated={invalidate}
+        />
       )}
 
       {tab === 'afastamentos' && (

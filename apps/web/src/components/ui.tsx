@@ -37,6 +37,7 @@ const BADGE_COLORS: Record<string, string> = {
   darkred: 'bg-danger-deep/10 text-danger-deep',
   blue: 'bg-tint-blue text-accent',
   grey: 'bg-surface-alt text-text-secondary',
+  coral: 'bg-info-bg text-info',
 };
 
 export function Badge({ tone = 'grey', children }: { tone?: keyof typeof BADGE_COLORS; children: ReactNode }) {

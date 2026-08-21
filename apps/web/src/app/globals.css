@@ -20,6 +20,7 @@
   --danger: #b06a5e;
   --danger-deep: #8a2e2e;
   --info: #c9857a;
+  --info-bg: #f9ece7;
   --purple: #8a7fb0;
   --olive: #6d8a3d;
 
@@ -43,6 +44,7 @@
   --on-accent: #18191b;
   --success-bg: #212a1c;
   --warning-bg: #2e2818;
+  --info-bg: #3a2823;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -60,6 +62,7 @@
     --on-accent: #18191b;
     --success-bg: #212a1c;
     --warning-bg: #2e2818;
+    --info-bg: #3a2823;
   }
 }
 
@@ -83,6 +86,7 @@
   --color-danger: var(--danger);
   --color-danger-deep: var(--danger-deep);
   --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
   --color-purple: var(--purple);
   --color-olive: var(--olive);
   --radius-control: var(--radius-control);
