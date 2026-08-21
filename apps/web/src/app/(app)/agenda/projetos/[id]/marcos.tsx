@@ -75,6 +75,7 @@ export function ProjetoMarcos({ projetoId }: { projetoId: string }) {
         <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="rounded-control border border-border-strong bg-surface px-3 py-2 text-sm" />
         <Button
           type="button"
+          variant="add"
           disabled={!titulo.trim() || criar.isPending}
           onClick={() => criar.mutate()}
           className="flex items-center justify-center"

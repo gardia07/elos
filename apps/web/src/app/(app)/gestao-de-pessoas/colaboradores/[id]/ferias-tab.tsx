@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Check, ChevronDown } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import { formatDate, formatDias } from '@/lib/format';
@@ -332,7 +332,9 @@ export function FeriasTab({ employeeId, employee, feriasHistorico, feriasSaldoAt
       <div>
         <div className="mb-1 flex items-center justify-between gap-3">
           <h3 className="text-sm font-semibold text-text">Períodos aquisitivos</h3>
-          <Button onClick={() => setShowProgramar(true)}>Programar férias</Button>
+          <Button variant="add" onClick={() => setShowProgramar(true)} className="flex items-center gap-1.5">
+            <Plus className="h-4 w-4" /> Programar férias
+          </Button>
         </div>
         <p className="mb-3 text-xs text-text-tertiary">Mais recente primeiro — cada período pode ser expandido para ver adquiridos, gozados, vendidos e prazo de vencimento.</p>
         <div className="flex flex-col gap-2.5">

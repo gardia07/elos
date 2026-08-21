@@ -145,7 +145,7 @@ export function FinancasSection({ ano, tema }: { ano: number; tema: SecaoTema })
             placeholder="Ex.: salário, freelance…"
             className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
-          <Button type="submit" variant="secondary" disabled={!novoNomeReceita.trim()} className="flex items-center gap-1.5">
+          <Button type="submit" variant="add" disabled={!novoNomeReceita.trim()} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Categoria
           </Button>
         </form>
@@ -178,7 +178,7 @@ export function FinancasSection({ ano, tema }: { ano: number; tema: SecaoTema })
             placeholder="Ex.: aluguel, mercado…"
             className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
           />
-          <Button type="submit" variant="secondary" disabled={!novoNomeDespesa.trim()} className="flex items-center gap-1.5">
+          <Button type="submit" variant="add" disabled={!novoNomeDespesa.trim()} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Categoria
           </Button>
         </form>

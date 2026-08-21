@@ -48,7 +48,7 @@ export function Badge({ tone = 'grey', children }: { tone?: keyof typeof BADGE_C
   );
 }
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'cancel' | 'confirm';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'cancel' | 'confirm' | 'add';
 
 // Fundo suave (10% da cor), letra colorida, sem borda -- aprovado pela Gabi via provador de botoes.
 // Mesmo formato das abas/filtros segmentados (rounded-control, px-3 py-1.5, text-xs) -- só a cor muda.
@@ -64,6 +64,10 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   cancel: SOFT_RED,
   // Mesma cor do primary -- confirmacao leve, mesmo azul-acinzentado do "primary".
   confirm: SOFT_BLUE,
+  // Azul solido -- reservado pra acao de incluir/criar algo novo (sempre com icone Plus antes do
+  // texto), unica variante com preenchimento cheio em vez do fundo suave das demais. Mesmo
+  // tamanho/raio de todas as outras, so a cor/preenchimento muda.
+  add: 'px-3 py-1.5 text-xs font-semibold bg-accent text-on-accent hover:bg-accent/90',
 };
 
 // Exportado pra estilizar elementos que não podem ser um <button> (ex.: <Link> que navega mas

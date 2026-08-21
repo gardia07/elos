@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Badge, Button, Card, KpiCard } from '@/components/ui';
 
@@ -116,7 +117,9 @@ export default function AvaliacaoPage() {
               <span className="text-text-secondary">Fim</span>
               <input type="date" value={periodoFim} onChange={(e) => setPeriodoFim(e.target.value)} required className="rounded-control border border-border-strong bg-surface px-3 py-2" />
             </label>
-            <Button type="submit">Criar ciclo</Button>
+            <Button type="submit" variant="add" className="flex items-center gap-1.5">
+              <Plus className="h-4 w-4" /> Criar ciclo
+            </Button>
           </form>
         </Card>
       )}

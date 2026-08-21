@@ -104,7 +104,7 @@ export function CicloSection({ tema }: { tema: SecaoTema }) {
               className="rounded-control border border-border-strong bg-surface px-3 py-2"
             />
           </label>
-          <Button type="submit" disabled={criar.isPending} className="flex items-center gap-1.5 self-start">
+          <Button type="submit" variant="add" disabled={criar.isPending} className="flex items-center gap-1.5 self-start">
             <Plus className="h-4 w-4" /> Registrar
           </Button>
         </form>

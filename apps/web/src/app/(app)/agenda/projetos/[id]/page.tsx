@@ -196,7 +196,7 @@ export default function ProjetoDetalhePage() {
             <Button variant="secondary" onClick={() => setEditOpen(true)} className="flex items-center gap-1.5">
               <Pencil className="h-4 w-4" /> Editar
             </Button>
-            <Button onClick={() => setTaskDrawer({ open: true, item: null })} className="flex items-center gap-1.5">
+            <Button variant="add" onClick={() => setTaskDrawer({ open: true, item: null })} className="flex items-center gap-1.5">
               <Plus className="h-4 w-4" /> Nova tarefa
             </Button>
           </div>

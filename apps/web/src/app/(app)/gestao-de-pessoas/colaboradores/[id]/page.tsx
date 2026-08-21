@@ -1585,7 +1585,7 @@ export default function EmployeeProfilePage() {
           <Card>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Documentos</h3>
-              <Button onClick={() => setDocModalOpen(true)} className="flex items-center gap-1.5">
+              <Button variant="add" onClick={() => setDocModalOpen(true)} className="flex items-center gap-1.5">
                 <Plus className="h-4 w-4" /> Anexar
               </Button>
             </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Badge, Button, Card, Modal } from '@/components/ui';
 
@@ -100,7 +101,9 @@ export default function AfastamentosPage() {
         <p className="text-sm text-text-secondary">
           Lançamento de afastamentos, com soma automática por mesmo CID dentro de 60 dias (Lei 8.213/91, art. 60 §3º).
         </p>
-        <Button onClick={() => setShowCriar(true)}>Registrar afastamento</Button>
+        <Button variant="add" onClick={() => setShowCriar(true)} className="flex items-center gap-1.5">
+          <Plus className="h-4 w-4" /> Registrar afastamento
+        </Button>
       </div>
 
       <Card>

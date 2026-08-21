@@ -61,7 +61,7 @@ export default function ProjetosPage() {
           <Link href="/agenda" className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent">
             <ArrowLeft className="h-4 w-4" /> Voltar para a Agenda
           </Link>
-          <Button onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5">
+          <Button variant="add" onClick={() => setCreateOpen(true)} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Novo projeto
           </Button>
         </div>

@@ -105,7 +105,7 @@ export function AgendaHeader({
           <Moon className="h-4 w-4" /> Revisão do dia
         </Button>
 
-        <Button onClick={onNew} className="flex items-center gap-1.5">
+        <Button variant="add" onClick={onNew} className="flex items-center gap-1.5">
           <Plus className="h-4 w-4" /> Novo
         </Button>
       </div>
@@ -721,6 +721,7 @@ function SubtarefasSection({ agendaItemId }: { agendaItemId: string }) {
         />
         <Button
           type="button"
+          variant="add"
           disabled={!titulo.trim() || criar.isPending}
           onClick={() => criar.mutate()}
           className="flex items-center justify-center"

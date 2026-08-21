@@ -246,7 +246,7 @@ export function TarefasDoDia() {
           placeholder="Adicionar tarefa…"
           className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2 text-sm"
         />
-        <Button type="submit" disabled={criarManual.isPending || !novoTitulo.trim()} className="flex items-center justify-center">
+        <Button type="submit" variant="add" disabled={criarManual.isPending || !novoTitulo.trim()} className="flex items-center justify-center">
           <Plus className="h-4 w-4" />
         </Button>
       </form>

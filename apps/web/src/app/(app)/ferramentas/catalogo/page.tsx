@@ -87,7 +87,7 @@ export default function CatalogoFerramentasPage() {
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-text">Atalhos externos</h3>
-          <Button variant="secondary" className="flex items-center gap-1.5" onClick={() => setDrawer({ open: true, atalho: null })}>
+          <Button variant="add" className="flex items-center gap-1.5" onClick={() => setDrawer({ open: true, atalho: null })}>
             <Plus className="h-4 w-4" /> Novo atalho
           </Button>
         </div>

@@ -77,7 +77,7 @@ export function MetasSection({ ano, tema }: { ano: number; tema: SecaoTema }) {
           placeholder="Ex.: viajar para a praia, terminar o curso de inglês…"
           className="flex-1 rounded-control border border-border-strong bg-surface px-3 py-2.5 text-sm"
         />
-        <Button type="submit" disabled={criar.isPending || !titulo.trim()} className="flex items-center gap-1.5">
+        <Button type="submit" variant="add" disabled={criar.isPending || !titulo.trim()} className="flex items-center gap-1.5">
           <Plus className="h-4 w-4" /> Adicionar
         </Button>
       </form>
