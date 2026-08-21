@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FileText, Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import {
   complianceTone,
@@ -18,7 +19,7 @@ import {
   TerminationStatusValue,
   TerminationTipo,
 } from '@/lib/format';
-import { Badge, Button, Card, EmptyState, KpiCard, Switch } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, KpiCard, Modal, Switch } from '@/components/ui';
 import { type TenantInfo } from '@/components/empresa-form';
 
 const ESCOLARIDADE_OPTIONS = [
@@ -387,6 +388,7 @@ export default function EmployeeProfilePage() {
   const [leaveInicio, setLeaveInicio] = useState('');
   const [leaveRetorno, setLeaveRetorno] = useState('');
   const [leaveError, setLeaveError] = useState('');
+  const [docModalOpen, setDocModalOpen] = useState(false);
   const [docNome, setDocNome] = useState('');
   const [docTipo, setDocTipo] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -658,6 +660,7 @@ export default function EmployeeProfilePage() {
       setDocTipo('');
       setDocFile(null);
       setDocFileInputKey((k) => k + 1);
+      setDocModalOpen(false);
     },
   });
 
@@ -1855,24 +1858,32 @@ export default function EmployeeProfilePage() {
             </ul>
           </Card>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Documentos</h3>
+              <Button onClick={() => setDocModalOpen(true)} className="flex items-center gap-1.5">
+                <Plus className="h-4 w-4" /> Anexar
+              </Button>
+            </div>
             {e.documentos.length === 0 && <p className="text-sm text-text-tertiary">Sem documentos.</p>}
-            <ul className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+            <ul className="flex flex-col gap-2">
               {e.documentos.map((d) => (
-                <li key={d.id} className="flex items-center justify-between rounded-container border border-border p-3">
-                  <div>
-                    <div className="font-medium">{d.nome}</div>
-                    <div className="text-xs text-text-tertiary">
-                      {d.tipo} · {d.tamanho} · {formatDate(d.uploadEm)}
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-container border border-border p-2.5 text-sm">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 shrink-0 text-text-tertiary" />
+                    <div>
+                      <div className="font-medium">{d.nome}</div>
+                      <div className="text-xs text-text-tertiary">
+                        {d.tipo} · {d.tamanho} · {formatDate(d.uploadEm)}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <a
                       href={`${apiBaseUrl}/rh/employees/${id}/documentos/${d.id}/arquivo`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-accent hover:underline"
+                      className="rounded-control border border-border-strong bg-surface px-2 py-1 text-xs text-text-secondary hover:border-accent"
                     >
                       Visualizar
                     </a>
@@ -1885,7 +1896,17 @@ export default function EmployeeProfilePage() {
             </ul>
           </Card>
 
-          <Card>
+          <Modal
+            open={docModalOpen}
+            onClose={() => {
+              setDocModalOpen(false);
+              setDocNome('');
+              setDocTipo('');
+              setDocFile(null);
+              setDocFileInputKey((k) => k + 1);
+            }}
+            title="Anexar documento"
+          >
             <form
               className="flex flex-col items-start gap-3"
               onSubmit={(ev) => {
@@ -1912,12 +1933,26 @@ export default function EmployeeProfilePage() {
                 <span className="text-text-secondary">Tipo</span>
                 <input value={docTipo} onChange={(ev) => setDocTipo(ev.target.value)} placeholder="Contrato, Documento pessoal…" required className="w-full rounded-control border border-border-strong bg-surface px-3 py-2" />
               </label>
-              <Button type="submit" disabled={addDocumento.isPending || !docFile}>
-                {addDocumento.isPending ? 'Enviando…' : 'Anexar arquivo'}
-              </Button>
+              <div className="flex w-full justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="cancel"
+                  onClick={() => {
+                    setDocModalOpen(false);
+                    setDocNome('');
+                    setDocTipo('');
+                    setDocFile(null);
+                    setDocFileInputKey((k) => k + 1);
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={addDocumento.isPending || !docFile}>
+                  {addDocumento.isPending ? 'Enviando…' : 'Anexar arquivo'}
+                </Button>
+              </div>
             </form>
-          </Card>
-          </div>
+          </Modal>
         </div>
       )}
 

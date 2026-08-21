@@ -121,6 +121,27 @@ export function Drawer({ open, onClose, title, children }: { open: boolean; onCl
   );
 }
 
+// Dialog centralizado -- diferente do Drawer (painel lateral, altura cheia), pra formularios
+// curtos que nao precisam do espaco de uma tela inteira. Fecha no X, no overlay ou em Cancelar
+// (o proprio conteudo decide o botao de cancelar).
+export function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="scroll-suave relative flex max-h-[90vh] w-[460px] max-w-full flex-col overflow-y-auto rounded-container border border-border bg-surface p-6 shadow-lg">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-text">{title}</h2>
+          <button onClick={onClose} className="text-text-tertiary hover:text-text">
+            ✕
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function EmptyState({ children }: { children: ReactNode }) {
   return <p className="py-8 text-center text-sm text-text-tertiary">{children}</p>;
 }
